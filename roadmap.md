@@ -18,3 +18,8 @@
 - [x] Dodać stronę „O projekcie” z historią autora, opisem funkcji i metadanymi SEO
 - [x] Rozszerzyć opinie o opcjonalny e-mail i ocenę 1–10
 - [x] Przeprowadzić przegląd dostępności i poprawić wykryte problemy
+- [ ] Usunąć gotowe scenariusze i uporządkować sekcję frekwencji
+- [ ] Przywrócić subtelne, zmienne kolorystycznie tło cząsteczkowe
+- [ ] Dodać oficjalne wyniki wyborów 2023 i 2019
+- [ ] Pokazywać procent poparcia w trybie mapy jednej partii
+- [ ] Powiększyć logo SejmSim w nagłówku
