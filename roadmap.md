@@ -15,6 +15,6 @@
 - [x] Usunąć znaki typograficzne wskazane przez właściciela i sformalizować nagłówek
 - [x] Ustawić 80% krycia paneli i subtelny kolor aktualnego lidera
 - [x] Dodać neutralną grupę wpływu frekwencji oraz mobilne sterowanie strzałkami
-- [ ] Dodać stronę „O projekcie” z historią autora, opisem funkcji i metadanymi SEO
-- [ ] Rozszerzyć opinie o opcjonalny e-mail i ocenę 1–10
-- [ ] Przeprowadzić przegląd dostępności i poprawić wykryte problemy
+- [x] Dodać stronę „O projekcie” z historią autora, opisem funkcji i metadanymi SEO
+- [x] Rozszerzyć opinie o opcjonalny e-mail i ocenę 1–10
+- [x] Przeprowadzić przegląd dostępności i poprawić wykryte problemy
