@@ -207,7 +207,7 @@ function Index() {
               </a>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <a href="https://jifo.dev" target="_blank" rel="noreferrer">
+              <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
                 <UserRound className="mr-1.5 h-4 w-4" /> Kontakt
               </a>
             </Button>
