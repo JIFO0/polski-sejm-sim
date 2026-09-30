@@ -32,44 +32,36 @@ export function Hemicycle({
     }
     while (queue.length < total) queue.push("_empty");
 
-    const rows = 13;
-    const rInner = 0.42;
-    const rOuter = 1;
-    const weights = Array.from({ length: rows }, (_, i) => rInner + ((rOuter - rInner) * i) / (rows - 1));
-    const sum = weights.reduce((a, b) => a + b, 0);
-    const counts = weights.map((w) => Math.max(1, Math.round((w / sum) * queue.length)));
-    let diff = queue.length - counts.reduce((a, b) => a + b, 0);
-    let idx = rows - 1;
-    while (diff !== 0) {
-      counts[idx] = (counts[idx] ?? 1) + (diff > 0 ? 1 : -1);
-      diff += diff > 0 ? -1 : 1;
-      idx = (idx - 1 + rows) % rows;
+    const rows = 11;
+    const radii = Array.from({ length: rows }, (_, index) => 20 + (28 * index) / (rows - 1));
+    const radiusTotal = radii.reduce((sum, radius) => sum + radius, 0);
+    const counts = radii.map((radius) => Math.floor((radius / radiusTotal) * queue.length));
+    let remaining = queue.length - counts.reduce((sum, count) => sum + count, 0);
+    for (let row = rows - 1; remaining > 0; row = (row - 1 + rows) % rows) {
+      counts[row] = (counts[row] ?? 0) + 1;
+      remaining -= 1;
     }
 
-    const out: Seat[] = [];
-    let cursor = 0;
-    // Pobieramy kolumnami: dla każdego "slotu kątowego" idziemy od środka na zewnątrz.
-    const perRow: string[][] = counts.map(() => []);
-    const maxCount = Math.max(...counts);
-    for (let col = 0; col < maxCount; col++) {
-      for (let r = 0; r < rows; r++) {
-        if (col < (counts[r] ?? 0)) (perRow[r] as string[]).push(queue[cursor++] ?? "_empty");
-      }
-    }
-
+    const positions: { x: number; y: number; angle: number; radius: number }[] = [];
     for (let r = 0; r < rows; r++) {
-      const radius = weights[r] ?? 1;
+      const radius = radii[r] ?? 20;
       const n = counts[r] ?? 0;
       for (let i = 0; i < n; i++) {
         const angle = Math.PI - (Math.PI * (i + 0.5)) / n;
-        out.push({
-          x: +(50 + Math.cos(angle) * radius * 46).toFixed(3),
-          y: +(50 - Math.sin(angle) * radius * 46).toFixed(3),
-          party: perRow[r]?.[i] ?? "_empty",
+        positions.push({
+          x: Number((50 + Math.cos(angle) * radius).toFixed(3)),
+          y: Number((51 - Math.sin(angle) * radius).toFixed(3)),
+          angle: Number(angle.toFixed(6)),
+          radius,
         });
       }
     }
-    return out;
+    positions.sort((a, b) => b.angle - a.angle || a.radius - b.radius);
+    return positions.map((position, index) => ({
+      x: position.x,
+      y: position.y,
+      party: queue[index] ?? "_empty",
+    }));
   }, [seatsByParty, total]);
 
   return (
@@ -81,7 +73,7 @@ export function Hemicycle({
             key={i}
             cx={s.x}
             cy={s.y}
-            r={1.05}
+            r={1.22}
             fill={s.party === "_empty" ? "#E2E8F0" : (PARTY_MAP[s.party]?.color ?? "#94A3B8")}
             opacity={s.party === "_empty" ? 0.6 : dim ? 0.16 : 1}
             style={{ transition: "fill 300ms ease, opacity 250ms ease" }}

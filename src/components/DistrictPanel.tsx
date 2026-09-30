@@ -36,7 +36,7 @@ export function DistrictPanel({
       <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
         <div>
           <p className="eyebrow">
-            Okręg nr {district.id} · {district.seats} mandatów
+            Okręg nr {district.id}, {district.seats} mandatów
           </p>
           <h3 className="mt-0.5 font-display text-xl font-bold text-ink">{district.name}</h3>
         </div>
@@ -104,7 +104,7 @@ export function DistrictPanel({
                   onValueChange={([v = 0]) => setShare(p.id, v)}
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  baza {base.toFixed(1)}% · po frekwencji {eff.toFixed(1)}%
+                  baza {base.toFixed(1)}%, po frekwencji {eff.toFixed(1)}%
                 </p>
               </div>
             );

@@ -81,9 +81,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Sejmometr 2027" },
       {
         name: "description",
-        content: "Symulator wyborów do Sejmu RP 2027 — mapa okręgów, mandaty i koalicje.",
+        content: "Symulator wyborów do Sejmu RP 2027: mapa okręgów, mandaty i koalicje.",
       },
-      { property: "og:type", content: "website" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
@@ -110,7 +109,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pl">
       <head>
         <HeadContent />
       </head>
