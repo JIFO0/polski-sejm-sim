@@ -86,25 +86,25 @@ export function effectiveShares(
     sum += v;
   }
   if (sum <= 0) return raw;
-  for (const id of Object.keys(raw)) raw[id] = (raw[id] / sum) * 100;
+  for (const id of Object.keys(raw)) raw[id] = ((raw[id] ?? 0) / sum) * 100;
   return raw;
 }
 
 function dhondt(votes: Record<string, number>, seats: number): Record<string, number> {
-  const ids = Object.keys(votes).filter((k) => votes[k] > 0);
+  const ids = Object.keys(votes).filter((k) => (votes[k] ?? 0) > 0);
   const result: Record<string, number> = Object.fromEntries(ids.map((k) => [k, 0]));
   for (let s = 0; s < seats; s++) {
     let best: string | null = null;
     let bestQ = -1;
     for (const id of ids) {
-      const q = votes[id] / (result[id] + 1);
+      const q = (votes[id] ?? 0) / ((result[id] ?? 0) + 1);
       if (q > bestQ + 1e-12) {
         bestQ = q;
         best = id;
       }
     }
     if (!best) break;
-    result[best] += 1;
+    result[best] = (result[best] ?? 0) + 1;
   }
   return result;
 }
@@ -168,7 +168,7 @@ export function simulate(scenario: Scenario): SimulationResult {
     if (id === "inne") return false;
     const settings = scenario.parties[id];
     if (!settings?.enabled) return false;
-    return nationalShares[id] >= settings.threshold - 1e-9;
+    return (nationalShares[id] ?? 0) >= settings.threshold - 1e-9;
   });
 
   const seatsByParty: Record<string, number> = {};
