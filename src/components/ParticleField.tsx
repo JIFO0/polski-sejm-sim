@@ -23,6 +23,7 @@ function hexToRgb(hex: string) {
 }
 
 const RGB = PARTY_COLORS.map(hexToRgb);
+const FALLBACK = [148, 163, 184] as const;
 
 /**
  * Tło: "polskie społeczeństwo" jako chmura punktów. Punkty rozstępują się
