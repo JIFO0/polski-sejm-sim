@@ -4,7 +4,7 @@ import { Download, ExternalLink, MessageSquareText, RotateCcw, Upload, UserRound
 import { toast } from "sonner";
 
 import { DISTRICTS } from "@/data/districts";
-import { PARTIES, PARTY_MAP } from "@/data/parties";
+import { PARTIES, PARTY_MAP, type Party } from "@/data/parties";
 import {
   BASE_TURNOUT,
   MAJORITY,
@@ -36,6 +36,7 @@ const blankState = (id: number): DistrictState => {
 };
 
 const DEFAULT_SETTINGS = { threshold: 5 as const, turnoutSensitivity: 0, enabled: true };
+const isParty = (party: Party | undefined): party is Party => Boolean(party);
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -78,7 +79,7 @@ function Index() {
   );
 
   const displayedParties = useMemo(
-    () => displayOrder.map((id) => PARTY_MAP[id]).filter((party) => Boolean(party)),
+    () => displayOrder.map((id) => PARTY_MAP[id]).filter(isParty),
     [displayOrder],
   );
 

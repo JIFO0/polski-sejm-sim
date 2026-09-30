@@ -1,6 +1,7 @@
 import { ArrowLeftRight } from "lucide-react";
 import { PARTIES } from "@/data/parties";
 import { PartyLogo } from "@/components/PartyLogo";
+import { Button } from "@/components/ui/button";
 import type { PartySettings } from "@/lib/simulation";
 
 type Side = "higher" | "lower";
@@ -49,16 +50,18 @@ export function TurnoutGroups({
                     : (settings[party.id]?.turnoutSensitivity ?? party.turnoutSensitivity) < 0,
                 )
                 .map((party) => (
-                  <button
+                  <Button
                     key={party.id}
+                    variant="outline"
+                    size="sm"
                     draggable
                     onDragStart={(event) => event.dataTransfer.setData("text/plain", party.id)}
                     onClick={() => onMove(party.id, group.side === "higher" ? "lower" : "higher")}
-                    className="flex cursor-grab items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-2 text-xs font-semibold shadow-sm transition-transform hover:-translate-y-0.5 active:cursor-grabbing"
+                    className="cursor-grab gap-2 bg-surface active:cursor-grabbing"
                   >
                     <PartyLogo id={party.id} size={20} />
                     {party.short}
-                  </button>
+                  </Button>
                 ))}
             </div>
           </div>
