@@ -96,6 +96,15 @@ export function PolandMap({
           <div className="panel-float animate-fade-in px-3 py-2">
             <p className="eyebrow">Okręg {hovered.id}</p>
             <p className="font-display text-sm font-semibold text-ink">{hovered.name}</p>
+            {mode === "party" ? (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: PARTY_MAP[focusParty]?.color }} />
+                <span className="text-xs text-muted-foreground">{PARTY_MAP[focusParty]?.short}</span>
+                <strong className="num ml-auto text-base text-ink">
+                  {(hovered.shares[focusParty] ?? 0).toFixed(1)}%
+                </strong>
+              </div>
+            ) : (
             <div className="mt-1.5 space-y-0.5">
               {Object.entries(hovered.seatsByParty)
                 .filter(([, n]) => n > 0)
@@ -112,6 +121,7 @@ export function PolandMap({
                   </div>
                 ))}
             </div>
+            )}
           </div>
         ) : null}
       </div>

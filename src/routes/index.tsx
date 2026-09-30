@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Download, ExternalLink, Info, RotateCcw, Sparkles, Upload, UserRound } from "lucide-react";
+import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { LogoMark } from "@/components/Logos";
@@ -25,6 +25,7 @@ import { DistrictPanel } from "@/components/DistrictPanel";
 import { CoalitionBuilder } from "@/components/CoalitionBuilder";
 import { ScenarioShelf } from "@/components/ScenarioShelf";
 import { TurnoutGroups } from "@/components/TurnoutGroups";
+import { HistoricalResults } from "@/components/HistoricalResults";
 import { PartyLogo } from "@/components/PartyLogo";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Button } from "@/components/ui/button";
@@ -223,7 +224,7 @@ function Index() {
           <div className="grid items-start gap-8 xl:grid-cols-[minmax(22rem,0.8fr)_minmax(36rem,1.2fr)]">
             <div className="max-w-2xl">
               <div className="flex items-center gap-3.5">
-                <LogoMark size={48} className="shrink-0 drop-shadow-sm" />
+                <LogoMark size={64} className="shrink-0 drop-shadow-sm" />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="eyebrow !mb-0">Symulator wyborów do Sejmu RP 2027</p>
@@ -447,9 +448,7 @@ function Index() {
           </div>
         </section>
 
-        <section>
-          <TurnoutGroups settings={scenario.parties} onMove={setTurnoutSide} />
-        </section>
+        <HistoricalResults />
 
         {/* KOALICJE */}
         <section>
@@ -463,14 +462,15 @@ function Index() {
         </section>
 
         {/* USTAWIENIA MODELU */}
-        <section className="grid gap-6 md:grid-cols-2">
-          <div className="panel p-5">
+        <section className="space-y-6">
+          <div className="panel p-5 md:p-6">
             <h2 className="font-display text-xl font-bold text-ink">Frekwencja</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Ustaw jedną frekwencję dla całego kraju albo dopieszczaj okręg po okręgu na mapie.
             </p>
 
-            <div className="mt-5">
+            <div className="mt-5 grid gap-6 md:grid-cols-2">
+            <div>
               <div className="flex items-baseline justify-between">
                 <span className="text-sm font-semibold">Frekwencja we wszystkich okręgach</span>
                 <span className="num text-lg font-bold text-primary">
@@ -487,7 +487,7 @@ function Index() {
               />
             </div>
 
-            <div className="mt-6">
+            <div>
               <div className="flex items-baseline justify-between">
                 <span className="text-sm font-semibold">Siła profilu elektoratu</span>
                 <span className="num text-sm font-bold">
@@ -507,6 +507,11 @@ function Index() {
                 partie o młodszym i bardziej miejskim elektoracie, a maleją te o elektoracie
                 najbardziej zdyscyplinowanym.
               </p>
+            </div>
+            </div>
+
+            <div className="mt-6">
+              <TurnoutGroups settings={scenario.parties} onMove={setTurnoutSide} embedded />
             </div>
           </div>
 
@@ -554,31 +559,6 @@ function Index() {
                           setScenario((sc) => ({
                             ...sc,
                             parties: { ...sc.parties, [p.id]: { ...(sc.parties[p.id] ?? DEFAULT_SETTINGS), enabled: v } },
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="w-full">
-                      <div className="flex items-baseline justify-between text-[11px] text-muted-foreground">
-                        <span>wrażliwość na frekwencję</span>
-                        <span className="num">
-                          {s.turnoutSensitivity > 0 ? "+" : ""}
-                          {s.turnoutSensitivity.toFixed(2)}
-                        </span>
-                      </div>
-                      <Slider
-                        className="mt-1.5"
-                        min={-1.5}
-                        max={1.5}
-                        step={0.05}
-                        value={[s.turnoutSensitivity]}
-                        onValueChange={([v = 0]) =>
-                          setScenario((sc) => ({
-                            ...sc,
-                            parties: {
-                              ...sc.parties,
-                              [p.id]: { ...(sc.parties[p.id] ?? DEFAULT_SETTINGS), turnoutSensitivity: v },
-                            },
                           }))
                         }
                       />

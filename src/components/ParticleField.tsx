@@ -13,6 +13,8 @@ interface Particle {
   to: number;
   t: number;
   speed: number;
+  phase: number;
+  colorHold: number;
 }
 
 function hexToRgb(hex: string) {
@@ -57,11 +59,9 @@ export function ParticleField({ className }: { className?: string }) {
       canvas.height = Math.max(1, Math.floor(height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Większa liczba kropeczek o mniejszej wielkości i mniejszej przezroczystości
-      const density = Math.round((width * height) / 2200);
-      const count = Math.max(380, Math.min(2200, density));
+      const density = Math.round((width * height) / 3000);
+      const count = Math.max(260, Math.min(1100, density));
       particles = Array.from({ length: count }, () => {
-        const c = Math.floor(Math.random() * RGB.length);
         const ox = Math.random() * width;
         const oy = Math.random() * height;
         return {
@@ -71,12 +71,13 @@ export function ParticleField({ className }: { className?: string }) {
           y: oy,
           vx: 0,
           vy: 0,
-          // Mniejsze kropeczki: 0.75 - 1.85 px
-          r: 0.75 + Math.random() * 1.1,
-          from: c,
-          to: c,
+          r: 0.8 + Math.random() * 1.15,
+          from: -1,
+          to: -1,
           t: 1,
-          speed: 0.015 + Math.random() * 0.025,
+          speed: 0.003 + Math.random() * 0.005,
+          phase: Math.random() * Math.PI * 2,
+          colorHold: 160 + Math.random() * 500,
         };
       });
     };
@@ -113,10 +114,11 @@ export function ParticleField({ className }: { className?: string }) {
             p.vx += (dx / d) * force * 0.65;
             p.vy += (dy / d) * force * 0.65;
 
-            if (p.t >= 1 && Math.random() < 0.06 + force * 0.12) {
+            if (p.t >= 1 && Math.random() < 0.015 + force * 0.025) {
               p.from = p.to;
               p.to = Math.floor(Math.random() * RGB.length);
               p.t = 0;
+              p.colorHold = 100 + Math.random() * 280;
             }
           }
         }
@@ -131,23 +133,30 @@ export function ParticleField({ className }: { className?: string }) {
         p.vx *= 0.89;
         p.vy *= 0.89;
 
-        // Drobny organiczny mikro-ruch wokół pozycji wyjściowej
-        p.vx += (Math.random() - 0.5) * 0.012;
-        p.vy += (Math.random() - 0.5) * 0.012;
+        p.phase += 0.004;
+        p.vx += Math.cos(p.phase) * 0.0025;
+        p.vy += Math.sin(p.phase * 0.83) * 0.0025;
 
         p.x += p.vx;
         p.y += p.vy;
 
         if (p.t < 1) p.t = Math.min(1, p.t + p.speed);
-        const a = RGB[p.from] ?? FALLBACK;
-        const b = RGB[p.to] ?? FALLBACK;
+        p.colorHold -= 1;
+        if (p.colorHold <= 0 && p.t >= 1) {
+          p.from = p.to;
+          p.to = p.to === -1 ? Math.floor(Math.random() * RGB.length) : -1;
+          p.t = 0;
+          p.colorHold = p.to === -1 ? 220 + Math.random() * 620 : 90 + Math.random() * 220;
+        }
+        const a = p.from === -1 ? FALLBACK : (RGB[p.from] ?? FALLBACK);
+        const b = p.to === -1 ? FALLBACK : (RGB[p.to] ?? FALLBACK);
         const t = p.t;
         const r = Math.round(a[0] + (b[0] - a[0]) * t);
         const g = Math.round(a[1] + (b[1] - a[1]) * t);
         const bl = Math.round(a[2] + (b[2] - a[2]) * t);
 
-        // Zmniejszone opacity: subtelne tło (0.13 do max ~0.35 przy kursorze)
-        const alpha = 0.13 + boost * 0.22;
+        const colored = p.to !== -1 || p.from !== -1;
+        const alpha = (colored ? 0.19 : 0.14) + boost * 0.16;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r + boost * 0.6, 0, Math.PI * 2);
@@ -161,10 +170,10 @@ export function ParticleField({ className }: { className?: string }) {
     if (reduced) {
       ctx.clearRect(0, 0, width, height);
       for (const p of particles) {
-        const c = RGB[p.to] ?? FALLBACK;
+        const c = p.to === -1 ? FALLBACK : (RGB[p.to] ?? FALLBACK);
         ctx.beginPath();
         ctx.arc(p.originX, p.originY, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${c[0]}, ${c[1]}, ${c[2]}, 0.14)`;
+        ctx.fillStyle = `rgba(${c[0]}, ${c[1]}, ${c[2]}, 0.16)`;
         ctx.fill();
       }
     } else {

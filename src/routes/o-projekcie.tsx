@@ -44,7 +44,7 @@ const features = [
   {
     icon: Save,
     title: "Własne scenariusze",
-    text: "Zapisuj swoje warianty, testuj gotowe szablony, pobieraj pliki JSON i udostępniaj własne analizy przez bezpośredni link.",
+    text: "Zapisuj własne warianty, pobieraj pliki JSON i udostępniaj swoje analizy przez bezpośredni link.",
   },
 ];
 

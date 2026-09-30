@@ -15,9 +15,11 @@ const sideFor = (sensitivity: number): Side => {
 export function TurnoutGroups({
   settings,
   onMove,
+  embedded = false,
 }: {
   settings: Record<string, PartySettings>;
   onMove: (partyId: string, side: Side) => void;
+  embedded?: boolean;
 }) {
   const parties = PARTIES.filter((party) => party.id !== "inne");
   const groups: { side: Side; title: string; note: string }[] = [
@@ -27,7 +29,7 @@ export function TurnoutGroups({
   ];
 
   return (
-    <div className="panel p-5">
+    <div className={embedded ? "border-t border-border pt-6" : "panel p-5"}>
       <div className="flex items-center gap-3">
         <ArrowLeftRight className="h-5 w-5 text-primary" />
         <div>
