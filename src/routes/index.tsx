@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Download, ExternalLink, MessageSquareText, RotateCcw, Upload, UserRound } from "lucide-react";
+import { Download, ExternalLink, RotateCcw, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { DISTRICTS } from "@/data/districts";
@@ -22,6 +22,7 @@ import { CoalitionBuilder } from "@/components/CoalitionBuilder";
 import { ScenarioShelf } from "@/components/ScenarioShelf";
 import { TurnoutGroups } from "@/components/TurnoutGroups";
 import { PartyLogo } from "@/components/PartyLogo";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -201,11 +202,7 @@ function Index() {
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
           <nav className="flex justify-end gap-2" aria-label="Kontakt z autorem">
-            <Button variant="outline" size="sm" asChild>
-              <a href="https://jifo.dev" target="_blank" rel="noreferrer">
-                <MessageSquareText className="mr-1.5 h-4 w-4" /> Dodaj opinię
-              </a>
-            </Button>
+            <FeedbackDialog />
             <Button variant="outline" size="sm" asChild>
               <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
                 <UserRound className="mr-1.5 h-4 w-4" /> Kontakt
