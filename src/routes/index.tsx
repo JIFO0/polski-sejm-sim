@@ -26,6 +26,8 @@ import { CoalitionBuilder } from "@/components/CoalitionBuilder";
 import { ScenarioShelf } from "@/components/ScenarioShelf";
 import { TurnoutGroups } from "@/components/TurnoutGroups";
 import { HistoricalResults } from "@/components/HistoricalResults";
+import { HistoricalDistrictResults } from "@/components/HistoricalDistrictResults";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { PartyLogo } from "@/components/PartyLogo";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Button } from "@/components/ui/button";
@@ -309,6 +311,7 @@ function Index() {
       </header>
 
       <main className="relative z-10 mx-auto max-w-[1400px] space-y-14 px-5 py-12">
+        <CollapsibleSection title="Symulacja w okręgach">
         {/* MAPA + PANEL */}
         <section className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
           <div className="panel p-4 md:p-6">
@@ -447,10 +450,17 @@ function Index() {
             )}
           </div>
         </section>
+        </CollapsibleSection>
 
-        <HistoricalResults />
+        <CollapsibleSection title="Wyniki dawnych wyborów" defaultOpen={false}>
+          <div className="space-y-6">
+            <HistoricalResults />
+            <HistoricalDistrictResults />
+          </div>
+        </CollapsibleSection>
 
         {/* KOALICJE */}
+        <CollapsibleSection title="Koalicje i większość">
         <section>
           <CoalitionBuilder
             coalitions={scenario.coalitions}
@@ -460,8 +470,10 @@ function Index() {
             onHover={(members) => setHighlight(members ? new Set(members) : null)}
           />
         </section>
+        </CollapsibleSection>
 
         {/* USTAWIENIA MODELU */}
+        <CollapsibleSection title="Frekwencja i ustawienia modelu">
         <section className="space-y-6">
           <div className="panel p-5 md:p-6">
             <h2 className="font-display text-xl font-bold text-ink">Frekwencja</h2>
@@ -569,6 +581,7 @@ function Index() {
             </div>
           </div>
         </section>
+        </CollapsibleSection>
 
         <section className="grid gap-6 border-y border-border bg-surface/80 px-1 py-8 backdrop-blur-sm md:grid-cols-[1fr_auto] md:items-center">
           <div>

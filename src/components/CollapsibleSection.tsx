@@ -18,15 +18,20 @@ export function CollapsibleSection({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen} className={className}>
-      <div className="mb-3 flex items-center justify-end">
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground" aria-label={`${open ? "Zwiń" : "Rozwiń"} sekcję ${title}`}>
+      <CollapsibleTrigger asChild>
+        <Button
+          variant="ghost"
+          className="mb-3 h-auto min-h-11 w-full justify-between rounded-lg border border-border/70 bg-surface/70 px-4 py-3 text-left hover:bg-surface"
+          aria-label={`${open ? "Zwiń" : "Rozwiń"} sekcję ${title}`}
+        >
+          <span className="font-display text-lg font-bold text-ink">{title}</span>
+          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             {open ? "Zwiń" : "Rozwiń"}
             <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-          </Button>
-        </CollapsibleTrigger>
-      </div>
-      <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up overflow-hidden">
+          </span>
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent forceMount className="overflow-hidden data-[state=closed]:hidden data-[state=open]:animate-accordion-down">
         {children}
       </CollapsibleContent>
     </Collapsible>

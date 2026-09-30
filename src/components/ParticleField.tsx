@@ -60,8 +60,8 @@ export function ParticleField({ className }: { className?: string }) {
       canvas.height = Math.max(1, Math.floor(height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const density = Math.round((width * height) / 2200);
-      const count = Math.max(420, Math.min(1500, density));
+      const density = Math.round((width * height) / 1700);
+      const count = Math.max(520, Math.min(1800, density));
       particles = Array.from({ length: count }, (_, index) => {
         const ox = Math.random() * width;
         const oy = Math.random() * height;
@@ -72,13 +72,13 @@ export function ParticleField({ className }: { className?: string }) {
           y: oy,
           vx: 0,
           vy: 0,
-          r: 1.1 + Math.random() * 1.5,
+          r: 1.15 + Math.random() * 1.75,
           from: -1,
           to: -1,
           t: 1,
           speed: 0.003 + Math.random() * 0.005,
           phase: Math.random() * Math.PI * 2,
-          colorHold: 160 + Math.random() * 500,
+          colorHold: Math.random() * 420,
           partyColor: index % RGB.length,
         };
       });
@@ -96,7 +96,7 @@ export function ParticleField({ className }: { className?: string }) {
       pointer.y = -9999;
     };
 
-    const radius = 175;
+    const radius = 210;
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
@@ -113,8 +113,8 @@ export function ParticleField({ className }: { className?: string }) {
             const force = (1 - d / radius) ** 2;
             boost = force;
             // Impuls odpychający
-            p.vx += (dx / d) * force * 0.65;
-            p.vy += (dy / d) * force * 0.65;
+            p.vx += (dx / d) * force * 0.85;
+            p.vy += (dy / d) * force * 0.85;
 
             if (force > 0.04 && p.to === -1) {
               p.from = p.to;
@@ -158,7 +158,7 @@ export function ParticleField({ className }: { className?: string }) {
         const bl = Math.round(a[2] + (b[2] - a[2]) * t);
 
         const colored = p.to !== -1 || p.from !== -1;
-        const alpha = (colored ? 0.34 : 0.22) + boost * 0.18;
+        const alpha = (colored ? 0.42 : 0.29) + boost * 0.16;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r + boost * 0.9, 0, Math.PI * 2);
@@ -175,7 +175,7 @@ export function ParticleField({ className }: { className?: string }) {
         const c = p.to === -1 ? FALLBACK : (RGB[p.to] ?? FALLBACK);
         ctx.beginPath();
         ctx.arc(p.originX, p.originY, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${c[0]}, ${c[1]}, ${c[2]}, 0.22)`;
+        ctx.fillStyle = `rgba(${c[0]}, ${c[1]}, ${c[2]}, 0.29)`;
         ctx.fill();
       }
     } else {
