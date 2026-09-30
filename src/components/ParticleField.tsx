@@ -127,8 +127,8 @@ export function ParticleField({ className }: { className?: string }) {
         }
 
         if (p.t < 1) p.t = Math.min(1, p.t + p.speed);
-        const a = RGB[p.from];
-        const b = RGB[p.to];
+        const a = RGB[p.from] ?? FALLBACK;
+        const b = RGB[p.to] ?? FALLBACK;
         const t = p.t;
         const r = Math.round(a[0] + (b[0] - a[0]) * t);
         const g = Math.round(a[1] + (b[1] - a[1]) * t);
@@ -147,7 +147,7 @@ export function ParticleField({ className }: { className?: string }) {
     if (reduced) {
       ctx.clearRect(0, 0, width, height);
       for (const p of particles) {
-        const c = RGB[p.to];
+        const c = RGB[p.to] ?? FALLBACK;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${c[0]}, ${c[1]}, ${c[2]}, 0.18)`;
