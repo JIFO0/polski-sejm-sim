@@ -74,8 +74,8 @@ export function FeedbackDialog() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Twoja opinia o Sejmometrze</DialogTitle>
-          <DialogDescription>Uwagi, błędy, pomysły. Jedna opinia na 12 godzin.</DialogDescription>
+          <DialogTitle>Twoja opinia o Sejmowym Symulatorze</DialogTitle>
+          <DialogDescription>Uwagi, błędy, pomysły na sejmsim.pl. Jedna opinia na 12 godzin.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-1.5">
@@ -96,7 +96,7 @@ export function FeedbackDialog() {
             />
           </div>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Jak oceniasz Sejmometr?</legend>
+            <legend className="text-sm font-medium">Jak oceniasz Sejmowy Symulator (sejmsim.pl)?</legend>
             <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-10" role="radiogroup" aria-label="Ocena narzędzia od 1 do 10">
               {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
                 <label key={value} className="cursor-pointer">

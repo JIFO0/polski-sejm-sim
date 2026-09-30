@@ -78,10 +78,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Sejmometr 2027" },
+      { title: "Sejmowy Symulator 2027 (sejmsim.pl)" },
       {
         name: "description",
-        content: "Symulator wyborów do Sejmu RP 2027: mapa okręgów, mandaty i koalicje.",
+        content: "Sejmowy Symulator 2027 (sejmsim.pl) — interaktywna mapa 41 okręgów, mandaty i koalicje.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -98,7 +98,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "alternate icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,

@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound } from "lucide-react";
+import { Download, ExternalLink, Info, RotateCcw, Sparkles, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
+
+import { LogoMark } from "@/components/Logos";
+import { useActiveLogo } from "@/components/LogoConceptsShowcase";
+import { SupportButton } from "@/components/SupportButton";
 
 import { DISTRICTS } from "@/data/districts";
 import { PARTIES, PARTY_MAP, type Party } from "@/data/parties";
@@ -27,9 +31,9 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 
-const TITLE = "Sejmometr 2027: symulator wyborów do Sejmu";
+const TITLE = "Sejmowy Symulator 2027 (sejmsim.pl) — symulator wyborów do Sejmu";
 const DESC =
-  "Interaktywna mapa 41 okręgów, przelicznik D'Hondta, frekwencja i koalicje. Twórz własne scenariusze wyborów do Sejmu 2027 i zapisuj je do pliku.";
+  "Interaktywna mapa 41 okręgów, przelicznik D'Hondta, frekwencja i koalicje na sejmsim.pl. Twórz własne scenariusze wyborów do Sejmu 2027 i zapisuj je do pliku.";
 
 const blankState = (id: number): DistrictState => {
   const base = DISTRICTS.find((d) => d.id === id);
@@ -54,6 +58,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const activeLogo = useActiveLogo();
   const [scenario, setScenario] = useState<Scenario>(() => defaultScenario());
   const [selected, setSelected] = useState<number | null>(null);
   const [mode, setMode] = useState<MapMode>("winner");
@@ -201,27 +206,54 @@ function Index() {
           }}
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
-          <nav className="flex flex-wrap justify-end gap-2" aria-label="Nawigacja główna">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/o-projekcie">
-                <Info className="mr-1.5 h-4 w-4" /> O projekcie
-              </Link>
-            </Button>
-            <FeedbackDialog />
-            <Button variant="outline" size="sm" asChild>
-              <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
-                <UserRound className="mr-1.5 h-4 w-4" /> Kontakt
-              </a>
-            </Button>
+          <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Nawigacja główna">
+            <Link to="/o-projekcie" className="group flex items-center gap-2.5">
+              <LogoMark concept={activeLogo} size={30} />
+              <div className="flex flex-col leading-none">
+                <span className="font-display text-sm font-bold tracking-tight text-ink group-hover:text-primary transition-colors">
+                  Sejmowy Symulator<span className="text-primary">.</span>
+                </span>
+                <span className="font-mono text-[10px] text-muted-foreground">sejmsim.pl</span>
+              </div>
+            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/o-projekcie">
+                  <Sparkles className="mr-1.5 h-4 w-4 text-primary" /> 7 Konceptów Logo
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/o-projekcie">
+                  <Info className="mr-1.5 h-4 w-4" /> O projekcie
+                </Link>
+              </Button>
+              <FeedbackDialog />
+              <Button variant="outline" size="sm" asChild>
+                <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
+                  <UserRound className="mr-1.5 h-4 w-4" /> Kontakt
+                </a>
+              </Button>
+              <SupportButton size="sm" />
+            </div>
           </nav>
           <div className="grid items-start gap-8 xl:grid-cols-[minmax(22rem,0.8fr)_minmax(36rem,1.2fr)]">
             <div className="max-w-2xl">
-              <p className="eyebrow">Symulator wyborów do Sejmu RP 2027</p>
-              <h1 className="mt-3 font-display text-5xl font-bold leading-[0.95] text-ink md:text-7xl">
-                Sejmometr
-                <span className="text-primary">.</span>
-                <span className="sr-only"> Symulator wyborów do Sejmu 2027</span>
-              </h1>
+              <div className="flex items-center gap-3.5">
+                <LogoMark concept={activeLogo} size={52} className="shrink-0 drop-shadow-sm" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="eyebrow !mb-0">Symulator wyborów do Sejmu RP 2027</p>
+                    <span className="rounded bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+                      sejmsim.pl
+                    </span>
+                  </div>
+                  <h1 className="mt-1 font-display text-4xl font-bold leading-[0.95] text-ink sm:text-5xl md:text-6xl">
+                    Sejmowy Symulator
+                    <span className="text-primary">.</span>
+                    <span className="sr-only"> Sejmowy Symulator wyborów do Sejmu 2027 sejmsim.pl</span>
+                  </h1>
+                </div>
+              </div>
               <p className="mt-4 max-w-xl text-base text-muted-foreground md:text-lg">
                 Profesjonalne narzędzie do analizy poparcia, frekwencji i możliwych koalicji.
                 Punktem wyjścia jest średnia sondażowa serwisu
@@ -583,11 +615,14 @@ function Index() {
               DevOps, UI/UX i fotografią. Rozwija projekty cyfrowe pod marką JIFO.
             </p>
           </div>
-          <Button asChild>
-            <Link to="/o-projekcie">
-              O projekcie <Info className="ml-1.5 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <SupportButton size="default" />
+            <Button asChild>
+              <Link to="/o-projekcie">
+                O projekcie <Info className="ml-1.5 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </section>
 
         <footer className="border-t border-border bg-background/90 pt-6 text-xs leading-relaxed text-muted-foreground">

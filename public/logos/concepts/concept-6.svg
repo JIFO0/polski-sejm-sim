@@ -1,0 +1,23 @@
+<svg width="200" height="200" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" rx="22" fill="#0F172A" />
+  <g transform="skewX(-10)">
+    <path d="M 38 28 C 38 22 34 20 28 20 C 20 20 18 24 18 30 C 18 42 38 42 38 54 C 38 62 30 66 24 66 C 18 66 16 62 16 56" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" />
+    <circle cx="38" cy="28" r="3" fill="#E11D48" />
+  </g>
+  <circle cx="58" cy="46" r="3" fill="#E11D48" />
+  <circle cx="56" cy="34" r="2.5" fill="#E11D48" />
+  <circle cx="56" cy="58" r="2.5" fill="#E11D48" />
+  <circle cx="69" cy="46" r="3.5" fill="#F43F5E" />
+  <circle cx="66" cy="30" r="3" fill="#F43F5E" />
+  <circle cx="66" cy="62" r="3" fill="#F43F5E" />
+  <circle cx="60" cy="20" r="2.5" fill="#E2E8F0" />
+  <circle cx="60" cy="72" r="2.5" fill="#E2E8F0" />
+  <circle cx="81" cy="46" r="4" fill="#E2E8F0" />
+  <circle cx="78" cy="28" r="3.5" fill="#E2E8F0" />
+  <circle cx="78" cy="64" r="3.5" fill="#E2E8F0" />
+  <circle cx="71" cy="16" r="3" fill="#94A3B8" />
+  <circle cx="71" cy="76" r="3" fill="#94A3B8" />
+  <circle cx="91" cy="46" r="3" fill="#F59E0B" />
+  <circle cx="88" cy="32" r="2.5" fill="#64748B" />
+  <circle cx="88" cy="60" r="2.5" fill="#64748B" />
+</svg>

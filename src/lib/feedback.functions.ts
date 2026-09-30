@@ -65,7 +65,7 @@ export const sendFeedback = createServerFn({ method: "POST" })
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username: "Sejmometr 2027",
+        username: "Sejmowy Symulator 2027 (sejmsim.pl)",
         allowed_mentions: { parse: [] },
         embeds: [
           {
