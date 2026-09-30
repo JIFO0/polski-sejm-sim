@@ -4,6 +4,8 @@ import { z } from "zod";
 
 const schema = z.object({
   name: z.string().trim().max(80).optional(),
+  email: z.string().trim().email().max(254).optional(),
+  rating: z.number().int().min(1).max(10),
   message: z.string().trim().min(3).max(1500),
 });
 
@@ -47,7 +49,13 @@ export const sendFeedback = createServerFn({ method: "POST" })
 
     const { error: insErr } = await supabaseAdmin
       .from("feedback")
-      .insert({ ip_hash: ipHash, name: data.name || null, message: data.message });
+      .insert({
+        ip_hash: ipHash,
+        name: data.name || null,
+        email: data.email || null,
+        rating: data.rating,
+        message: data.message,
+      });
     if (insErr) {
       console.error("feedback insert", insErr);
       return { ok: false as const, error: "Nie udało się wysłać opinii." };
@@ -64,7 +72,11 @@ export const sendFeedback = createServerFn({ method: "POST" })
             title: "Nowa opinia",
             description: data.message,
             color: 0xf26722,
-            fields: [{ name: "Podpis", value: data.name || "anonim", inline: true }],
+            fields: [
+              { name: "Ocena", value: `${data.rating}/10`, inline: true },
+              { name: "Podpis", value: data.name || "anonim", inline: true },
+              { name: "E-mail", value: data.email || "nie podano", inline: false },
+            ],
             timestamp: new Date().toISOString(),
           },
         ],

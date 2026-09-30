@@ -17,24 +17,30 @@ export type Database = {
       feedback: {
         Row: {
           created_at: string
+          email: string | null
           id: string
           ip_hash: string
           message: string
           name: string | null
+          rating: number | null
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id?: string
           ip_hash: string
           message: string
           name?: string | null
+          rating?: number | null
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
           ip_hash?: string
           message?: string
           name?: string | null
+          rating?: number | null
         }
         Relationships: []
       }
