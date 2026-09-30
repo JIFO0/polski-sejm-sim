@@ -28,6 +28,13 @@ const TITLE = "Sejmometr 2027 — symulator wyborów do Sejmu";
 const DESC =
   "Interaktywna mapa 41 okręgów, przelicznik D'Hondta, frekwencja i koalicje. Twórz własne scenariusze wyborów do Sejmu 2027 i zapisuj je do pliku.";
 
+const blankState = (id: number): DistrictState => {
+  const base = DISTRICTS.find((d) => d.id === id);
+  return { shares: { ...(base?.base ?? {}) }, turnout: BASE_TURNOUT };
+};
+
+const DEFAULT_SETTINGS = { threshold: 5 as const, turnoutSensitivity: 0, enabled: true };
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
