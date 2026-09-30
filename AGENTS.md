@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Client-only scenario persistence uses browser localStorage and URL hashes, because sharing and saved slots do not require a backend.
+- Turnout influence is represented by three sensitivity states: lower, neutral, and higher, so touch controls and drag-and-drop share one model.

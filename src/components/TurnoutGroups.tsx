@@ -1,10 +1,16 @@
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeft, ArrowLeftRight, ArrowRight, Minus } from "lucide-react";
 import { PARTIES } from "@/data/parties";
 import { PartyLogo } from "@/components/PartyLogo";
 import { Button } from "@/components/ui/button";
 import type { PartySettings } from "@/lib/simulation";
 
-type Side = "higher" | "lower";
+type Side = "lower" | "neutral" | "higher";
+
+const sideFor = (sensitivity: number): Side => {
+  if (sensitivity < -0.01) return "lower";
+  if (sensitivity > 0.01) return "higher";
+  return "neutral";
+};
 
 export function TurnoutGroups({
   settings,
@@ -16,6 +22,7 @@ export function TurnoutGroups({
   const parties = PARTIES.filter((party) => party.id !== "inne");
   const groups: { side: Side; title: string; note: string }[] = [
     { side: "lower", title: "Zyskują przy niższej frekwencji", note: "Bardziej zdyscyplinowany elektorat" },
+    { side: "neutral", title: "Frekwencja nie wpływa", note: "Poparcie pozostaje bez korekty" },
     { side: "higher", title: "Zyskują przy wyższej frekwencji", note: "Większa mobilizacja nowych wyborców" },
   ];
 
@@ -25,10 +32,10 @@ export function TurnoutGroups({
         <ArrowLeftRight className="h-5 w-5 text-primary" />
         <div>
           <h2 className="font-display text-xl font-bold text-ink">Wpływ frekwencji</h2>
-          <p className="text-sm text-muted-foreground">Przeciągnij partię między grupami lub kliknij ją, aby zmienić stronę.</p>
+          <p className="text-sm text-muted-foreground">Przeciągnij partię między grupami. Na telefonie użyj strzałek na karcie partii.</p>
         </div>
       </div>
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
+      <div className="mt-5 grid gap-4 lg:grid-cols-3">
         {groups.map((group) => (
           <div
             key={group.side}
@@ -44,24 +51,42 @@ export function TurnoutGroups({
             <p className="mt-0.5 text-xs text-muted-foreground">{group.note}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {parties
-                .filter((party) =>
-                  group.side === "higher"
-                    ? (settings[party.id]?.turnoutSensitivity ?? party.turnoutSensitivity) >= 0
-                    : (settings[party.id]?.turnoutSensitivity ?? party.turnoutSensitivity) < 0,
-                )
+                .filter((party) => sideFor(settings[party.id]?.turnoutSensitivity ?? 0) === group.side)
                 .map((party) => (
-                  <Button
+                  <div
                     key={party.id}
-                    variant="outline"
-                    size="sm"
                     draggable
                     onDragStart={(event) => event.dataTransfer.setData("text/plain", party.id)}
-                    onClick={() => onMove(party.id, group.side === "higher" ? "lower" : "higher")}
-                    className="cursor-grab gap-2 bg-surface active:cursor-grabbing"
+                    className="flex min-h-10 items-center gap-1 rounded-md border border-border bg-surface/80 p-1 shadow-sm"
                   >
-                    <PartyLogo id={party.id} size={20} />
-                    {party.short}
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => onMove(party.id, group.side === "higher" ? "neutral" : "lower")}
+                      disabled={group.side === "lower"}
+                      aria-label={`Przenieś ${party.short} w lewo`}
+                      title="Przenieś w lewo"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="flex min-w-0 flex-1 cursor-grab items-center justify-center gap-2 px-1 active:cursor-grabbing">
+                      <PartyLogo id={party.id} size={20} />
+                      <span className="truncate text-xs font-semibold">{party.short}</span>
+                    </div>
+                    {group.side === "neutral" ? <Minus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => onMove(party.id, group.side === "lower" ? "neutral" : "higher")}
+                      disabled={group.side === "higher"}
+                      aria-label={`Przenieś ${party.short} w prawo`}
+                      title="Przenieś w prawo"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
             </div>
           </div>
