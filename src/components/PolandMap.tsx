@@ -75,7 +75,7 @@ export function PolandMap({
               onMouseEnter={() => setHover(d.id)}
               onMouseLeave={() => setHover((h) => (h === d.id ? null : h))}
             >
-              <title>{`${d.id}. ${d.name} — ${d.seats} mandatów`}</title>
+              <title>{`${d.id}. ${d.name}, ${d.seats} mandatów`}</title>
             </path>
           ))}
         </g>

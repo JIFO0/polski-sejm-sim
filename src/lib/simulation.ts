@@ -50,7 +50,7 @@ export function defaultScenario(): Scenario {
   }
   return {
     version: 1,
-    name: "Sondaż ewybory.eu — punkt wyjścia",
+    name: "Sondaż ewybory.eu: punkt wyjścia",
     createdAt: new Date().toISOString(),
     turnoutEffect: 1,
     districts,
