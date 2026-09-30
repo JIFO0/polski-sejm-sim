@@ -44,7 +44,7 @@ export function defaultScenario(): Scenario {
   for (const p of PARTIES) {
     parties[p.id] = {
       threshold: p.threshold,
-      turnoutSensitivity: p.turnoutSensitivity,
+      turnoutSensitivity: 0,
       enabled: true,
     };
   }

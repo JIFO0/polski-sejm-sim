@@ -13,3 +13,5 @@
 - [x] Dodać do 10 lokalnych scenariuszy oraz udostępnianie linkiem
 - [x] Dodać klasyfikację wpływu frekwencji metodą przeciągnij i upuść
 - [x] Usunąć znaki typograficzne wskazane przez właściciela i sformalizować nagłówek
+- [x] Ustawić 80% krycia paneli i subtelny kolor aktualnego lidera
+- [x] Dodać neutralną grupę wpływu frekwencji oraz mobilne sterowanie strzałkami

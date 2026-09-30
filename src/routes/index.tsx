@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Download, ExternalLink, RotateCcw, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -173,14 +173,14 @@ function Index() {
     });
   }, []);
 
-  const setTurnoutSide = useCallback((partyId: string, side: "higher" | "lower") => {
+  const setTurnoutSide = useCallback((partyId: string, side: "lower" | "neutral" | "higher") => {
     setScenario((current) => ({
       ...current,
       parties: {
         ...current.parties,
         [partyId]: {
           ...(current.parties[partyId] ?? DEFAULT_SETTINGS),
-          turnoutSensitivity: side === "higher" ? 0.65 : -0.65,
+          turnoutSensitivity: side === "higher" ? 0.65 : side === "lower" ? -0.65 : 0,
         },
       },
     }));
@@ -252,7 +252,10 @@ function Index() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(15rem,0.8fr)]">
-            <div className="panel-float w-full p-5">
+            <div
+              className="panel-float leader-tint w-full p-5"
+              style={{ "--leader-color": leader?.color ?? "var(--border)" } as CSSProperties}
+            >
               <div className="flex items-baseline justify-between">
                 <p className="eyebrow">Skład Sejmu w tym scenariuszu</p>
                 <p className="num text-xs text-muted-foreground">
@@ -363,7 +366,10 @@ function Index() {
                 onClose={() => setSelected(null)}
               />
             ) : (
-              <div className="panel h-full p-5">
+              <div
+                className="panel leader-tint h-full p-5"
+                style={{ "--leader-color": leader?.color ?? "var(--border)" } as CSSProperties}
+              >
                 <h3 className="font-display text-lg font-bold text-ink">Wynik ogólnokrajowy</h3>
                 <p className="text-sm text-muted-foreground">
                   Suwak ustawia poparcie partii jednakowo we wszystkich okręgach.
