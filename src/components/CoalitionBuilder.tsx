@@ -84,6 +84,7 @@ export function CoalitionBuilder({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 shrink-0"
+                  aria-label={`Usuń koalicję ${c.name}`}
                   onClick={() => onChange(coalitions.filter((x) => x.id !== c.id))}
                 >
                   <Trash2 className="h-4 w-4" />
