@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Download, ExternalLink, MessageSquareText, RotateCcw, Upload, UserRound } from "lucide-react";
+import { Download, ExternalLink, RotateCcw, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { DISTRICTS } from "@/data/districts";
