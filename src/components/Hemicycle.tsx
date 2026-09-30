@@ -41,7 +41,7 @@ export function Hemicycle({
     let diff = queue.length - counts.reduce((a, b) => a + b, 0);
     let idx = rows - 1;
     while (diff !== 0) {
-      counts[idx] += diff > 0 ? 1 : -1;
+      counts[idx] = (counts[idx] ?? 1) + (diff > 0 ? 1 : -1);
       diff += diff > 0 ? -1 : 1;
       idx = (idx - 1 + rows) % rows;
     }
@@ -53,19 +53,19 @@ export function Hemicycle({
     const maxCount = Math.max(...counts);
     for (let col = 0; col < maxCount; col++) {
       for (let r = 0; r < rows; r++) {
-        if (col < counts[r]) perRow[r].push(queue[cursor++] ?? "_empty");
+        if (col < (counts[r] ?? 0)) (perRow[r] as string[]).push(queue[cursor++] ?? "_empty");
       }
     }
 
     for (let r = 0; r < rows; r++) {
-      const radius = weights[r];
-      const n = counts[r];
+      const radius = weights[r] ?? 1;
+      const n = counts[r] ?? 0;
       for (let i = 0; i < n; i++) {
         const angle = Math.PI - (Math.PI * (i + 0.5)) / n;
         out.push({
           x: 50 + Math.cos(angle) * radius * 46,
           y: 50 - Math.sin(angle) * radius * 46,
-          party: perRow[r][i] ?? "_empty",
+          party: perRow[r]?.[i] ?? "_empty",
         });
       }
     }
