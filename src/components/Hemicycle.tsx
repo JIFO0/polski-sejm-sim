@@ -17,7 +17,7 @@ export function Hemicycle({
 }: {
   seatsByParty: Record<string, number>;
   total?: number;
-  highlight?: Set<string>;
+  highlight?: Set<string> | undefined;
 }) {
   const seats = useMemo<Seat[]>(() => {
     const order = [

@@ -307,7 +307,7 @@ function Index() {
             {selected != null ? (
               <DistrictPanel
                 districtId={selected}
-                state={scenario.districts[selected]}
+                state={scenario.districts[selected] ?? blankState(selected)}
                 result={resultById[selected]}
                 onChange={(next) => setDistrict(selected, next)}
                 onReset={() => resetDistrict(selected)}
@@ -323,7 +323,7 @@ function Index() {
                   {ranked.map((p) => {
                     const share = result.nationalShares[p.id] ?? 0;
                     const seats = result.seatsByParty[p.id] ?? 0;
-                    const settings = scenario.parties[p.id];
+                    const settings = scenario.parties[p.id] ?? DEFAULT_SETTINGS;
                     const inSejm = result.qualified.includes(p.id);
                     return (
                       <div
@@ -434,7 +434,7 @@ function Index() {
             </p>
             <div className="mt-4 space-y-2">
               {PARTIES.filter((p) => p.id !== "inne").map((p) => {
-                const s = scenario.parties[p.id];
+                const s = scenario.parties[p.id] ?? DEFAULT_SETTINGS;
                 return (
                   <div
                     key={p.id}
@@ -451,7 +451,7 @@ function Index() {
                               ...sc,
                               parties: {
                                 ...sc.parties,
-                                [p.id]: { ...sc.parties[p.id], threshold: t },
+                                [p.id]: { ...(sc.parties[p.id] ?? DEFAULT_SETTINGS), threshold: t },
                               },
                             }))
                           }
@@ -470,7 +470,7 @@ function Index() {
                         onCheckedChange={(v) =>
                           setScenario((sc) => ({
                             ...sc,
-                            parties: { ...sc.parties, [p.id]: { ...sc.parties[p.id], enabled: v } },
+                            parties: { ...sc.parties, [p.id]: { ...(sc.parties[p.id] ?? DEFAULT_SETTINGS), enabled: v } },
                           }))
                         }
                       />
@@ -494,7 +494,7 @@ function Index() {
                             ...sc,
                             parties: {
                               ...sc.parties,
-                              [p.id]: { ...sc.parties[p.id], turnoutSensitivity: v },
+                              [p.id]: { ...(sc.parties[p.id] ?? DEFAULT_SETTINGS), turnoutSensitivity: v },
                             },
                           }))
                         }
