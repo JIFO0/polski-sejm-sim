@@ -1,0 +1,62 @@
+// Dane bazowe: ewybory.eu (średnia sondażowa, stan na 30.09.2026).
+// Mapa okręgów: kontury ze schematu okręgów wyborczych do Sejmu RP.
+// Liczba uprawnionych jest przybliżona proporcjonalnie do liczby mandatów.
+import { DISTRICT_PATHS } from "./districtPaths";
+
+export type DistrictBase = Record<string, number>;
+
+export interface District {
+  id: number;
+  name: string;
+  seats: number;
+  electorate: number;
+  base: DistrictBase;
+  path: string;
+}
+
+export const DISTRICTS: District[] = [
+  { id: 1, name: "Legnica", seats: 12, electorate: 764400, base: { ko: 34.0, pis: 18.0, konf: 13.0, kkp: 8.0, nl: 7.0, rp: 5.0, razem: 3.0, psl: 2.0, pl2050: 1.0, inne: 9.0 }, path: DISTRICT_PATHS[1] },
+  { id: 2, name: "Wałbrzych", seats: 8, electorate: 509600, base: { ko: 38.0, pis: 18.0, kkp: 13.0, konf: 12.0, nl: 6.0, rp: 5.0, razem: 3.0, psl: 2.0, pl2050: 1.0, inne: 2.0 }, path: DISTRICT_PATHS[2] },
+  { id: 3, name: "Wrocław", seats: 14, electorate: 891800, base: { ko: 37.0, pis: 14.0, konf: 12.0, nl: 9.0, razem: 7.0, kkp: 6.0, rp: 4.0, psl: 2.0, pl2050: 1.0, inne: 8.0 }, path: DISTRICT_PATHS[3] },
+  { id: 4, name: "Bydgoszcz", seats: 12, electorate: 764400, base: { ko: 35.0, pis: 16.0, konf: 13.0, nl: 8.0, kkp: 7.0, razem: 4.0, rp: 4.0, psl: 3.0, pl2050: 1.0, inne: 9.0 }, path: DISTRICT_PATHS[4] },
+  { id: 5, name: "Toruń", seats: 13, electorate: 828100, base: { ko: 30.0, pis: 18.0, konf: 14.0, nl: 8.0, kkp: 7.0, rp: 5.0, razem: 4.0, psl: 4.0, pl2050: 1.0, inne: 9.0 }, path: DISTRICT_PATHS[5] },
+  { id: 6, name: "Lublin", seats: 15, electorate: 955500, base: { pis: 24.0, ko: 20.0, konf: 15.0, kkp: 11.0, rp: 7.0, nl: 5.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 11.0 }, path: DISTRICT_PATHS[6] },
+  { id: 7, name: "Chełm", seats: 12, electorate: 764400, base: { pis: 27.0, ko: 18.0, konf: 16.0, kkp: 14.0, rp: 7.0, nl: 4.0, psl: 4.0, razem: 2.0, pl2050: 1.0, inne: 7.0 }, path: DISTRICT_PATHS[7] },
+  { id: 8, name: "Zielona Góra", seats: 12, electorate: 764400, base: { ko: 38.0, pis: 15.0, konf: 13.0, kkp: 8.0, nl: 7.0, psl: 4.0, rp: 4.0, razem: 3.0, pl2050: 1.0, inne: 7.0 }, path: DISTRICT_PATHS[8] },
+  { id: 9, name: "Łódź", seats: 10, electorate: 637000, base: { ko: 42.0, pis: 14.0, konf: 10.0, nl: 10.0, kkp: 6.0, razem: 5.0, rp: 4.0, pl2050: 1.0, psl: 1.0, inne: 7.0 }, path: DISTRICT_PATHS[9] },
+  { id: 10, name: "Piotrków Trybunalski", seats: 9, electorate: 573300, base: { pis: 25.0, ko: 22.0, konf: 15.0, kkp: 10.0, rp: 7.0, nl: 6.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 8.0 }, path: DISTRICT_PATHS[10] },
+  { id: 11, name: "Sieradz", seats: 12, electorate: 764400, base: { ko: 26.0, pis: 22.0, konf: 14.0, kkp: 9.0, nl: 7.0, rp: 6.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 9.0 }, path: DISTRICT_PATHS[11] },
+  { id: 12, name: "Kraków (Chrzanów)", seats: 8, electorate: 509600, base: { ko: 25.0, pis: 23.0, konf: 16.0, kkp: 9.0, rp: 6.0, nl: 5.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 9.0 }, path: DISTRICT_PATHS[12] },
+  { id: 13, name: "Kraków", seats: 14, electorate: 891800, base: { ko: 31.0, pis: 16.0, konf: 13.0, nl: 9.0, kkp: 7.0, razem: 7.0, rp: 4.0, psl: 2.0, pl2050: 1.0, inne: 10.0 }, path: DISTRICT_PATHS[13] },
+  { id: 14, name: "Nowy Sącz", seats: 10, electorate: 637000, base: { pis: 29.0, konf: 17.0, ko: 16.0, kkp: 11.0, rp: 8.0, nl: 3.0, razem: 2.0, psl: 2.0, pl2050: 1.0, inne: 11.0 }, path: DISTRICT_PATHS[14] },
+  { id: 15, name: "Tarnów", seats: 9, electorate: 573300, base: { pis: 26.0, ko: 17.0, konf: 16.0, kkp: 10.0, rp: 7.0, nl: 4.0, psl: 4.0, razem: 3.0, pl2050: 1.0, inne: 12.0 }, path: DISTRICT_PATHS[15] },
+  { id: 16, name: "Płock", seats: 10, electorate: 637000, base: { pis: 24.0, ko: 23.0, konf: 14.0, kkp: 9.0, nl: 6.0, rp: 6.0, psl: 5.0, razem: 3.0, pl2050: 1.0, inne: 9.0 }, path: DISTRICT_PATHS[16] },
+  { id: 17, name: "Radom", seats: 9, electorate: 573300, base: { pis: 26.0, ko: 21.0, konf: 15.0, kkp: 10.0, rp: 7.0, nl: 5.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 9.0 }, path: DISTRICT_PATHS[17] },
+  { id: 18, name: "Siedlce", seats: 12, electorate: 764400, base: { pis: 26.0, ko: 19.0, konf: 16.0, kkp: 11.0, rp: 7.0, nl: 5.0, psl: 4.0, razem: 3.0, pl2050: 1.0, inne: 8.0 }, path: DISTRICT_PATHS[18] },
+  { id: 19, name: "Warszawa", seats: 20, electorate: 1274000, base: { ko: 44.0, nl: 13.0, pis: 11.0, konf: 9.0, razem: 7.0, kkp: 5.0, rp: 3.0, psl: 2.0, pl2050: 1.0, inne: 5.0 }, path: DISTRICT_PATHS[19] },
+  { id: 20, name: "Warszawa (Okolice W-Wy)", seats: 12, electorate: 764400, base: { ko: 36.0, pis: 17.0, konf: 13.0, nl: 8.0, kkp: 7.0, rp: 5.0, razem: 4.0, psl: 3.0, pl2050: 1.0, inne: 6.0 }, path: DISTRICT_PATHS[20] },
+  { id: 21, name: "Opole", seats: 12, electorate: 764400, base: { ko: 34.0, pis: 17.0, konf: 14.0, kkp: 9.0, nl: 6.0, rp: 5.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 8.0 }, path: DISTRICT_PATHS[21] },
+  { id: 22, name: "Krosno", seats: 11, electorate: 700700, base: { pis: 29.0, ko: 16.0, konf: 16.0, kkp: 12.0, rp: 8.0, nl: 4.0, psl: 3.0, razem: 2.0, pl2050: 1.0, inne: 9.0 }, path: DISTRICT_PATHS[22] },
+  { id: 23, name: "Rzeszów", seats: 15, electorate: 955500, base: { pis: 28.0, ko: 18.0, konf: 17.0, kkp: 12.0, rp: 7.0, nl: 4.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 7.0 }, path: DISTRICT_PATHS[23] },
+  { id: 24, name: "Białystok", seats: 14, electorate: 891800, base: { pis: 23.0, ko: 21.0, konf: 16.0, kkp: 10.0, rp: 6.0, nl: 5.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 12.0 }, path: DISTRICT_PATHS[24] },
+  { id: 25, name: "Gdańsk", seats: 12, electorate: 764400, base: { ko: 42.0, pis: 13.0, konf: 12.0, nl: 9.0, kkp: 6.0, razem: 6.0, rp: 4.0, psl: 2.0, pl2050: 1.0, inne: 5.0 }, path: DISTRICT_PATHS[25] },
+  { id: 26, name: "Słupsk", seats: 14, electorate: 891800, base: { ko: 38.0, pis: 16.0, konf: 14.0, kkp: 8.0, nl: 7.0, razem: 4.0, rp: 4.0, psl: 3.0, pl2050: 1.0, inne: 5.0 }, path: DISTRICT_PATHS[26] },
+  { id: 27, name: "Bielsko-Biała", seats: 9, electorate: 573300, base: { ko: 29.0, pis: 20.0, konf: 15.0, kkp: 8.0, nl: 6.0, rp: 5.0, razem: 4.0, psl: 2.0, pl2050: 1.0, inne: 10.0 }, path: DISTRICT_PATHS[27] },
+  { id: 28, name: "Częstochowa", seats: 7, electorate: 445900, base: { ko: 29.0, pis: 19.0, konf: 13.0, kkp: 9.0, nl: 7.0, rp: 5.0, razem: 4.0, psl: 3.0, pl2050: 1.0, inne: 10.0 }, path: DISTRICT_PATHS[28] },
+  { id: 29, name: "Katowice (Gliwice)", seats: 9, electorate: 573300, base: { ko: 36.0, pis: 16.0, konf: 14.0, nl: 8.0, kkp: 7.0, razem: 4.0, rp: 4.0, psl: 2.0, pl2050: 1.0, inne: 8.0 }, path: DISTRICT_PATHS[29] },
+  { id: 30, name: "Bielsko-Biała (Rybnik)", seats: 9, electorate: 573300, base: { ko: 30.0, pis: 20.0, konf: 16.0, kkp: 8.0, nl: 6.0, rp: 6.0, razem: 4.0, psl: 2.0, pl2050: 1.0, inne: 7.0 }, path: DISTRICT_PATHS[30] },
+  { id: 31, name: "Katowice", seats: 12, electorate: 764400, base: { ko: 37.0, pis: 16.0, konf: 12.0, nl: 8.0, kkp: 6.0, razem: 5.0, rp: 4.0, pl2050: 1.0, psl: 1.0, inne: 10.0 }, path: DISTRICT_PATHS[31] },
+  { id: 32, name: "Katowice (Sosnowiec)", seats: 9, electorate: 573300, base: { ko: 31.0, pis: 16.0, konf: 12.0, nl: 9.0, kkp: 7.0, razem: 4.0, rp: 4.0, psl: 2.0, pl2050: 1.0, inne: 14.0 }, path: DISTRICT_PATHS[32] },
+  { id: 33, name: "Kielce", seats: 16, electorate: 1019200, base: { pis: 25.0, ko: 21.0, konf: 13.0, kkp: 11.0, rp: 7.0, nl: 5.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 11.0 }, path: DISTRICT_PATHS[33] },
+  { id: 34, name: "Elbląg", seats: 8, electorate: 509600, base: { ko: 32.0, pis: 19.0, konf: 14.0, kkp: 8.0, nl: 7.0, rp: 5.0, psl: 4.0, razem: 3.0, pl2050: 1.0, inne: 7.0 }, path: DISTRICT_PATHS[34] },
+  { id: 35, name: "Olsztyn", seats: 10, electorate: 637000, base: { ko: 34.0, pis: 17.0, konf: 14.0, kkp: 8.0, nl: 7.0, rp: 5.0, razem: 4.0, psl: 4.0, pl2050: 1.0, inne: 6.0 }, path: DISTRICT_PATHS[35] },
+  { id: 36, name: "Kalisz", seats: 12, electorate: 764400, base: { ko: 29.0, pis: 19.0, konf: 16.0, kkp: 9.0, nl: 7.0, rp: 5.0, psl: 4.0, razem: 3.0, pl2050: 1.0, inne: 7.0 }, path: DISTRICT_PATHS[36] },
+  { id: 37, name: "Konin", seats: 9, electorate: 573300, base: { ko: 24.0, pis: 21.0, konf: 15.0, kkp: 8.0, nl: 7.0, rp: 6.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 12.0 }, path: DISTRICT_PATHS[37] },
+  { id: 38, name: "Piła", seats: 9, electorate: 573300, base: { ko: 35.0, pis: 15.0, konf: 15.0, nl: 8.0, kkp: 8.0, razem: 4.0, psl: 4.0, rp: 4.0, pl2050: 1.0, inne: 6.0 }, path: DISTRICT_PATHS[38] },
+  { id: 39, name: "Poznań", seats: 10, electorate: 637000, base: { ko: 45.0, nl: 11.0, pis: 10.0, konf: 10.0, razem: 7.0, kkp: 5.0, rp: 3.0, psl: 2.0, pl2050: 1.0, inne: 6.0 }, path: DISTRICT_PATHS[39] },
+  { id: 40, name: "Koszalin", seats: 8, electorate: 509600, base: { ko: 39.0, pis: 17.0, konf: 12.0, nl: 8.0, kkp: 8.0, rp: 5.0, razem: 3.0, psl: 3.0, pl2050: 1.0, inne: 4.0 }, path: DISTRICT_PATHS[40] },
+  { id: 41, name: "Szczecin", seats: 12, electorate: 764400, base: { ko: 41.0, pis: 15.0, konf: 11.0, nl: 8.0, kkp: 7.0, razem: 4.0, rp: 4.0, psl: 2.0, pl2050: 1.0, inne: 7.0 }, path: DISTRICT_PATHS[41] },
+];
+
+export const TOTAL_SEATS = DISTRICTS.reduce((s, d) => s + d.seats, 0);
+export const MAP_VIEWBOX = "0 0 1100 1000";
