@@ -122,10 +122,10 @@ export function ScenarioShelf({
           maxLength={48}
           aria-label="Nazwa scenariusza"
         />
-        <Button size="icon" onClick={saveLocal} title="Zapisz lokalnie" aria-label="Zapisz lokalnie">
+        <Button size="icon" className="min-h-11 min-w-11" onClick={saveLocal} title="Zapisz lokalnie" aria-label="Zapisz lokalnie">
           <Save className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="icon" onClick={() => void share()} title="Kopiuj link" aria-label="Kopiuj link">
+        <Button variant="outline" size="icon" className="min-h-11 min-w-11" onClick={() => void share()} title="Kopiuj link" aria-label="Kopiuj link">
           <Copy className="h-4 w-4" />
         </Button>
       </div>
@@ -147,7 +147,7 @@ export function ScenarioShelf({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 shrink-0"
+                className="min-h-11 min-w-11 shrink-0"
                 onClick={() => persist(saved.filter((savedItem) => savedItem.id !== item.id))}
                 title="Usuń scenariusz"
                 aria-label={`Usuń ${item.name}`}

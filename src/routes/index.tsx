@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Download, ExternalLink, RotateCcw, Upload, UserRound } from "lucide-react";
+import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { DISTRICTS } from "@/data/districts";
@@ -190,8 +190,8 @@ function Index() {
   const focusColor = PARTY_MAP[focusParty]?.color;
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <ParticleField className="pointer-events-none fixed inset-0 z-0 h-screen w-screen" />
+    <div className="relative min-h-dvh overflow-hidden">
+      <ParticleField className="pointer-events-none fixed inset-0 z-0 h-dvh w-screen" />
       <header className="relative z-10 overflow-hidden border-b border-border bg-surface/80 backdrop-blur-[2px]">
         <div
           className="pointer-events-none absolute inset-0"
@@ -201,7 +201,12 @@ function Index() {
           }}
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
-          <nav className="flex justify-end gap-2" aria-label="Kontakt z autorem">
+          <nav className="flex flex-wrap justify-end gap-2" aria-label="Nawigacja główna">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/o-projekcie">
+                <Info className="mr-1.5 h-4 w-4" /> O projekcie
+              </Link>
+            </Button>
             <FeedbackDialog />
             <Button variant="outline" size="sm" asChild>
               <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
@@ -243,6 +248,7 @@ function Index() {
                   type="file"
                   accept="application/json"
                   className="hidden"
+                  aria-label="Wybierz plik scenariusza JSON"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) void load(f);
@@ -578,9 +584,9 @@ function Index() {
             </p>
           </div>
           <Button asChild>
-            <a href="https://jifo.dev" target="_blank" rel="noreferrer">
-              Poznaj autora <ExternalLink className="ml-1.5 h-4 w-4" />
-            </a>
+            <Link to="/o-projekcie">
+              O projekcie <Info className="ml-1.5 h-4 w-4" />
+            </Link>
           </Button>
         </section>
 

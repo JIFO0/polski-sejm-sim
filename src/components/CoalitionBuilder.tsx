@@ -76,6 +76,7 @@ export function CoalitionBuilder({
                   aria-label="Kolor grupy"
                 />
                 <Input
+                  aria-label={`Nazwa grupy ${c.name}`}
                   value={c.name}
                   onChange={(e) => update(c.id, { name: e.target.value })}
                   className="h-8 border-transparent bg-transparent px-1 font-display text-base font-semibold shadow-none focus-visible:border-border"
@@ -126,6 +127,8 @@ export function CoalitionBuilder({
                     <button
                       key={p.id}
                       onClick={() => toggle(c, p.id)}
+                      aria-pressed={on}
+                      aria-label={`${on ? "Usuń" : "Dodaj"} ${p.name} ${on ? "z" : "do"} grupy ${c.name}`}
                       className={`flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium transition-all ${
                         on
                           ? "border-transparent text-white shadow-sm"

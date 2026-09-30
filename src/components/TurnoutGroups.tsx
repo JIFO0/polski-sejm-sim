@@ -62,7 +62,7 @@ export function TurnoutGroups({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 shrink-0"
+                      className="min-h-11 min-w-11 shrink-0"
                       onClick={() => onMove(party.id, group.side === "higher" ? "neutral" : "lower")}
                       disabled={group.side === "lower"}
                       aria-label={`Przenieś ${party.short} w lewo`}
@@ -78,7 +78,7 @@ export function TurnoutGroups({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 shrink-0"
+                      className="min-h-11 min-w-11 shrink-0"
                       onClick={() => onMove(party.id, group.side === "lower" ? "neutral" : "higher")}
                       disabled={group.side === "higher"}
                       aria-label={`Przenieś ${party.short} w prawo`}

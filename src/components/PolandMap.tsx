@@ -70,8 +70,18 @@ export function PolandMap({
               d={d.path}
               className="district-path"
               data-selected={selected === d.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Okręg ${d.id}, ${d.name}, ${d.seats} mandatów`}
+              aria-pressed={selected === d.id}
               fill={fillFor(d.id)}
               onClick={() => onSelect(d.id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onSelect(d.id);
+                }
+              }}
               onMouseEnter={() => setHover(d.id)}
               onMouseLeave={() => setHover((h) => (h === d.id ? null : h))}
             >
