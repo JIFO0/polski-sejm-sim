@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Download, RotateCcw, Upload } from "lucide-react";
+import { Download, ExternalLink, MessageSquareText, RotateCcw, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { DISTRICTS } from "@/data/districts";
-import { PARTIES, PARTY_MAP } from "@/data/parties";
+import { PARTIES, PARTY_MAP, type Party } from "@/data/parties";
 import {
   BASE_TURNOUT,
   MAJORITY,
@@ -19,12 +19,14 @@ import { PolandMap, type MapMode } from "@/components/PolandMap";
 import { Hemicycle } from "@/components/Hemicycle";
 import { DistrictPanel } from "@/components/DistrictPanel";
 import { CoalitionBuilder } from "@/components/CoalitionBuilder";
+import { ScenarioShelf } from "@/components/ScenarioShelf";
+import { TurnoutGroups } from "@/components/TurnoutGroups";
 import { PartyLogo } from "@/components/PartyLogo";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 
-const TITLE = "Sejmometr 2027 — symulator wyborów do Sejmu";
+const TITLE = "Sejmometr 2027: symulator wyborów do Sejmu";
 const DESC =
   "Interaktywna mapa 41 okręgów, przelicznik D'Hondta, frekwencja i koalicje. Twórz własne scenariusze wyborów do Sejmu 2027 i zapisuj je do pliku.";
 
@@ -34,6 +36,7 @@ const blankState = (id: number): DistrictState => {
 };
 
 const DEFAULT_SETTINGS = { threshold: 5 as const, turnoutSensitivity: 0, enabled: true };
+const isParty = (party: Party | undefined): party is Party => Boolean(party);
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -55,6 +58,9 @@ function Index() {
   const [mode, setMode] = useState<MapMode>("winner");
   const [focusParty, setFocusParty] = useState("ko");
   const [highlight, setHighlight] = useState<Set<string> | null>(null);
+  const [displayOrder, setDisplayOrder] = useState(() =>
+    PARTIES.filter((party) => party.id !== "inne").map((party) => party.id),
+  );
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const result = useMemo(() => simulate(scenario), [scenario]);
@@ -71,6 +77,15 @@ function Index() {
       ),
     [result],
   );
+
+  const displayedParties = useMemo(
+    () => displayOrder.map((id) => PARTY_MAP[id]).filter(isParty),
+    [displayOrder],
+  );
+
+  const commitPartyOrder = useCallback(() => {
+    setDisplayOrder(ranked.map((party) => party.id));
+  }, [ranked]);
 
   const setDistrict = useCallback((id: number, next: DistrictState) => {
     setScenario((s) => ({ ...s, districts: { ...s.districts, [id]: next } }));
@@ -143,18 +158,40 @@ function Index() {
       });
       toast.success(`Wczytano: ${parsed.name ?? "scenariusz"}`);
     } catch {
-      toast.error("Nie udało się wczytać pliku — to nie jest scenariusz tej aplikacji.");
+      toast.error("Nie udało się wczytać pliku. To nie jest scenariusz tej aplikacji.");
     }
   };
+
+  const loadScenario = useCallback((next: Scenario) => {
+    const base = defaultScenario();
+    setScenario({
+      ...base,
+      ...next,
+      districts: { ...base.districts, ...next.districts },
+      parties: { ...base.parties, ...next.parties },
+    });
+  }, []);
+
+  const setTurnoutSide = useCallback((partyId: string, side: "higher" | "lower") => {
+    setScenario((current) => ({
+      ...current,
+      parties: {
+        ...current.parties,
+        [partyId]: {
+          ...(current.parties[partyId] ?? DEFAULT_SETTINGS),
+          turnoutSensitivity: side === "higher" ? 0.65 : -0.65,
+        },
+      },
+    }));
+  }, []);
 
   const leader = ranked[0];
   const focusColor = PARTY_MAP[focusParty]?.color;
 
   return (
-    <div className="min-h-screen">
-      {/* HERO */}
-      <header className="relative overflow-hidden border-b border-border bg-surface">
-        <ParticleField className="pointer-events-none absolute inset-0 h-full w-full" />
+    <div className="relative min-h-screen overflow-hidden">
+      <ParticleField className="pointer-events-none fixed inset-0 z-0 h-screen w-screen" />
+      <header className="relative z-10 overflow-hidden border-b border-border bg-surface/80 backdrop-blur-[2px]">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -162,18 +199,30 @@ function Index() {
               "radial-gradient(120% 90% at 50% 0%, transparent 35%, var(--surface) 92%)",
           }}
         />
-        <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-14 md:py-20">
-          <div className="flex flex-wrap items-start justify-between gap-6">
+        <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
+          <nav className="flex justify-end gap-2" aria-label="Kontakt z autorem">
+            <Button variant="outline" size="sm" asChild>
+              <a href="https://jifo.dev" target="_blank" rel="noreferrer">
+                <MessageSquareText className="mr-1.5 h-4 w-4" /> Dodaj opinię
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href="https://jifo.dev" target="_blank" rel="noreferrer">
+                <UserRound className="mr-1.5 h-4 w-4" /> Kontakt
+              </a>
+            </Button>
+          </nav>
+          <div className="grid items-start gap-8 xl:grid-cols-[minmax(22rem,0.8fr)_minmax(36rem,1.2fr)]">
             <div className="max-w-2xl">
-              <p className="eyebrow">Symulator · Wybory do Sejmu RP 2027</p>
+              <p className="eyebrow">Symulator wyborów do Sejmu RP 2027</p>
               <h1 className="mt-3 font-display text-5xl font-bold leading-[0.95] text-ink md:text-7xl">
                 Sejmometr
                 <span className="text-primary">.</span>
               </h1>
               <p className="mt-4 max-w-xl text-base text-muted-foreground md:text-lg">
-                Maluj okręgi, kręć frekwencją, składaj koalicje. Punkt wyjścia to średnia
-                sondażowa z <span className="font-semibold text-foreground">ewybory.eu</span> na
-                dziś — resztę dopisujesz sam.
+                Profesjonalne narzędzie do analizy poparcia, frekwencji i możliwych koalicji.
+                Punktem wyjścia jest średnia sondażowa serwisu
+                <span className="font-semibold text-foreground"> ewybory.eu</span>.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 <Button onClick={save}>
@@ -205,7 +254,8 @@ function Index() {
               </div>
             </div>
 
-            <div className="panel-float w-full max-w-md p-5">
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(15rem,0.8fr)]">
+            <div className="panel-float w-full p-5">
               <div className="flex items-baseline justify-between">
                 <p className="eyebrow">Skład Sejmu w tym scenariuszu</p>
                 <p className="num text-xs text-muted-foreground">
@@ -220,7 +270,7 @@ function Index() {
                 <div>
                   <p className="text-xs text-muted-foreground">Największy klub</p>
                   <p className="font-display text-lg font-bold" style={{ color: leader?.color }}>
-                    {leader?.short} · {result.seatsByParty[leader?.id ?? ""] ?? 0}
+                    {leader?.short}: {result.seatsByParty[leader?.id ?? ""] ?? 0}
                   </p>
                 </div>
                 <p className="num text-xs text-muted-foreground">
@@ -228,11 +278,13 @@ function Index() {
                 </p>
               </div>
             </div>
+            <ScenarioShelf scenario={scenario} onLoad={loadScenario} />
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1400px] space-y-14 px-5 py-12">
+      <main className="relative z-10 mx-auto max-w-[1400px] space-y-14 px-5 py-12">
         {/* MAPA + PANEL */}
         <section className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
           <div className="panel p-4 md:p-6">
@@ -320,7 +372,7 @@ function Index() {
                   Suwak ustawia poparcie partii jednakowo we wszystkich okręgach.
                 </p>
                 <div className="mt-4 space-y-3">
-                  {ranked.map((p) => {
+                  {displayedParties.map((p) => {
                     const share = result.nationalShares[p.id] ?? 0;
                     const seats = result.seatsByParty[p.id] ?? 0;
                     const settings = scenario.parties[p.id] ?? DEFAULT_SETTINGS;
@@ -338,7 +390,7 @@ function Index() {
                             <p className="truncate text-sm font-semibold">{p.short}</p>
                             <p className="truncate text-[11px] text-muted-foreground">
                               próg {settings.threshold}%
-                              {inSejm ? "" : " · poniżej progu"}
+                              {inSejm ? "" : ", poniżej progu"}
                             </p>
                           </div>
                           <span
@@ -358,6 +410,7 @@ function Index() {
                           step={0.1}
                           value={[share]}
                           onValueChange={([v = 0]) => nationalSwing(p.id, v)}
+                          onValueCommit={commitPartyOrder}
                         />
                       </div>
                     );
@@ -366,6 +419,10 @@ function Index() {
               </div>
             )}
           </div>
+        </section>
+
+        <section>
+          <TurnoutGroups settings={scenario.parties} onMove={setTurnoutSide} />
         </section>
 
         {/* KOALICJE */}
@@ -507,7 +564,23 @@ function Index() {
           </div>
         </section>
 
-        <footer className="border-t border-border pt-6 text-xs leading-relaxed text-muted-foreground">
+        <section className="grid gap-6 border-y border-border bg-surface/80 px-1 py-8 backdrop-blur-sm md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <p className="eyebrow">Autor projektu</p>
+            <h2 className="mt-2 font-display text-2xl font-bold text-ink">Iwo Laskowski, JIFO</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              Twórca z Gdyni łączący ekonomię z technologią. Zajmuje się rozwiązaniami webowymi,
+              DevOps, UI/UX i fotografią. Rozwija projekty cyfrowe pod marką JIFO.
+            </p>
+          </div>
+          <Button asChild>
+            <a href="https://jifo.dev" target="_blank" rel="noreferrer">
+              Poznaj autora <ExternalLink className="ml-1.5 h-4 w-4" />
+            </a>
+          </Button>
+        </section>
+
+        <footer className="border-t border-border bg-background/90 pt-6 text-xs leading-relaxed text-muted-foreground">
           <p>
             Dane wyjściowe: średnia sondażowa i symulacja okręgowa z ewybory.eu (stan na 30 września
             2026). Mandaty liczone metodą D'Hondta osobno w każdym z 41 okręgów, z progami
@@ -518,6 +591,14 @@ function Index() {
           <p className="mt-2">
             Logotypy partii pochodzą z Wikimedia Commons i należą do ich właścicieli.
           </p>
+          <a
+            href="https://ewybory.eu/sondaze/"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex items-center font-semibold text-primary hover:underline"
+          >
+            Sprawdź aktualne sondaże na ewybory.eu <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+          </a>
         </footer>
       </main>
     </div>
