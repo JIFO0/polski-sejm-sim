@@ -90,10 +90,13 @@ function Index() {
       const delta = target - avg;
       const districts = { ...s.districts };
       for (const d of DISTRICTS) {
-        const st = districts[d.id];
+        const st = districts[d.id] ?? blankState(d.id);
         districts[d.id] = {
-          ...st,
-          shares: { ...st.shares, [pid]: Math.max(0, +(st.shares[pid] + delta).toFixed(2)) },
+          turnout: st.turnout,
+          shares: {
+            ...st.shares,
+            [pid]: Math.max(0, +((st.shares[pid] ?? 0) + delta).toFixed(2)),
+          },
         };
       }
       return { ...s, districts };
@@ -103,7 +106,8 @@ function Index() {
   const setGlobalTurnout = useCallback((value: number) => {
     setScenario((s) => {
       const districts = { ...s.districts };
-      for (const d of DISTRICTS) districts[d.id] = { ...districts[d.id], turnout: value };
+      for (const d of DISTRICTS)
+        districts[d.id] = { shares: (districts[d.id] ?? blankState(d.id)).shares, turnout: value };
       return { ...s, districts };
     });
   }, []);
