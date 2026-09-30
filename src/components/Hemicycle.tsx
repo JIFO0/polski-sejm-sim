@@ -63,8 +63,8 @@ export function Hemicycle({
       for (let i = 0; i < n; i++) {
         const angle = Math.PI - (Math.PI * (i + 0.5)) / n;
         out.push({
-          x: 50 + Math.cos(angle) * radius * 46,
-          y: 50 - Math.sin(angle) * radius * 46,
+          x: +(50 + Math.cos(angle) * radius * 46).toFixed(3),
+          y: +(50 - Math.sin(angle) * radius * 46).toFixed(3),
           party: perRow[r]?.[i] ?? "_empty",
         });
       }
