@@ -41,10 +41,10 @@ export function DistrictPanel({
           <h3 className="mt-0.5 font-display text-xl font-bold text-ink">{district.name}</h3>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={onReset} title="Przywróć wartości bazowe">
+          <Button variant="ghost" size="icon" onClick={onReset} title="Przywróć wartości bazowe" aria-label="Przywróć wartości bazowe">
             <RotateCcw className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={onClose} title="Zamknij">
+          <Button variant="ghost" size="icon" onClick={onClose} title="Zamknij" aria-label="Zamknij panel okręgu">
             <X className="h-4 w-4" />
           </Button>
         </div>

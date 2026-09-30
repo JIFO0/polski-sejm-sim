@@ -215,6 +215,7 @@ function Index() {
               <h1 className="mt-3 font-display text-5xl font-bold leading-[0.95] text-ink md:text-7xl">
                 Sejmometr
                 <span className="text-primary">.</span>
+                <span className="sr-only"> Symulator wyborów do Sejmu 2027</span>
               </h1>
               <p className="mt-4 max-w-xl text-base text-muted-foreground md:text-lg">
                 Profesjonalne narzędzie do analizy poparcia, frekwencji i możliwych koalicji.
