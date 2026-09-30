@@ -4,7 +4,7 @@ import { Download, ExternalLink, Info, RotateCcw, Sparkles, Upload, UserRound } 
 import { toast } from "sonner";
 
 import { LogoMark } from "@/components/Logos";
-import { useActiveLogo } from "@/components/LogoConceptsShowcase";
+import { FloatingNav } from "@/components/FloatingNav";
 import { SupportButton } from "@/components/SupportButton";
 
 import { DISTRICTS } from "@/data/districts";
@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 
-const TITLE = "Sejmowy Symulator 2027 (sejmsim.pl) — symulator wyborów do Sejmu";
+const TITLE = "SejmSim 2027 (sejmsim.pl) — symulator wyborów do Sejmu";
 const DESC =
   "Interaktywna mapa 41 okręgów, przelicznik D'Hondta, frekwencja i koalicje na sejmsim.pl. Twórz własne scenariusze wyborów do Sejmu 2027 i zapisuj je do pliku.";
 
@@ -58,7 +58,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const activeLogo = useActiveLogo();
   const [scenario, setScenario] = useState<Scenario>(() => defaultScenario());
   const [selected, setSelected] = useState<number | null>(null);
   const [mode, setMode] = useState<MapMode>("winner");
@@ -197,6 +196,7 @@ function Index() {
   return (
     <div className="relative min-h-dvh overflow-hidden">
       <ParticleField className="pointer-events-none fixed inset-0 z-0 h-dvh w-screen" />
+      <FloatingNav mode="simulator" />
       <header className="relative z-10 overflow-hidden border-b border-border bg-surface/80 backdrop-blur-[2px]">
         <div
           className="pointer-events-none absolute inset-0"
@@ -206,40 +206,24 @@ function Index() {
           }}
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
-          <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Nawigacja główna">
-            <Link to="/o-projekcie" className="group flex items-center gap-2.5">
-              <LogoMark concept={activeLogo} size={30} />
-              <div className="flex flex-col leading-none">
-                <span className="font-display text-sm font-bold tracking-tight text-ink group-hover:text-primary transition-colors">
-                  Sejmowy Symulator<span className="text-primary">.</span>
-                </span>
-                <span className="font-mono text-[10px] text-muted-foreground">sejmsim.pl</span>
-              </div>
-            </Link>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/o-projekcie">
-                  <Sparkles className="mr-1.5 h-4 w-4 text-primary" /> 7 Konceptów Logo
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/o-projekcie">
-                  <Info className="mr-1.5 h-4 w-4" /> O projekcie
-                </Link>
-              </Button>
-              <FeedbackDialog />
-              <Button variant="outline" size="sm" asChild>
-                <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
-                  <UserRound className="mr-1.5 h-4 w-4" /> Kontakt
-                </a>
-              </Button>
-              <SupportButton size="sm" />
-            </div>
+          <nav className="flex items-center justify-end gap-2" aria-label="Nawigacja główna">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/o-projekcie">
+                <Info className="mr-1.5 h-4 w-4" /> O projekcie
+              </Link>
+            </Button>
+            <FeedbackDialog />
+            <Button variant="outline" size="sm" asChild>
+              <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
+                <UserRound className="mr-1.5 h-4 w-4" /> Kontakt
+              </a>
+            </Button>
+            <SupportButton size="sm" />
           </nav>
           <div className="grid items-start gap-8 xl:grid-cols-[minmax(22rem,0.8fr)_minmax(36rem,1.2fr)]">
             <div className="max-w-2xl">
               <div className="flex items-center gap-3.5">
-                <LogoMark concept={activeLogo} size={52} className="shrink-0 drop-shadow-sm" />
+                <LogoMark size={48} className="shrink-0 drop-shadow-sm" />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="eyebrow !mb-0">Symulator wyborów do Sejmu RP 2027</p>
@@ -248,9 +232,9 @@ function Index() {
                     </span>
                   </div>
                   <h1 className="mt-1 font-display text-4xl font-bold leading-[0.95] text-ink sm:text-5xl md:text-6xl">
-                    Sejmowy Symulator
+                    SejmSim
                     <span className="text-primary">.</span>
-                    <span className="sr-only"> Sejmowy Symulator wyborów do Sejmu 2027 sejmsim.pl</span>
+                    <span className="sr-only"> SejmSim — symulator wyborów do Sejmu 2027 sejmsim.pl</span>
                   </h1>
                 </div>
               </div>

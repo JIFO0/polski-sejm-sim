@@ -1,16 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, BarChart3, ExternalLink, Globe, Mail, MapPinned, Save, Sparkles, UsersRound } from "lucide-react";
+import { ArrowLeft, BarChart3, ExternalLink, Globe, Mail, MapPinned, Play, Save, UsersRound } from "lucide-react";
 
 import { FeedbackDialog } from "@/components/FeedbackDialog";
+import { FloatingNav } from "@/components/FloatingNav";
 import { ParticleField } from "@/components/ParticleField";
+import { SupportButton } from "@/components/SupportButton";
 import { Button } from "@/components/ui/button";
-import { LogoConceptsShowcase, useActiveLogo } from "@/components/LogoConceptsShowcase";
-import { LogoMark } from "@/components/Logos";
-import { SupportButton, SupportCard } from "@/components/SupportButton";
 
-const TITLE = "O projekcie i twórcy | Sejmowy Symulator 2027 (sejmsim.pl) — Iwo Laskowski";
+const TITLE = "O projekcie i twórcy | SejmSim 2027 (sejmsim.pl) — Iwo Laskowski";
 const DESCRIPTION =
-  "Poznaj historię Sejmowego Symulatora 2027 (sejmsim.pl), twórcę projektu Iwo Laskowskiego (@jifo) oraz 7 oficjalnych konceptów identyfikacji wizualnej i logo platformy.";
+  "Poznaj historię SejmSim (sejmsim.pl) oraz twórcę projektu Iwo Laskowskiego (@jifo). Dowiedz się, jak działa symulator ordynacji wyborczej.";
 
 export const Route = createFileRoute("/o-projekcie")({
   head: () => ({
@@ -30,52 +29,42 @@ const features = [
   {
     icon: MapPinned,
     title: "41 okręgów wyborczych",
-    text: "Zmieniaj poparcie i frekwencję osobno w każdym okręgu, zamiast opierać analizę wyłącznie na wyniku krajowym.",
+    text: "Zmieniaj poparcie i frekwencję osobno w każdym okręgu. Polska nie głosuje jednorodnie — geografia ma kluczowe znaczenie.",
   },
   {
     icon: BarChart3,
     title: "Mandaty metodą D'Hondta",
-    text: "Obserwuj, jak progi wyborcze, lokalne różnice i rozkład głosów przekładają się na 460 miejsc w Sejmie.",
+    text: "Sprawdź, jak progi wyborcze (5% i 8%) oraz wielkość okręgów wpływają na podział 460 miejsc na sali sejmowej.",
   },
   {
     icon: UsersRound,
     title: "Frekwencja i koalicje",
-    text: "Sprawdzaj, które komitety mogą zyskać na zmianie frekwencji i jakie układy osiągają większość 231 mandatów.",
+    text: "Testuj zróżnicowaną mobilizację wyborców i badaj, jakie bloki partyjne mogą osiągnąć większość 231 mandatów.",
   },
   {
     icon: Save,
     title: "Własne scenariusze",
-    text: "Zapisuj do 10 wariantów w przeglądarce, pobieraj je jako pliki i udostępniaj gotową analizę przez link.",
+    text: "Zapisuj swoje warianty, testuj gotowe szablony, pobieraj pliki JSON i udostępniaj własne analizy przez bezpośredni link.",
   },
 ];
 
 function AboutProject() {
-  const activeLogo = useActiveLogo();
-
   return (
     <div className="relative min-h-dvh overflow-hidden">
       <ParticleField className="pointer-events-none fixed inset-0 z-0 h-dvh w-screen" />
+      <FloatingNav mode="about" />
+
+      {/* Górny pasek nawigacji */}
       <header className="relative z-10 border-b border-border bg-surface/80 backdrop-blur-sm">
         <nav
-          className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4"
+          className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-5 py-3.5"
           aria-label="Nawigacja strony O projekcie"
         >
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/">
-                <ArrowLeft className="mr-1.5 h-4 w-4" /> Wróć do symulatora
-              </Link>
-            </Button>
-            <div className="hidden items-center gap-2 border-l border-border pl-3 sm:flex">
-              <LogoMark concept={activeLogo} size={28} />
-              <div className="flex flex-col leading-none">
-                <span className="font-display text-sm font-bold text-ink">
-                  Sejmowy Symulator<span className="text-primary">.</span>
-                </span>
-                <span className="font-mono text-[9px] text-muted-foreground">sejmsim.pl</span>
-              </div>
-            </div>
-          </div>
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/">
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Wróć do symulatora
+            </Link>
+          </Button>
 
           <div className="flex items-center gap-2">
             <FeedbackDialog />
@@ -89,171 +78,134 @@ function AboutProject() {
         </nav>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-5xl space-y-16 px-5 py-10 md:py-16">
-        <article className="space-y-14">
-          {/* BANER AUTORA */}
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-md">
-            <div className="relative aspect-[4.8/1] w-full min-h-[140px] bg-slate-950 sm:min-h-[180px]">
-              <img
-                src="/images/iwo-banner.png"
-                alt="Iwo Laskowski @jifo - A reliable pair of hands"
-                className="h-full w-full object-cover object-center"
-              />
-            </div>
-
-            {/* KARTA TWÓRCY ZE ZDJĘCIEM */}
-            <div className="relative -mt-12 px-6 pb-6 pt-0 sm:-mt-16 sm:px-8 sm:pb-8">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-background bg-card shadow-lg sm:h-28 sm:w-28">
-                    <img
-                      src="/images/iwo-photo.png"
-                      alt="Iwo Laskowski - twórca Sejmometru"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-display text-2xl font-bold text-ink sm:text-3xl">
-                        Iwo Laskowski
-                      </h2>
-                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-primary">
-                        @jifo
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-sm font-medium text-muted-foreground">
-                      Twórca & Architekt platformy Sejmowy Symulator (sejmsim.pl) • Gdynia
-                    </p>
-                    <p className="mt-1 font-mono text-xs italic text-ink/80">
-                      „A reliable pair of hands”
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <SupportButton size="sm" />
-                  <Button variant="outline" size="sm" asChild>
-                    <a href="https://jifo.dev" target="_blank" rel="noreferrer">
-                      <Globe className="mr-1.5 h-3.5 w-3.5" /> jifo.dev
-                    </a>
-                  </Button>
-                  <Button size="sm" asChild>
-                    <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
-                      <Mail className="mr-1.5 h-3.5 w-3.5" /> Skontaktuj się
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* GŁÓWNA HISTORIA / MOTYWACJA */}
-          <header className="max-w-3xl">
-            <p className="eyebrow">O projekcie i misji</p>
-            <h1 className="mt-3 font-display text-4xl font-bold leading-tight text-ink md:text-5xl">
-              Sejmowy Symulator powstał z ciekawości polityki, matematyki i mechanizmów społecznych
+      <main className="relative z-10 mx-auto max-w-4xl space-y-12 px-5 py-8 md:py-12">
+        <article className="space-y-12">
+          {/* GŁÓWNA HISTORIA / MOTYWACJA (naturalny, bezpośredni język) */}
+          <header className="space-y-4">
+            <p className="eyebrow">Dlaczego powstał SejmSim</p>
+            <h1 className="font-display text-3xl font-bold leading-tight text-ink sm:text-4xl md:text-5xl">
+              Ogólnokrajowe procenty nie tworzą rządu. O wszystkim decydują okręgi.
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-foreground md:text-xl">
-              Jestem Iwo. Od zawsze fascynują mnie mechanizmy społeczne, socjologia wyborcza
-              oraz to, jak drobne przesunięcia nastrojów przekładają się na arytmetykę większości parlamentarnej.
-              Chciałem stworzyć otwarte, precyzyjne narzędzie na <strong className="text-foreground">sejmsim.pl</strong>,
-              w którym każdy obywatel, analityk i pasjonat może samodzielnie sprawdzić własne pytania o wybory do Sejmu w 2027 roku.
-            </p>
+            <div className="space-y-4 text-base leading-relaxed text-muted-foreground md:text-lg">
+              <p>
+                Cześć, nazywam się <strong>Iwo Laskowski</strong>.
+              </p>
+              <p>
+                Pomysł na SejmSim zrodził się z prostej obserwacji po dyskusji o kolejnych sondażach.
+                W mediach w kółko widzimy te same ogólne wykresy słupkowe, ale w polskim systemie wyborczym
+                taki wynik niewiele mówi o przyszłej większości parlamentarnej.
+              </p>
+              <p>
+                O mandatach decydują <strong>41 okręgów wyborczych</strong>, lokalna frekwencja oraz metoda D&apos;Hondta,
+                która premiuje silniejsze ugrupowania, a mniejsze partie potrafi zepchnąć pod próg. Różnica 1–2 punktów
+                procentowych w odpowiednich regionach może przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji.
+              </p>
+              <p>
+                Zamiast opierać się na gotowych komentarzach publicystów, chciałem mieć narzędzie, w którym sam mogę
+                przesunąć suwak, sprawdzić co się stanie przy wyższej mobilizacji wielkich miast albo przy spadku poparcia
+                jednego z koalicjantów. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go
+                w publiczny, bezpłatny symulator na <strong className="text-foreground">sejmsim.pl</strong>.
+              </p>
+            </div>
           </header>
 
-          {/* SEKCJA: SKĄD TEN POMYSŁ */}
-          <section className="grid gap-8 border-y border-border py-12 md:grid-cols-[0.7fr_1.3fr]">
-            <div>
-              <p className="eyebrow">Skąd ten pomysł</p>
-              <h2 className="mt-2 font-display text-3xl font-bold text-ink">Od rozmowy do narzędzia</h2>
-            </div>
-            <div className="space-y-5 text-base leading-8 text-muted-foreground">
-              <p>
-                Po długiej rozmowie z przyjacielem zdałem sobie sprawę, że w polskiej przestrzeni publicznej
-                brakuje bezpłatnego, nowoczesnego symulatora, który pozwalałby sprawdzić własne scenariusze
-                wyborcze na 2027 rok. Co stanie się przy niższej lub wyższej frekwencji? Jak zmieni się Sejm,
-                jeśli partia X osiągnie wynik wyższy o 2 punkty procentowe, partia Y nie przekroczy progu,
-                a potencjalni koalicjanci uzyskają łącznie 231 mandatów?
-              </p>
-              <p>
-                Pierwszą wersję napisałem w Pythonie, wyłącznie dla siebie. Stopniowo ulepszałem algorytmy
-                i rozkład okręgowy, aż uznałem, że prawdopodobnie nie tylko ja potrzebuję takiego sposobu
-                analizowania wyborów. Pierwsza publiczna wersja zajęła mi tydzień intensywnej pracy.
-              </p>
-              <p>
-                Dzięki rozmowom ze świetnymi ludźmi rozwijam Sejmowy Symulator (sejmsim.pl) tak, aby był najbardziej rzetelnym
-                i intuicyjnym narzędziem analitycznym przed najbliższymi wyborami. Chcę, by więcej osób
-                w Polsce mogło z równą ciekawością badać ordynację wyborczą, algorytm D&apos;Hondta i dynamikę demokracji.
-              </p>
-            </div>
-          </section>
-
-          {/* CO POTRAFI SEJMOWY SYMULATOR */}
-          <section aria-labelledby="funkcje-projektu">
-            <p className="eyebrow">Co potrafi Sejmowy Symulator</p>
-            <h2 id="funkcje-projektu" className="mt-2 max-w-2xl font-display text-3xl font-bold text-ink">
-              Symulator wyborów do Sejmu z analizą 41 okręgów, frekwencji i koalicji
+          {/* CO POTRAFI SEJMSIM */}
+          <section aria-labelledby="funkcje-projektu" className="border-t border-border pt-10">
+            <p className="eyebrow">Możliwości narzędzia</p>
+            <h2 id="funkcje-projektu" className="mt-1 font-display text-2xl font-bold text-ink sm:text-3xl">
+              Co możesz sprawdzić w SejmSim?
             </h2>
-            <p className="mt-4 max-w-3xl leading-7 text-muted-foreground">
-              Punktem wyjścia są dane sondażowe, ale każdy parametr możesz zmienić. Wyniki są
-              przeliczane osobno dla 41 okręgów metodą D&apos;Hondta, dlatego ten sam wynik ogólnokrajowy może
-              prowadzić do diametralnie różnych podziałów mandatów w zależności od geografii poparcia.
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-base">
+              Punktem wyjścia jest aktualna średnia sondażowa serwisu ewybory.eu, ale każdy parametr możesz dowolnie modyfikować.
             </p>
-            <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+            <ul className="mt-6 grid gap-4 sm:grid-cols-2">
               {features.map(({ icon: Icon, title, text }) => (
                 <li key={title} className="panel p-5 transition-shadow hover:shadow-md">
                   <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                  <h3 className="mt-4 font-display text-lg font-bold text-ink">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
+                  <h3 className="mt-3 font-display text-base font-bold text-ink">{title}</h3>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">{text}</p>
                 </li>
               ))}
             </ul>
           </section>
 
-          {/* SEKCJA: 7 KONCEPTÓW LOGO */}
-          <div className="border-t border-border pt-12">
-            <LogoConceptsShowcase />
-          </div>
-
-          {/* WAŻNE ZASTRZEŻENIE */}
-          <section className="rounded-2xl border border-border bg-surface/80 px-6 py-10 text-center backdrop-blur-sm md:px-12">
-            <p className="eyebrow">Ważne zastrzeżenie</p>
-            <h2 className="mt-2 font-display text-2xl font-bold text-ink">Narzędzie do analizy, nie prognoza</h2>
-            <p className="mx-auto mt-3 max-w-2xl leading-7 text-muted-foreground">
-              Sejmowy Symulator (sejmsim.pl) pokazuje matematyczne i symulacyjne skutki przyjętych założeń. Nie przewiduje wyniku wyborów
-              i nie zastępuje oficjalnych sondaży. Ma ułatwiać zrozumienie mechaniki ordynacji oraz testowanie własnych hipotez.
+          {/* SYMULATOR NIE WRÓŻKA (Req 7) */}
+          <section className="rounded-2xl border border-border bg-surface/80 p-6 text-center backdrop-blur-sm sm:p-8">
+            <p className="eyebrow">Ważna uwaga</p>
+            <h2 className="mt-1 font-display text-2xl font-bold text-ink">Symulator nie wróżka</h2>
+            <p className="mx-auto mt-2.5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              SejmSim pokazuje matematyczne skutki przyjętych założeń w oparciu o algorytm D&apos;Hondta i rozkład okręgowy.
+              To narzędzie analityczne do sprawdzania scenariuszy „co by było, gdyby” — nie jest prognozą ani oficjalnym badaniem opinii.
             </p>
           </section>
 
-          {/* WESPRZYJ ROZWÓJ PROJEKTU */}
-          <section aria-labelledby="wesprzyj-projekt">
-            <SupportCard />
-          </section>
-
-          {/* STOPKA */}
-          <footer className="border-t border-border py-12 text-center">
-            <p className="font-display text-2xl font-bold text-ink">Pomyślnych analiz życzy JIFO!</p>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
-              Projekt stworzył <strong>Iwo Laskowski</strong>, twórca z Gdyni łączący ekonomię, technologię,
-              rozwiązania webowe, DevOps, UI/UX i fotografię.
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button asChild>
-                <Link to="/">Uruchom Sejmowy Symulator</Link>
-              </Button>
-              <SupportButton size="default" />
-              <Button variant="outline" asChild>
-                <a href="https://jifo.dev" target="_blank" rel="noreferrer">
-                  Poznaj JIFO <ExternalLink className="ml-1 h-3.5 w-3.5" />
-                </a>
-              </Button>
-              <Button variant="ghost" asChild>
-                <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
-                  Kontakt z Iwo
-                </a>
-              </Button>
+          {/* POŁĄCZONY, ELEGANCKI BOX TWÓRCY I WSPARCIA (Req 6 & Req 8) */}
+          <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-md">
+            {/* Zmniejszony, subtelny baner na samym dole */}
+            <div className="relative h-24 w-full bg-slate-950 sm:h-28">
+              <img
+                src="/images/iwo-banner.png"
+                alt="Iwo Laskowski - banner twórcy"
+                className="h-full w-full object-cover object-center opacity-85"
+              />
             </div>
-          </footer>
+
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-border shadow-sm">
+                    <img
+                      src="/images/iwo-photo.png"
+                      alt="Iwo Laskowski"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-display text-lg font-bold text-ink">Iwo Laskowski</h3>
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+                        @jifo
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Twórca SejmSim • Gdynia
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <a href="https://jifo.dev" target="_blank" rel="noreferrer">
+                      <Globe className="mr-1.5 h-3.5 w-3.5" /> jifo.dev
+                    </a>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
+                      <Mail className="mr-1.5 h-3.5 w-3.5" /> Kontakt z Iwo
+                    </a>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-5 border-t border-border pt-5 space-y-3">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Platforma <strong className="text-foreground">sejmsim.pl</strong> powstaje pro bono jako niezależne narzędzie obywatelskie bez reklam. Każda wpłata pomaga utrzymać serwery, dopracowywać algorytmy i dodawać nowe funkcje.
+                </p>
+                <p className="font-display text-sm font-semibold text-ink">
+                  Pomyślnych analiz życzy JIFO!
+                </p>
+
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <Button asChild>
+                    <Link to="/">
+                      <Play className="mr-1.5 h-4 w-4 fill-current" /> Uruchom SejmSim
+                    </Link>
+                  </Button>
+                  <SupportButton size="default" />
+                </div>
+              </div>
+            </div>
+          </section>
         </article>
       </main>
     </div>

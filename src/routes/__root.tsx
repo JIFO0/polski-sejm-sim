@@ -78,14 +78,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Sejmowy Symulator 2027 (sejmsim.pl)" },
+      { title: "SejmSim 2027 (sejmsim.pl)" },
       {
         name: "description",
-        content: "Sejmowy Symulator 2027 (sejmsim.pl) — interaktywna mapa 41 okręgów, mandaty i koalicje.",
+        content: "SejmSim 2027 (sejmsim.pl) — interaktywna mapa 41 okręgów, mandaty i koalicje.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/logos/official-logo.svg" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:image", content: "/logos/official-logo.svg" },
+      { name: "twitter:site", content: "@jifo" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -99,6 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: "/favicon.svg" },
       { rel: "alternate icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),

@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { PARTY_COLORS } from "@/data/parties";
 
 interface Particle {
+  originX: number;
+  originY: number;
   x: number;
   y: number;
   vx: number;
@@ -26,8 +28,8 @@ const RGB = PARTY_COLORS.map(hexToRgb);
 const FALLBACK = [148, 163, 184] as const;
 
 /**
- * Tło: "polskie społeczeństwo" jako chmura punktów. Punkty rozstępują się
- * przed kursorem i przebarwiają na kolory partii w jego promieniu.
+ * Tło: "polskie społeczeństwo" jako chmura punktów. Punkty delikatnie
+ * rozstępują się przed kursorem i płynnie wracają na swoje miejsce (spring physics).
  */
 export function ParticleField({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -55,20 +57,26 @@ export function ParticleField({ className }: { className?: string }) {
       canvas.height = Math.max(1, Math.floor(height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const density = Math.round((width * height) / 3600);
-      const count = Math.max(260, Math.min(1800, density));
+      // Większa liczba kropeczek o mniejszej wielkości i mniejszej przezroczystości
+      const density = Math.round((width * height) / 2200);
+      const count = Math.max(380, Math.min(2200, density));
       particles = Array.from({ length: count }, () => {
         const c = Math.floor(Math.random() * RGB.length);
+        const ox = Math.random() * width;
+        const oy = Math.random() * height;
         return {
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.12,
-          vy: (Math.random() - 0.5) * 0.12,
-          r: 1.25 + Math.random() * 2.25,
+          originX: ox,
+          originY: oy,
+          x: ox,
+          y: oy,
+          vx: 0,
+          vy: 0,
+          // Mniejsze kropeczki: 0.75 - 1.85 px
+          r: 0.75 + Math.random() * 1.1,
           from: c,
           to: c,
           t: 1,
-          speed: 0.012 + Math.random() * 0.02,
+          speed: 0.015 + Math.random() * 0.025,
         };
       });
     };
@@ -85,19 +93,14 @@ export function ParticleField({ className }: { className?: string }) {
       pointer.y = -9999;
     };
 
-    const radius = 210;
+    const radius = 175;
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
       for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
-        if (p.y < -10) p.y = height + 10;
-        if (p.y > height + 10) p.y = -10;
-
         let boost = 0;
+
+        // Odpychanie od kursora
         if (pointer.active) {
           const dx = p.x - pointer.x;
           const dy = p.y - pointer.y;
@@ -106,8 +109,10 @@ export function ParticleField({ className }: { className?: string }) {
             const d = Math.sqrt(d2) || 1;
             const force = (1 - d / radius) ** 2;
             boost = force;
-            p.vx += (dx / d) * force * 0.55;
-            p.vy += (dy / d) * force * 0.55;
+            // Impuls odpychający
+            p.vx += (dx / d) * force * 0.65;
+            p.vy += (dy / d) * force * 0.65;
+
             if (p.t >= 1 && Math.random() < 0.06 + force * 0.12) {
               p.from = p.to;
               p.to = Math.floor(Math.random() * RGB.length);
@@ -116,16 +121,22 @@ export function ParticleField({ className }: { className?: string }) {
           }
         }
 
-        p.vx *= 0.94;
-        p.vy *= 0.94;
-        const drift = 0.035;
-        p.vx += (Math.random() - 0.5) * drift * 0.4;
-        p.vy += (Math.random() - 0.5) * drift * 0.4;
-        const sp = Math.hypot(p.vx, p.vy);
-        if (sp > 2.4) {
-          p.vx = (p.vx / sp) * 2.4;
-          p.vy = (p.vy / sp) * 2.4;
-        }
+        // Siła sprężystości ściągająca punkt z powrotem na pozycję wyjściową (origin)
+        const homeDx = p.originX - p.x;
+        const homeDy = p.originY - p.y;
+        p.vx += homeDx * 0.022;
+        p.vy += homeDy * 0.022;
+
+        // Tłumienie prędkości (damping)
+        p.vx *= 0.89;
+        p.vy *= 0.89;
+
+        // Drobny organiczny mikro-ruch wokół pozycji wyjściowej
+        p.vx += (Math.random() - 0.5) * 0.012;
+        p.vy += (Math.random() - 0.5) * 0.012;
+
+        p.x += p.vx;
+        p.y += p.vy;
 
         if (p.t < 1) p.t = Math.min(1, p.t + p.speed);
         const a = RGB[p.from] ?? FALLBACK;
@@ -134,10 +145,12 @@ export function ParticleField({ className }: { className?: string }) {
         const r = Math.round(a[0] + (b[0] - a[0]) * t);
         const g = Math.round(a[1] + (b[1] - a[1]) * t);
         const bl = Math.round(a[2] + (b[2] - a[2]) * t);
-        const alpha = 0.32 + boost * 0.62;
+
+        // Zmniejszone opacity: subtelne tło (0.13 do max ~0.35 przy kursorze)
+        const alpha = 0.13 + boost * 0.22;
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r + boost * 1.6, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.r + boost * 0.6, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, ${alpha})`;
         ctx.fill();
       }
@@ -150,8 +163,8 @@ export function ParticleField({ className }: { className?: string }) {
       for (const p of particles) {
         const c = RGB[p.to] ?? FALLBACK;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${c[0]}, ${c[1]}, ${c[2]}, 0.28)`;
+        ctx.arc(p.originX, p.originY, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${c[0]}, ${c[1]}, ${c[2]}, 0.14)`;
         ctx.fill();
       }
     } else {

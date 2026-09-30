@@ -16,7 +16,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function FeedbackDialog() {
+export function FeedbackDialog({
+  iconOnly = false,
+  className = "",
+}: {
+  iconOnly?: boolean;
+  className?: string;
+}) {
   const send = useServerFn(sendFeedback);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -68,13 +74,25 @@ export function FeedbackDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <MessageSquareText className="mr-1.5 h-4 w-4" /> Dodaj opinię
-        </Button>
+        {iconOnly ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all active:scale-95 ${className}`}
+            title="Dodaj opinię"
+            aria-label="Dodaj opinię"
+          >
+            <MessageSquareText className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className={className}>
+            <MessageSquareText className="mr-1.5 h-4 w-4" /> Dodaj opinię
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Twoja opinia o Sejmowym Symulatorze</DialogTitle>
+          <DialogTitle>Twoja opinia o SejmSim</DialogTitle>
           <DialogDescription>Uwagi, błędy, pomysły na sejmsim.pl. Jedna opinia na 12 godzin.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
@@ -96,7 +114,7 @@ export function FeedbackDialog() {
             />
           </div>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Jak oceniasz Sejmowy Symulator (sejmsim.pl)?</legend>
+            <legend className="text-sm font-medium">Jak oceniasz SejmSim (sejmsim.pl)?</legend>
             <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-10" role="radiogroup" aria-label="Ocena narzędzia od 1 do 10">
               {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
                 <label key={value} className="cursor-pointer">
