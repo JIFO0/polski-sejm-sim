@@ -23,3 +23,6 @@
 - [x] Dodać oficjalne wyniki wyborów 2023 i 2019
 - [x] Pokazywać procent poparcia w trybie mapy jednej partii
 - [x] Powiększyć logo SejmSim w nagłówku
+- [x] Zwiększyć widoczność i reakcję cząsteczek na kursor
+- [x] Dodać historyczne mapy okręgów dla wyborów 2023, 2019, 2015 i 2011
+- [x] Dodać zwijanie głównych sekcji, z historią domyślnie zamkniętą
