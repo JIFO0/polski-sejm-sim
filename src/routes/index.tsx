@@ -346,7 +346,7 @@ function Index() {
                           max={55}
                           step={0.1}
                           value={[share]}
-                          onValueChange={([v]) => nationalSwing(p.id, v)}
+                          onValueChange={([v = 0]) => nationalSwing(p.id, v)}
                         />
                       </div>
                     );
@@ -389,7 +389,7 @@ function Index() {
                 max={90}
                 step={0.5}
                 value={[result.nationalTurnout]}
-                onValueChange={([v]) => setGlobalTurnout(v)}
+                onValueChange={([v = 0]) => setGlobalTurnout(v)}
               />
             </div>
 
@@ -406,7 +406,7 @@ function Index() {
                 max={2}
                 step={0.05}
                 value={[scenario.turnoutEffect]}
-                onValueChange={([v]) => setScenario((s) => ({ ...s, turnoutEffect: v }))}
+                onValueChange={([v = 0]) => setScenario((s) => ({ ...s, turnoutEffect: v }))}
               />
               <p className="mt-2 text-xs text-muted-foreground">
                 0% = frekwencja zmienia tylko wagę okręgu. Wyżej = przy wysokiej frekwencji rosną
@@ -478,7 +478,7 @@ function Index() {
                         max={1.5}
                         step={0.05}
                         value={[s.turnoutSensitivity]}
-                        onValueChange={([v]) =>
+                        onValueChange={([v = 0]) =>
                           setScenario((sc) => ({
                             ...sc,
                             parties: {

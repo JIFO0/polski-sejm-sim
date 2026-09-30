@@ -64,7 +64,7 @@ export function DistrictPanel({
             max={95}
             step={0.5}
             value={[state.turnout]}
-            onValueChange={([v]) => onChange({ ...state, turnout: v })}
+            onValueChange={([v = 0]) => onChange({ ...state, turnout: v })}
           />
           <p className="mt-2 text-xs text-muted-foreground">
             Baza {BASE_TURNOUT}%. Wyższa frekwencja zwiększa wagę okręgu w skali kraju i przesuwa
@@ -101,7 +101,7 @@ export function DistrictPanel({
                   max={70}
                   step={0.5}
                   value={[value]}
-                  onValueChange={([v]) => setShare(p.id, v)}
+                  onValueChange={([v = 0]) => setShare(p.id, v)}
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
                   baza {base.toFixed(1)}% · po frekwencji {eff.toFixed(1)}%
