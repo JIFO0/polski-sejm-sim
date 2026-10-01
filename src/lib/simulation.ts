@@ -1,5 +1,5 @@
 import { DISTRICTS, type District } from "@/data/districts";
-import { PARTIES, PARTY_MAP, type ThresholdKind } from "@/data/parties";
+import { PARTIES, PARTY_MAP, type CustomPartyDef, type MergerDef, type ThresholdKind } from "@/data/parties";
 
 export const BASE_TURNOUT = 74.4;
 export const MAJORITY = 231;
@@ -35,6 +35,10 @@ export interface Scenario {
   districts: Record<number, DistrictState>;
   parties: Record<string, PartySettings>;
   coalitions: Coalition[];
+  /** Własne partie użytkownika (bez obrazków). */
+  customParties?: CustomPartyDef[];
+  /** Wspólne listy łączące poparcie kilku partii. */
+  mergers?: MergerDef[];
 }
 
 export function defaultScenario(): Scenario {
@@ -77,6 +81,7 @@ export function effectiveShares(
   turnoutEffect: number,
   parties: Record<string, PartySettings>,
   independentSupport = false,
+  mergers: MergerDef[] = [],
 ): Record<string, number> {
   const delta = (state.turnout - BASE_TURNOUT) / BASE_TURNOUT;
   const raw: Record<string, number> = {};
@@ -88,6 +93,18 @@ export function effectiveShares(
     const v = Math.max(0, pct * (1 + sens * turnoutEffect * delta));
     raw[id] = v;
     sum += v;
+  }
+  for (const m of mergers) {
+    let joint = 0;
+    for (const member of m.members) {
+      joint += raw[member] ?? 0;
+      delete raw[member];
+    }
+    const kept = joint * Math.min(1, Math.max(0, m.retention / 100));
+    if (parties[m.id]?.enabled !== false) raw[m.id] = kept;
+    const lost = joint - (parties[m.id]?.enabled !== false ? kept : 0);
+    if (!independentSupport && raw["inne"] != null) raw["inne"] += lost;
+    else sum -= lost;
   }
   if (sum <= 0 || (independentSupport && sum <= 100)) return raw;
   for (const id of Object.keys(raw)) raw[id] = ((raw[id] ?? 0) / sum) * 100;
@@ -156,6 +173,7 @@ export function simulate(scenario: Scenario): SimulationResult {
       scenario.turnoutEffect,
       scenario.parties,
       scenario.independentSupport ?? false,
+      scenario.mergers ?? [],
     );
     const valid = (d.electorate * state.turnout) / 100;
     const votes: Record<string, number> = {};
