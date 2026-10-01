@@ -245,7 +245,6 @@ function Index() {
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
             <nav className="flex flex-wrap items-center justify-end gap-2" aria-label="Nawigacja główna">
-              <AccessibilityMenu />
             <Button variant="ghost" size="sm" asChild>
               <Link to="/o-projekcie">
                 <Info className="mr-1.5 h-4 w-4" /> O projekcie
