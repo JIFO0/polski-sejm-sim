@@ -68,8 +68,8 @@ export function AccessibilityMenu({ compact = false }: { compact?: boolean }) {
           size={compact ? "icon" : "sm"}
           className={
             compact
-              ? "min-h-11 min-w-11 rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
-              : "min-h-11 bg-primary font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
+              ? "min-h-11 min-w-11 rounded-full bg-blue-600 text-white shadow-md hover:bg-blue-700"
+              : "min-h-11 bg-blue-600 font-semibold text-white shadow-md hover:bg-blue-700"
           }
           aria-label="Ustawienia dostępności"
           title="Ustawienia dostępności"
