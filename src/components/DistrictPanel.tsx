@@ -1,7 +1,8 @@
-import { RotateCcw, X } from "lucide-react";
+import { RotateCcw, Users, X } from "lucide-react";
 import { DISTRICTS } from "@/data/districts";
 import { MERGED_INTO, PARTIES, PARTY_MAP, type MergerDef } from "@/data/parties";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { PartyLogo } from "@/components/PartyLogo";
 import { ShareInput } from "@/components/ShareInput";
@@ -28,6 +29,10 @@ export function DistrictPanel({
 }) {
   const district = DISTRICTS.find((d) => d.id === districtId);
   if (!district) return null;
+
+  const currentElectorate = state.electorate ?? district.electorate;
+  const isElectorateModified = state.electorate != null && state.electorate !== district.electorate;
+  const validVotes = Math.round((currentElectorate * state.turnout) / 100);
 
   const setShare = (pid: string, value: number) => {
     const otherTotal = Object.entries(state.shares).reduce(
@@ -78,6 +83,49 @@ export function DistrictPanel({
       </div>
 
       <div className="space-y-5 overflow-y-auto px-5 py-4">
+        {/* Kwalifikowani wyborcy (Uprawnieni) */}
+        <div className="rounded-lg border border-border/70 bg-surface-strong/40 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor="district-electorate-input" className="flex items-center gap-1.5 text-xs font-semibold text-ink">
+              <Users className="h-3.5 w-3.5 text-primary" />
+              Kwalifikowani wyborcy (uprawnieni)
+            </label>
+            {isElectorateModified ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1.5 text-[10px] text-muted-foreground hover:text-ink"
+                onClick={() => onChange({ ...state, electorate: undefined })}
+                title={`Przywróć bazową liczbę: ${district.electorate.toLocaleString("pl-PL")}`}
+              >
+                <RotateCcw className="mr-1 h-3 w-3" /> Baza ({district.electorate.toLocaleString("pl-PL")})
+              </Button>
+            ) : null}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <Input
+              id="district-electorate-input"
+              type="number"
+              min={10000}
+              max={5000000}
+              step={1000}
+              value={currentElectorate}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val) && val > 0) {
+                  onChange({ ...state, electorate: val });
+                }
+              }}
+              className="h-9 font-mono text-sm"
+              aria-label="Liczba uprawnionych wyborców w okręgu"
+            />
+            <span className="shrink-0 text-xs text-muted-foreground">wyborców</span>
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            Oddane głosy: <strong className="text-ink">{validVotes.toLocaleString("pl-PL")}</strong> (przy frekwencji {state.turnout.toFixed(1)}%)
+          </p>
+        </div>
+
         <div>
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-semibold">Frekwencja w okręgu</span>
@@ -94,8 +142,7 @@ export function DistrictPanel({
             onValueChange={([v = 0]) => onChange({ ...state, turnout: v })}
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            Baza {BASE_TURNOUT}%. Wyższa frekwencja zwiększa wagę okręgu w skali kraju i przesuwa
-            proporcje w stronę partii o mniej zdyscyplinowanym elektoracie.
+            Baza {BASE_TURNOUT}%. Wyższa frekwencja zwiększa liczbę oddanych głosów w okręgu i jego wagę w kraju.
           </p>
         </div>
 
@@ -112,6 +159,7 @@ export function DistrictPanel({
               : (district.base[p.id] ?? 0);
             const value = state.shares[p.id] ?? (mergerDef ? base : 0);
             const eff = result?.shares[p.id] ?? value;
+            const partyVotes = Math.round(result?.votes[p.id] ?? (validVotes * eff) / 100);
             const seats = result?.seatsByParty[p.id] ?? 0;
             return (
               <div key={p.id} className="rounded-lg border border-border/70 bg-surface-strong/60 p-3">
@@ -132,7 +180,7 @@ export function DistrictPanel({
                   onValueChange={([v = 0]) => setShare(p.id, v)}
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  baza {base.toFixed(1)}%, po frekwencji {eff.toFixed(1)}%
+                  baza {base.toFixed(1)}%, po frekwencji {eff.toFixed(1)}% • szac. <strong className="text-ink">{partyVotes.toLocaleString("pl-PL")}</strong> głosów
                   {mergerDef ? ` • wspólna lista (${mergerDef.members.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ")})` : ""}
                 </p>
               </div>

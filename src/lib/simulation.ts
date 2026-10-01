@@ -9,6 +9,8 @@ export interface DistrictState {
   shares: Record<string, number>;
   /** Frekwencja w okręgu, w procentach. */
   turnout: number;
+  /** Liczba kwalifikowanych wyborców / uprawnionych (opcjonalna, domyślnie z DISTRICTS[id].electorate). */
+  electorate?: number;
 }
 
 export interface PartySettings {
@@ -44,13 +46,13 @@ export interface Scenario {
 export function defaultScenario(): Scenario {
   const districts: Record<number, DistrictState> = {};
   for (const d of DISTRICTS) {
-    districts[d.id] = { shares: { ...d.base }, turnout: BASE_TURNOUT };
+    districts[d.id] = { shares: { ...d.base }, turnout: BASE_TURNOUT, electorate: d.electorate };
   }
   const parties: Record<string, PartySettings> = {};
   for (const p of PARTIES) {
     parties[p.id] = {
       threshold: p.threshold,
-      turnoutSensitivity: p.turnoutSensitivity,
+      turnoutSensitivity: 0,
       enabled: true,
     };
   }
@@ -145,6 +147,7 @@ export interface DistrictResult {
   id: number;
   name: string;
   seats: number;
+  electorate: number;
   votes: Record<string, number>;
   shares: Record<string, number>;
   seatsByParty: Record<string, number>;
@@ -159,6 +162,7 @@ export interface SimulationResult {
   seatsByParty: Record<string, number>;
   qualified: string[];
   totalVotes: number;
+  totalElectorate: number;
   nationalTurnout: number;
 }
 
@@ -168,6 +172,7 @@ export function simulate(scenario: Scenario): SimulationResult {
     shares: Record<string, number>;
     votes: Record<string, number>;
     valid: number;
+    electorate: number;
   }[] = [];
   const nationalVotes: Record<string, number> = {};
   let totalVotes = 0;
@@ -177,7 +182,9 @@ export function simulate(scenario: Scenario): SimulationResult {
     const state = scenario.districts[d.id] ?? {
       shares: { ...d.base },
       turnout: BASE_TURNOUT,
+      electorate: d.electorate,
     };
+    const electorate = typeof state.electorate === "number" && state.electorate > 0 ? state.electorate : d.electorate;
     const shares = effectiveShares(
       d,
       state,
@@ -186,7 +193,7 @@ export function simulate(scenario: Scenario): SimulationResult {
       scenario.independentSupport ?? false,
       scenario.mergers ?? [],
     );
-    const valid = (d.electorate * state.turnout) / 100;
+    const valid = (electorate * state.turnout) / 100;
     const votes: Record<string, number> = {};
     for (const [id, pct] of Object.entries(shares)) {
       const v = (valid * pct) / 100;
@@ -194,8 +201,8 @@ export function simulate(scenario: Scenario): SimulationResult {
       nationalVotes[id] = (nationalVotes[id] ?? 0) + v;
     }
     totalVotes += valid;
-    totalElectorate += d.electorate;
-    perDistrict.push({ d, shares, votes, valid });
+    totalElectorate += electorate;
+    perDistrict.push({ d, shares, votes, valid, electorate });
   }
 
   const nationalShares: Record<string, number> = {};
@@ -211,7 +218,7 @@ export function simulate(scenario: Scenario): SimulationResult {
   });
 
   const seatsByParty: Record<string, number> = {};
-  const districts: DistrictResult[] = perDistrict.map(({ d, shares, votes, valid }) => {
+  const districts: DistrictResult[] = perDistrict.map(({ d, shares, votes, valid, electorate }) => {
     const eligible: Record<string, number> = {};
     for (const id of qualified) eligible[id] = votes[id] ?? 0;
     const seatsHere = dhondt(eligible, d.seats);
@@ -233,6 +240,7 @@ export function simulate(scenario: Scenario): SimulationResult {
       id: d.id,
       name: d.name,
       seats: d.seats,
+      electorate,
       votes,
       shares,
       seatsByParty: seatsHere,
@@ -248,6 +256,7 @@ export function simulate(scenario: Scenario): SimulationResult {
     seatsByParty,
     qualified,
     totalVotes,
+    totalElectorate,
     nationalTurnout: totalElectorate > 0 ? (totalVotes / totalElectorate) * 100 : 0,
   };
 }

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound } from "lucide-react";
+import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { LogoMark } from "@/components/Logos";
@@ -77,6 +77,10 @@ function Index() {
   const [displayOrder, setDisplayOrder] = useState(() =>
     PARTIES.filter((party) => party.id !== "inne").map((party) => party.id),
   );
+  const [showVotes, setShowVotes] = useState(false);
+  const [nationalElectorateInput, setNationalElectorateInput] = useState(() =>
+    String(DISTRICTS.reduce((acc, d) => acc + d.electorate, 0)),
+  );
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -121,14 +125,20 @@ function Index() {
   }, []);
 
   const nationalRawShares = useMemo(() => {
-    const weight = DISTRICTS.reduce((total, district) => total + district.electorate, 0);
+    const weight = DISTRICTS.reduce((total, district) => {
+      const el = scenario.districts[district.id]?.electorate ?? district.electorate;
+      return total + el;
+    }, 0);
     return Object.fromEntries(
       PARTIES.map((party) => [
         party.id,
         DISTRICTS.reduce(
-          (total, district) => total + (scenario.districts[district.id]?.shares[party.id] ?? 0) * district.electorate,
+          (total, district) => {
+            const el = scenario.districts[district.id]?.electorate ?? district.electorate;
+            return total + (scenario.districts[district.id]?.shares[party.id] ?? 0) * el;
+          },
           0,
-        ) / weight,
+        ) / (weight > 0 ? weight : 1),
       ]),
     );
   }, [scenario.districts]);
@@ -168,7 +178,7 @@ function Index() {
       }
       return {
         ...s,
-        districts: { ...s.districts, [id]: { shares, turnout: BASE_TURNOUT } },
+        districts: { ...s.districts, [id]: { shares, turnout: BASE_TURNOUT, electorate: base.electorate } },
       };
     });
   }, []);
@@ -182,11 +192,11 @@ function Index() {
 
     setScenario((s) => {
       const current = DISTRICTS.reduce(
-        (acc, d) => acc + (s.districts[d.id]?.shares[pid] ?? 0) * d.electorate,
+        (acc, d) => acc + (s.districts[d.id]?.shares[pid] ?? 0) * (s.districts[d.id]?.electorate ?? d.electorate),
         0,
       );
-      const weight = DISTRICTS.reduce((acc, d) => acc + d.electorate, 0);
-      const avg = current / weight;
+      const weight = DISTRICTS.reduce((acc, d) => acc + (s.districts[d.id]?.electorate ?? d.electorate), 0);
+      const avg = current / (weight > 0 ? weight : 1);
       const boundedTarget = Math.min(100, Math.max(0, target));
       const delta = boundedTarget - avg;
       const districts = { ...s.districts };
@@ -210,7 +220,7 @@ function Index() {
             );
         if (!(pid in shares)) shares[pid] = targetHere;
         districts[d.id] = {
-          turnout: st.turnout,
+          ...st,
           shares,
         };
       }
@@ -224,10 +234,49 @@ function Index() {
     turnoutTrackRef.current = setTimeout(() => track({ event: "turnout_set", turnout: value }), 1500);
     setScenario((s) => {
       const districts = { ...s.districts };
-      for (const d of DISTRICTS)
-        districts[d.id] = { shares: (districts[d.id] ?? blankState(d.id)).shares, turnout: value };
+      for (const d of DISTRICTS) {
+        const cur = districts[d.id] ?? blankState(d.id);
+        districts[d.id] = { ...cur, turnout: value };
+      }
       return { ...s, districts };
     });
+  }, []);
+
+  const setGlobalElectorate = useCallback((totalTarget: number) => {
+    const baseTotal = DISTRICTS.reduce((acc, d) => acc + d.electorate, 0);
+    const ratio = totalTarget / (baseTotal > 0 ? baseTotal : 1);
+    setScenario((s) => {
+      const districts = { ...s.districts };
+      for (const d of DISTRICTS) {
+        const cur = districts[d.id] ?? blankState(d.id);
+        districts[d.id] = { ...cur, electorate: Math.round(d.electorate * ratio) };
+      }
+      return { ...s, districts };
+    });
+    toast.success(`Zaktualizowano liczbę uprawnionych w kraju: ${Math.round(totalTarget).toLocaleString("pl-PL")}`);
+  }, []);
+
+  const applyNationalElectorate = useCallback(() => {
+    const val = parseInt(nationalElectorateInput, 10);
+    if (!isNaN(val) && val >= 1_000_000 && val <= 50_000_000) {
+      setGlobalElectorate(val);
+    } else {
+      toast.error("Wprowadź prawidłową liczbę wyborców (od 1 mln do 50 mln).");
+    }
+  }, [nationalElectorateInput, setGlobalElectorate]);
+
+  const resetGlobalElectorate = useCallback(() => {
+    const baseTotal = DISTRICTS.reduce((acc, d) => acc + d.electorate, 0);
+    setNationalElectorateInput(String(baseTotal));
+    setScenario((s) => {
+      const districts = { ...s.districts };
+      for (const d of DISTRICTS) {
+        const cur = districts[d.id] ?? blankState(d.id);
+        districts[d.id] = { ...cur, electorate: undefined };
+      }
+      return { ...s, districts };
+    });
+    toast.info("Przywrócono domyślną liczbę uprawnionych wyborców (29 276 800)");
   }, []);
 
   const save = () => {
@@ -546,11 +595,31 @@ function Index() {
                 className="panel leader-tint h-full p-5"
                 style={{ "--leader-color": leader?.color ?? "var(--border)" } as CSSProperties}
               >
-                <h3 className="font-display text-lg font-bold text-ink">Wynik ogólnokrajowy</h3>
-                <p className="text-sm text-muted-foreground">
-                  Suwak i pole procentowe zmieniają poparcie z zachowaniem regionalnych różnic.
-                </p>
-                <label className="mt-4 flex min-h-12 cursor-pointer items-start gap-3 rounded-md border border-border bg-surface/70 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-ink">Wynik ogólnokrajowy</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Suwak i pole procentowe zmieniają poparcie z zachowaniem regionalnych różnic.
+                    </p>
+                  </div>
+                  <Button
+                    variant={showVotes ? "secondary" : "outline"}
+                    size="sm"
+                    className="h-8 gap-1.5 px-2.5 text-xs font-semibold shrink-0"
+                    onClick={() => setShowVotes(!showVotes)}
+                    title="Przełącz wyświetlanie szacunkowej liczby głosów"
+                  >
+                    <Users className="h-3.5 w-3.5 text-primary" />
+                    <span>{showVotes ? "Ukryj głosy" : "Liczba głosów"}</span>
+                  </Button>
+                </div>
+
+                <div className="mt-2.5 flex items-center justify-between rounded-md bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+                  <span>Uprawnieni: <strong className="text-ink">{(result.totalElectorate / 1_000_000).toFixed(2)} mln</strong></span>
+                  <span>Oddane: <strong className="text-ink">{(result.totalVotes / 1_000_000).toFixed(2)} mln</strong> ({result.nationalTurnout.toFixed(1)}%)</span>
+                </div>
+
+                <label className="mt-3 flex min-h-12 cursor-pointer items-start gap-3 rounded-md border border-border bg-surface/70 p-3">
                   <Checkbox
                     checked={scenario.independentSupport ?? false}
                     onCheckedChange={(checked) => {
@@ -572,6 +641,7 @@ function Index() {
                   {displayedParties.map((p) => {
                     const share = scenario.independentSupport ? (nationalRawShares[p.id] ?? 0) : (result.nationalShares[p.id] ?? 0);
                     const seats = result.seatsByParty[p.id] ?? 0;
+                    const votes = Math.round(result.nationalVotes[p.id] ?? 0);
                     const settings = scenario.parties[p.id] ?? DEFAULT_SETTINGS;
                     const inSejm = result.qualified.includes(p.id);
                     const mergerDef = scenario.mergers?.find((m) => m.id === p.id);
@@ -584,12 +654,13 @@ function Index() {
                       >
                         <div className="flex items-center gap-2.5">
                           <PartyLogo id={p.id} size={28} />
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold">{p.short}</p>
                             <p className="truncate text-[11px] text-muted-foreground">
                               {mergerDef
                                 ? `wspólna lista (${mergerDef.members.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ")})`
                                 : `próg ${settings.threshold}%${inSejm ? "" : ", poniżej progu"}`}
+                              {showVotes ? ` • szac. ${votes.toLocaleString("pl-PL")} głosów` : ""}
                             </p>
                           </div>
                           <ShareInput
@@ -598,10 +669,18 @@ function Index() {
                             label={`Krajowe poparcie ${p.name}`}
                             max={scenario.independentSupport ? share + unassignedShare : 100}
                           />
-                          <span className="num w-10 rounded bg-ink/5 py-0.5 text-center text-sm font-bold">
+                          <span className="num w-10 rounded bg-ink/5 py-0.5 text-center text-sm font-bold" title={`${seats} mandatów`}>
                             {seats}
                           </span>
                         </div>
+                        {showVotes ? (
+                          <div className="mt-1.5 flex items-center justify-between rounded bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                            <span>Szacunkowa liczba głosów:</span>
+                            <span className="font-mono font-bold text-ink">
+                              {votes.toLocaleString("pl-PL")}
+                            </span>
+                          </div>
+                        ) : null}
                         <Slider
                           className="mt-2.5"
                           min={0}
@@ -669,6 +748,101 @@ function Index() {
                 najbardziej zdyscyplinowanym.
               </p>
             </div>
+            </div>
+
+            {/* Kwalifikowani wyborcy i szacunek liczby głosów */}
+            <div className="mt-6 rounded-xl border border-border/80 bg-surface-strong/40 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Users className="h-5 w-5 text-primary shrink-0" />
+                  <div>
+                    <h3 className="font-display text-base font-bold text-ink">
+                      Kwalifikowani wyborcy i szacunek liczby głosów
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Liczba uprawnionych do głosowania w Polsce (baza PKW: 29 276 800). Wpływa bezpośrednio na szacowaną liczbę głosów w kraju i w 41 okręgach.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant={showVotes ? "default" : "outline"}
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-semibold"
+                  onClick={() => setShowVotes(!showVotes)}
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  {showVotes ? "Liczby głosów aktywne" : "Pokaż szacowane głosy przy partiach"}
+                </Button>
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="rounded-lg border border-border bg-surface p-3">
+                  <span className="text-xs font-semibold text-muted-foreground">Uprawnieni do głosowania w kraju</span>
+                  <div className="mt-1 flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-xl font-bold text-ink">
+                      {Math.round(result.totalElectorate).toLocaleString("pl-PL")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">wyborców</span>
+                  </div>
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={1000000}
+                      max={45000000}
+                      step={100000}
+                      value={nationalElectorateInput}
+                      onChange={(e) => setNationalElectorateInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && applyNationalElectorate()}
+                      placeholder="np. 29276800"
+                      className="h-8 text-xs font-mono"
+                      aria-label="Własna liczba uprawnionych w kraju"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-2 text-xs font-semibold shrink-0"
+                      onClick={applyNationalElectorate}
+                    >
+                      Ustaw
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2 text-xs text-muted-foreground hover:text-ink shrink-0"
+                      onClick={resetGlobalElectorate}
+                      title="Przywróć domyślne 29 276 800"
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border bg-surface p-3">
+                  <span className="text-xs font-semibold text-muted-foreground">Średnia frekwencja</span>
+                  <div className="mt-1 flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-xl font-bold text-primary">
+                      {result.nationalTurnout.toFixed(1)}%
+                    </span>
+                    <span className="text-xs text-muted-foreground">baza {BASE_TURNOUT}%</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Zmieniaj suwakiem ogólnym lub w poszczególnych 41 okręgach na mapie.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-border bg-surface p-3 sm:col-span-2 lg:col-span-1">
+                  <span className="text-xs font-semibold text-muted-foreground">Szacunkowa liczba oddanych głosów</span>
+                  <div className="mt-1 flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-xl font-bold text-ink">
+                      {Math.round(result.totalVotes).toLocaleString("pl-PL")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">ważnych głosów</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Obliczana ze wzoru: uprawnieni × frekwencja. Dzielona na partie według ich poparcia.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="mt-6">

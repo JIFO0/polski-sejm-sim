@@ -24,7 +24,7 @@ export const PARTIES: Party[] = [
     color: "#F26722",
     logo: "/logos/ko.svg",
     threshold: 8,
-    turnoutSensitivity: 0.45,
+    turnoutSensitivity: 0,
     blocHint: "koalicja",
   },
   {
@@ -34,7 +34,7 @@ export const PARTIES: Party[] = [
     color: "#14357F",
     logo: "/logos/pis.jpg",
     threshold: 5,
-    turnoutSensitivity: -0.55,
+    turnoutSensitivity: 0,
     blocHint: "prawica",
   },
   {
@@ -43,7 +43,7 @@ export const PARTIES: Party[] = [
     short: "Konf",
     color: "#111B3B",
     threshold: 5,
-    turnoutSensitivity: 0.3,
+    turnoutSensitivity: 0,
     blocHint: "prawica",
   },
   {
@@ -53,7 +53,7 @@ export const PARTIES: Party[] = [
     color: "#8C2F39",
     logo: "/logos/kkp.png",
     threshold: 5,
-    turnoutSensitivity: 0.1,
+    turnoutSensitivity: 0,
     blocHint: "prawica",
   },
   {
@@ -63,7 +63,7 @@ export const PARTIES: Party[] = [
     color: "#D0021B",
     logo: "/logos/nl.svg",
     threshold: 5,
-    turnoutSensitivity: 0.4,
+    turnoutSensitivity: 0,
     blocHint: "lewica",
   },
   {
@@ -73,7 +73,7 @@ export const PARTIES: Party[] = [
     color: "#A4247A",
     logo: "/logos/razem.svg",
     threshold: 5,
-    turnoutSensitivity: 0.8,
+    turnoutSensitivity: 0,
     blocHint: "lewica",
   },
   {
@@ -83,7 +83,7 @@ export const PARTIES: Party[] = [
     color: "#0F9BA8",
     logo: "/logos/rp.svg",
     threshold: 5,
-    turnoutSensitivity: 0.35,
+    turnoutSensitivity: 0,
   },
   {
     id: "psl",
@@ -92,7 +92,7 @@ export const PARTIES: Party[] = [
     color: "#2E7D32",
     logo: "/logos/psl.svg",
     threshold: 5,
-    turnoutSensitivity: -0.5,
+    turnoutSensitivity: 0,
     blocHint: "koalicja",
   },
   {
@@ -102,7 +102,7 @@ export const PARTIES: Party[] = [
     color: "#E0AC12",
     logo: "/logos/pl2050.svg",
     threshold: 5,
-    turnoutSensitivity: 0.25,
+    turnoutSensitivity: 0,
     blocHint: "koalicja",
   },
   {
