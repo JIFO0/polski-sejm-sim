@@ -75,6 +75,7 @@ function AboutProject() {
               </a>
             </Button>
             <SupportButton size="sm" />
+            <AccessibilityMenu />
           </div>
         </nav>
       </header>
