@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
+import { nationalSharesOf, track } from "@/lib/analytics";
 
 const STORAGE_KEY = "sejmometr.saved-scenarios.v1";
 
@@ -107,6 +108,7 @@ export function ScenarioShelf({
     if (!persist([entry, ...saved].slice(0, 10))) return;
     setActiveScenarioId(newId);
     setName("");
+    track({ event: "scenario_save", shares: nationalSharesOf(scenario) });
     toast.success(`Scenariusz "${title}" zapisany!`);
   };
 
@@ -117,6 +119,7 @@ export function ScenarioShelf({
   };
 
   const share = async () => {
+    track({ event: "scenario_share", shares: nationalSharesOf(scenario) });
     const url = new URL(window.location.href);
     url.hash = `scenario=${encodeScenario(scenario)}`;
     try {

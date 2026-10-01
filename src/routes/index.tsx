@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ import {
   type DistrictState,
   type Scenario,
 } from "@/lib/simulation";
+import { nationalSharesOf, track, trackPageViewOncePerSession } from "@/lib/analytics";
 import { ParticleField } from "@/components/ParticleField";
 import { PolandMap, type MapMode } from "@/components/PolandMap";
 import { Hemicycle } from "@/components/Hemicycle";
@@ -73,6 +74,10 @@ function Index() {
     PARTIES.filter((party) => party.id !== "inne").map((party) => party.id),
   );
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    trackPageViewOncePerSession();
+  }, []);
 
   const result = useMemo(() => simulate(scenario), [scenario]);
   const resultById = useMemo(
@@ -168,7 +173,10 @@ function Index() {
     });
   }, []);
 
+  const turnoutTrackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setGlobalTurnout = useCallback((value: number) => {
+    if (turnoutTrackRef.current) clearTimeout(turnoutTrackRef.current);
+    turnoutTrackRef.current = setTimeout(() => track({ event: "turnout_set", turnout: value }), 1500);
     setScenario((s) => {
       const districts = { ...s.districts };
       for (const d of DISTRICTS)
@@ -178,6 +186,11 @@ function Index() {
   }, []);
 
   const save = () => {
+    track({
+      event: "scenario_download",
+      shares: nationalSharesOf(scenario),
+      turnout: scenario.districts[1]?.turnout ?? BASE_TURNOUT,
+    });
     const blob = new Blob([JSON.stringify(scenario, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
