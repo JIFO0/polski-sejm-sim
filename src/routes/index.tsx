@@ -34,6 +34,7 @@ import { PartyLogo } from "@/components/PartyLogo";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
