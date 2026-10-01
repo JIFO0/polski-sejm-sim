@@ -110,7 +110,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
         let label = ym;
         try {
           const [y, m] = ym.split("-").map(Number);
-          const d = new Date(Date.UTC(y, m - 1, 15));
+          const d = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, 15));
           const monthName = new Intl.DateTimeFormat("pl-PL", { month: "long" }).format(d);
           label = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${y}`;
         } catch {

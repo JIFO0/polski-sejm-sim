@@ -91,7 +91,8 @@ export function ScenarioShelf({
     const linkId = new URLSearchParams(window.location.search).get("s");
     if (linkId) {
       void getShareFn({ data: { id: linkId } })
-        .then((res) => {
+        .then((raw) => {
+          const res = raw as { ok: true; scenario: unknown; name: string } | { ok: false; error: string };
           if (res.ok && validScenario(res.scenario)) {
             onLoad(res.scenario);
             track({ event: "share_link_open" });

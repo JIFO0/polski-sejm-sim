@@ -122,7 +122,10 @@ export function CustomPartiesPanel({
   const [draft, setDraft] = useState<string[]>([]);
 
   const addParty = () => {
-    if (custom.length >= MAX_CUSTOM) return toast.error(`Możesz dodać najwyżej ${MAX_CUSTOM} własnych partii.`);
+    if (custom.length >= MAX_CUSTOM) {
+      toast.error(`Możesz dodać najwyżej ${MAX_CUSTOM} własnych partii.`);
+      return;
+    }
     const id = newId("cp");
     const n = custom.length + 1;
     track({ event: "custom_party_add" });
@@ -166,8 +169,11 @@ export function CustomPartiesPanel({
   };
 
   const createMerger = () => {
-    if (mergers.length >= MAX_MERGERS) return toast.error(`Możesz utworzyć najwyżej ${MAX_MERGERS} wspólnych list.`);
-    if (draft.length < 2) return toast.error("Wybierz co najmniej dwie partie.");
+    if (mergers.length >= MAX_MERGERS) {
+      toast.error(`Możesz utworzyć najwyżej ${MAX_MERGERS} wspólnych list.`);
+      return;
+    }
+    if (draft.length < 2) return;
     const id = newId("ml");
     const first = PARTY_MAP[draft[0]!];
     const name = draft.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ");

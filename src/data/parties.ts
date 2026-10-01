@@ -174,10 +174,10 @@ export function syncCustomEntities(custom: CustomPartyDef[] = [], mergers: Merge
   const inne = BUILTIN[BUILTIN.length - 1]!; // „Inne” zawsze na końcu
   PARTIES.splice(0, PARTIES.length, ...BUILTIN.slice(0, -1));
   for (const c of custom) {
-    PARTIES.push({ ...c, logo: logos[c.id], threshold: 5, turnoutSensitivity: 0 });
+    PARTIES.push({ ...c, ...(logos[c.id] ? { logo: logos[c.id] } : {}), threshold: 5, turnoutSensitivity: 0 });
   }
   for (const m of mergers) {
-    PARTIES.push({ id: m.id, name: m.name, short: m.short, color: m.color, logo: logos[m.id], threshold: 8, turnoutSensitivity: 0 });
+    PARTIES.push({ id: m.id, name: m.name, short: m.short, color: m.color, ...(logos[m.id] ? { logo: logos[m.id] } : {}), threshold: 8, turnoutSensitivity: 0 });
     MERGER_IDS.add(m.id);
     for (const member of m.members) MERGED_INTO[member] = m.id;
   }
