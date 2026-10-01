@@ -38,9 +38,11 @@ import { Switch } from "@/components/ui/switch";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { ShareInput } from "@/components/ShareInput";
 
-const TITLE = "SejmSim 2027 (sejmsim.pl) — symulator wyborów do Sejmu";
+const TITLE = "SejmSim 2027 (sejmsim.pl) | Kalkulator Sejmu, kalkulator siedzeń i symulator wyborczy";
 const DESC =
-  "Interaktywna mapa 41 okręgów, przelicznik D'Hondta, frekwencja i koalicje na sejmsim.pl. Twórz własne scenariusze wyborów do Sejmu 2027 i zapisuj je do pliku.";
+  "Kalkulator Sejmu i kalkulator siedzeń (mandatów): interaktywna mapa 41 okręgów, przelicznik D'Hondta, frekwencja i koalicje na sejmsim.pl. Twórz własne scenariusze wyborów do Sejmu 2027.";
+const KEYWORDS =
+  "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator miejsc w sejmie, kalkulator mandatów sejm, symulator wyborów do sejmu, sejm 2027, metoda d'hondta, podział mandatów, koalicje sejmowe, sejmsim";
 
 const blankState = (id: number): DistrictState => {
   const base = DISTRICTS.find((d) => d.id === id);
@@ -55,6 +57,7 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: TITLE },
       { name: "description", content: DESC },
+      { name: "keywords", content: KEYWORDS },
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
@@ -296,7 +299,7 @@ function Index() {
                   <h1 className="mt-1 font-display text-4xl font-bold leading-[0.95] text-ink sm:text-5xl md:text-6xl">
                     SejmSim
                     <span className="text-primary">.</span>
-                    <span className="sr-only"> SejmSim — symulator wyborów do Sejmu 2027 sejmsim.pl</span>
+                    <span className="sr-only"> SejmSim: kalkulator Sejmu, kalkulator siedzeń i symulator wyborów 2027 sejmsim.pl</span>
                   </h1>
                 </div>
               </div>
@@ -682,6 +685,13 @@ function Index() {
         </section>
         </CollapsibleSection>
 
+        <CollapsibleSection title="Wyniki dawnych wyborów" defaultOpen={false} className="pb-2">
+          <div className="space-y-6">
+            <HistoricalResults />
+            <HistoricalDistrictResults />
+          </div>
+        </CollapsibleSection>
+
         <section className="grid gap-6 border-y border-border bg-surface/80 px-5 py-8 backdrop-blur-sm md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <p className="eyebrow">Autor projektu</p>
@@ -700,13 +710,6 @@ function Index() {
             </Button>
           </div>
         </section>
-
-        <CollapsibleSection title="Wyniki dawnych wyborów" defaultOpen={false} className="pb-2">
-          <div className="space-y-6">
-            <HistoricalResults />
-            <HistoricalDistrictResults />
-          </div>
-        </CollapsibleSection>
 
         <footer className="border-t border-border bg-background/90 px-5 py-6 text-xs leading-relaxed text-muted-foreground">
           <p>

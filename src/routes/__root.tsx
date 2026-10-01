@@ -80,10 +80,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SejmSim 2027 (sejmsim.pl)" },
+      { title: "SejmSim 2027 (sejmsim.pl) | Kalkulator Sejmu i siedzeń" },
       {
         name: "description",
-        content: "SejmSim 2027 (sejmsim.pl) — interaktywna mapa 41 okręgów, mandaty i koalicje.",
+        content: "SejmSim 2027 (sejmsim.pl): kalkulator Sejmu, kalkulator siedzeń i mandatów, interaktywna mapa 41 okręgów oraz badanie większości koalicyjnej.",
+      },
+      {
+        name: "keywords",
+        content: "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator miejsc w sejmie, kalkulator mandatów, symulator wyborów, sejm 2027, ordynacja wyborcza, d'hondt, koalicje sejmowe, sejmsim",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
