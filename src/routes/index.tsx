@@ -32,7 +32,6 @@ import { PartyLogo } from "@/components/PartyLogo";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
@@ -656,6 +655,13 @@ function Index() {
           </div>
         </section>
 
+        <CollapsibleSection title="Wyniki dawnych wyborów" defaultOpen={false} className="pb-2">
+          <div className="space-y-6">
+            <HistoricalResults />
+            <HistoricalDistrictResults />
+          </div>
+        </CollapsibleSection>
+
         <footer className="border-t border-border bg-background/90 px-5 py-6 text-xs leading-relaxed text-muted-foreground">
           <p>
             Dane wyjściowe: średnia sondażowa i symulacja okręgowa z ewybory.eu (stan na 30 września
@@ -677,12 +683,6 @@ function Index() {
           </a>
         </footer>
 
-        <CollapsibleSection title="Wyniki dawnych wyborów" defaultOpen={false} className="pb-6">
-          <div className="space-y-6">
-            <HistoricalResults />
-            <HistoricalDistrictResults />
-          </div>
-        </CollapsibleSection>
       </main>
     </div>
   );
