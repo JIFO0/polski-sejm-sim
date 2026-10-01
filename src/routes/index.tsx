@@ -20,6 +20,7 @@ import {
   type Coalition,
   type DistrictState,
   type Scenario,
+  type PartySettings,
 } from "@/lib/simulation";
 import { isScenarioModified, nationalSharesOf, track, trackPageViewOncePerSession } from "@/lib/analytics";
 import { ParticleField } from "@/components/ParticleField";

@@ -10,7 +10,7 @@ export interface DistrictState {
   /** Frekwencja w okręgu, w procentach. */
   turnout: number;
   /** Liczba kwalifikowanych wyborców / uprawnionych (opcjonalna, domyślnie z DISTRICTS[id].electorate). */
-  electorate?: number;
+  electorate?: number | undefined;
 }
 
 export interface PartySettings {

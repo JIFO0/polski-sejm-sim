@@ -25,7 +25,7 @@ export function DistrictPanel({
   onReset: () => void;
   onClose: () => void;
   independentSupport: boolean;
-  mergers?: MergerDef[];
+  mergers?: MergerDef[] | undefined;
 }) {
   const district = DISTRICTS.find((d) => d.id === districtId);
   if (!district) return null;
