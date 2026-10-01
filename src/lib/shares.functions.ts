@@ -79,7 +79,7 @@ export const listShares = createServerFn({ method: "POST" })
     const { listSharedScenariosForOwner } = await import("./server-db.server");
     try {
       const rows = listSharedScenariosForOwner(200);
-      return { ok: true as const, shares: rows };
+      return { ok: true as const, shares: rows.map(({ scenario: _s, ip_hash: _h, ...rest }) => rest) };
     } catch (err) {
       console.error("list shares error", err);
       return { ok: false as const, error: "Nie udało się odczytać linków." };
