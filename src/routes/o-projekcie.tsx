@@ -30,22 +30,22 @@ const features = [
   {
     icon: MapPinned,
     title: "41 okręgów wyborczych",
-    text: "Zmieniaj poparcie i frekwencję osobno w każdym okręgu. Polska nie głosuje jednorodnie — geografia ma kluczowe znaczenie.",
+    text: "W każdym okręgu można edytować poparcie i frekwencję, aby dokładnie stwierdzić które regiony mają znaczenie przy naszym scenariuszu.",
   },
   {
     icon: BarChart3,
     title: "Mandaty metodą D'Hondta",
-    text: "Sprawdź, jak progi wyborcze (5% i 8%) oraz wielkość okręgów wpływają na podział 460 miejsc na sali sejmowej.",
+    text: "Progi wyborcze (5% i 8%) oraz wielkość samych ugrupowań bardzo mocno wpływa na finalny układ koalicyjny, co jest tutaj ilustrowane.",
   },
   {
     icon: UsersRound,
     title: "Frekwencja i koalicje",
-    text: "Testuj zróżnicowaną mobilizację wyborców i badaj, jakie bloki partyjne mogą osiągnąć większość 231 mandatów.",
+    text: "Narzędzie umożliwia testowanie frekwencji i jej wpływu na wynik i badanie, jakie zmienia to dynamikę tworzenia koalicji.",
   },
   {
     icon: Save,
     title: "Własne scenariusze",
-    text: "Zapisuj własne warianty, pobieraj pliki JSON i udostępniaj swoje analizy przez bezpośredni link.",
+    text: "Istnieje możliwość zapisywania własnych wariantów, pobieranie plików JSON i udostępnianie swoich analiz przez bezpośredni link.",
   },
 ];
 
@@ -86,27 +86,22 @@ function AboutProject() {
           <header className="space-y-4">
             <p className="eyebrow">Dlaczego powstał SejmSim</p>
             <h1 className="font-display text-3xl font-bold leading-tight text-ink sm:text-4xl md:text-5xl">
-              Ogólnokrajowe procenty nie tworzą rządu. O wszystkim decydują okręgi.
+              O półokręgu (sejmowym) decydują okręgi (wyborcze)
             </h1>
             <div className="space-y-4 text-base leading-relaxed text-muted-foreground md:text-lg">
               <p>
                 Cześć, nazywam się <strong>Iwo Laskowski</strong>.
               </p>
               <p>
-                Pomysł na SejmSim zrodził się z prostej obserwacji po dyskusji o kolejnych sondażach.
-                W mediach w kółko widzimy te same ogólne wykresy słupkowe, ale w polskim systemie wyborczym
-                taki wynik niewiele mówi o przyszłej większości parlamentarnej.
+                Pomysł na SejmSim zrodził się z dyskusji z przyjacielem o kolejnych sondażach i prospektach na najbliższe wybory. Niestety nie było za bardzo narzędzia które w łatwy i wygodny sposób dawało możliwość na edycję wszystkich parametrów. Inna sprawa jest też taka, że w mediach widzimy zasadniczo głównie słupki z poparciem ogólnokrajowym, a niekoniecznie skupiamy się na poszczególnych konkretnych okręgach, które mają wbrew pozorom bardzo duże znaczenie.
               </p>
               <p>
                 O mandatach decydują <strong>41 okręgów wyborczych</strong>, lokalna frekwencja oraz metoda D&apos;Hondta,
-                która premiuje silniejsze ugrupowania, a mniejsze partie potrafi zepchnąć pod próg. Różnica 1–2 punktów
-                procentowych w odpowiednich regionach może przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji.
+                która premiuje silniejsze ugrupowania, a mniejsze partie zepchnąć pod próg. Różnica 1–2 punktów
+                procentowych w odpowiednich regionach może przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji. Celem tego narzędzia jest to uświadomić.
               </p>
               <p>
-                Zamiast opierać się na gotowych komentarzach publicystów, chciałem mieć narzędzie, w którym sam mogę
-                przesunąć suwak, sprawdzić co się stanie przy wyższej mobilizacji wielkich miast albo przy spadku poparcia
-                jednego z koalicjantów. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go
-                w publiczny, bezpłatny symulator na <strong className="text-foreground">sejmsim.pl</strong>.
+                Jestem programistą, więc tego typu problem uznałem że jest w granicach moich możliwości. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go w publiczny, bezpłatny symulator na <strong className="text-foreground">sejmsim.pl</strong>. Potrzebowałem troszkę konsultacji z ludźmi mądrzejszymi ode mnie, ale przecież na tym polega nauka nowych rzeczy. Ostatecznie jednak po prostu chcę, żeby cała Polska mogła analizować poparcie, scenariusze i być świadomymi wyborcami zaangażowanymi w proces demokratyczny.
               </p>
             </div>
           </header>
@@ -115,10 +110,10 @@ function AboutProject() {
           <section aria-labelledby="funkcje-projektu" className="border-t border-border pt-10">
             <p className="eyebrow">Możliwości narzędzia</p>
             <h2 id="funkcje-projektu" className="mt-1 font-display text-2xl font-bold text-ink sm:text-3xl">
-              Co możesz sprawdzić w SejmSim?
+              Co można sprawdzić w SejmSim?
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-base">
-              Punktem wyjścia jest aktualna średnia sondażowa serwisu ewybory.eu, ale każdy parametr możesz dowolnie modyfikować.
+              Punktem wyjścia jest średnia sondażowa serwisu ewybory.eu wyciągnięta z końcówki września, ale każdy parametr można dowolnie modyfikować, aby zgadzał się z naszymi predykcjami.
             </p>
             <ul className="mt-6 grid gap-4 sm:grid-cols-2">
               {features.map(({ icon: Icon, title, text }) => (
@@ -137,7 +132,7 @@ function AboutProject() {
             <h2 className="mt-1 font-display text-2xl font-bold text-ink">Symulator nie wróżka</h2>
             <p className="mx-auto mt-2.5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
               SejmSim pokazuje matematyczne skutki przyjętych założeń w oparciu o algorytm D&apos;Hondta i rozkład okręgowy.
-              To narzędzie analityczne do sprawdzania scenariuszy „co by było, gdyby” — nie jest prognozą ani oficjalnym badaniem opinii.
+              To narzędzie analityczne do sprawdzania scenariuszy i nie jest prognozą ani oficjalnym badaniem opinii.
             </p>
           </section>
 
@@ -170,7 +165,7 @@ function AboutProject() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Twórca SejmSim • Gdynia
+                      Twórca SejmSim z Gdyni
                     </p>
                   </div>
                 </div>
@@ -191,7 +186,7 @@ function AboutProject() {
 
               <div className="mt-5 border-t border-border pt-5 space-y-3">
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Platforma <strong className="text-foreground">sejmsim.pl</strong> powstaje pro bono jako niezależne narzędzie obywatelskie bez reklam. Każda wpłata pomaga utrzymać serwery, dopracowywać algorytmy i dodawać nowe funkcje.
+                  Platforma <strong className="text-foreground">sejmsim.pl</strong> powstaje pro bono jako niezależne, darmowe, ogólnodostępne narzędzie obywatelskie bez reklam. Każda wpłata jest ogromnie doceniana i pomaga utrzymać serwery, dopracowywać algorytmy i dodawać nowe funkcje. Jeżeli masz jakieś pomysły, daj koniecznie znać!
                 </p>
                 <p className="font-display text-sm font-semibold text-ink">
                   Pomyślnych analiz życzy JIFO!
