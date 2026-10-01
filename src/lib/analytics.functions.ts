@@ -259,7 +259,51 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       deviceBreakdown: [...deviceCounts.entries()].map(([device, count]) => ({ device, count })).sort((a, b) => b.count - a.count),
       trafficSources: [...trafficSources.entries()].map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count),
       dbStats,
+      webhookConfigured: Boolean(process.env["DISCORD_FEEDBACK_WEBHOOK_URL"]?.trim()),
     };
+  });
+
+export const testFeedbackWebhook = createServerFn({ method: "POST" })
+  .inputValidator((data) => summarySchema.parse(data))
+  .handler(async ({ data }) => {
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key)) {
+      return { ok: false as const, error: "Brak uprawnień." };
+    }
+    const webhook = process.env["DISCORD_FEEDBACK_WEBHOOK_URL"]?.trim();
+    if (!webhook) {
+      return { ok: false as const, error: "Brak zdefiniowanego DISCORD_FEEDBACK_WEBHOOK_URL w zmiennych środowiskowych." };
+    }
+    try {
+      const res = await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(6000),
+        body: JSON.stringify({
+          username: "SejmSim 2027 (sejmsim.pl)",
+          allowed_mentions: { parse: [] },
+          embeds: [
+            {
+              title: "🔔 Test webhooka SejmSim",
+              description: "To jest wiadomość testowa wysłana z panelu administratora sejmsim.pl.",
+              color: 0x22c55e,
+              fields: [
+                { name: "Status", value: "Działa poprawnie! ✅", inline: true },
+                { name: "Środowisko", value: "jifo-server", inline: true },
+              ],
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        return { ok: false as const, error: `Discord zwrócił błąd [${res.status}]: ${text}` };
+      }
+      return { ok: true as const };
+    } catch (err) {
+      return { ok: false as const, error: `Błąd połączenia: ${err instanceof Error ? err.message : String(err)}` };
+    }
   });
 
 const clearDataSchema = z.object({

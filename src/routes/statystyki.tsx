@@ -34,7 +34,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { getAnalyticsSummary, clearAllAnalyticsData } from "@/lib/analytics.functions";
+import { getAnalyticsSummary, clearAllAnalyticsData, testFeedbackWebhook } from "@/lib/analytics.functions";
 import { deactivateShare, deleteShare, listShares, togglePermanentShare } from "@/lib/shares.functions";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { EVENT_LABELS } from "@/lib/analytics-events";
@@ -95,6 +95,8 @@ function StatsPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const fetchSummary = useServerFn(getAnalyticsSummary);
   const clearDataFn = useServerFn(clearAllAnalyticsData);
+  const testWebhookFn = useServerFn(testFeedbackWebhook);
+  const [testingWebhook, setTestingWebhook] = useState(false);
 
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
@@ -103,6 +105,24 @@ function StatsPage() {
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [clearPassword, setClearPassword] = useState("");
   const [clearing, setClearing] = useState(false);
+
+  const handleTestWebhook = async () => {
+    setTestingWebhook(true);
+    try {
+      const res = await testWebhookFn({
+        data: { login: login.trim(), key: key.trim() },
+      });
+      if (res.ok) {
+        toast.success("Wiadomość testowa została pomyślnie wysłana na Discorda!");
+      } else {
+        toast.error(res.error || "Nie udało się wysłać wiadomości testowej.");
+      }
+    } catch {
+      toast.error("Błąd podczas wysyłania testu webhooka.");
+    } finally {
+      setTestingWebhook(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -852,14 +872,44 @@ function StatsPage() {
             </section>
 
             <section className="panel p-5">
-              <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary" /> Opinie z formularza
-              </h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {summary.feedback.count === 0
-                  ? "Nikt jeszcze nie wysłał opinii. Zapisują się w bazie nawet wtedy, gdy powiadomienie na Discordzie się nie uda."
-                  : `${summary.feedback.count} opinii, średnia ocena ${summary.feedback.avgRating?.toFixed(1) ?? "—"}/10.`}
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-primary" /> Opinie z formularza
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {summary.feedback.count === 0
+                      ? "Nikt jeszcze nie wysłał opinii. Zapisują się w bazie nawet wtedy, gdy powiadomienie na Discordzie się nie uda."
+                      : `${summary.feedback.count} opinii, średnia ocena ${summary.feedback.avgRating?.toFixed(1) ?? "—"}/10.`}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {summary.webhookConfigured ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      Discord Webhook aktywny
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 border border-amber-500/20" title="Ustaw DISCORD_FEEDBACK_WEBHOOK_URL w pliku .env">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Discord Webhook niepodłączony
+                    </span>
+                  )}
+                  {summary.webhookConfigured ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTestWebhook}
+                      disabled={testingWebhook}
+                      className="text-xs h-7 px-2.5"
+                    >
+                      {testingWebhook ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                      Testuj webhook
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
               <div className="mt-4 flex flex-col gap-3">
                 {summary.feedback.recent.map((item, index) => (
                   <article key={`${item.created_at}-${index}`} className="rounded-lg border border-border/70 p-3">
