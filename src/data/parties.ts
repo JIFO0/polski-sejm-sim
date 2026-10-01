@@ -136,7 +136,7 @@ export interface MergerDef extends CustomPartyDef {
   retention: number;
 }
 
-const BUILTIN_COUNT = PARTIES.length;
+const BUILTIN = PARTIES.slice();
 const LOGO_KEY = "sejmsim.custom-logos.v1";
 
 /** id partii składowej → id wspólnej listy, w której aktualnie jest. */
@@ -165,10 +165,11 @@ export function writeCustomLogo(id: string, dataUrl: string | null) {
 
 /** Synchronizuje globalny rejestr partii z własnymi partiami i listami scenariusza. */
 export function syncCustomEntities(custom: CustomPartyDef[] = [], mergers: MergerDef[] = []) {
-  for (const p of PARTIES.splice(BUILTIN_COUNT)) delete PARTY_MAP[p.id];
+  for (const k of Object.keys(PARTY_MAP)) delete PARTY_MAP[k];
   for (const k of Object.keys(MERGED_INTO)) delete MERGED_INTO[k];
   const logos = readCustomLogos();
-  const inne = PARTIES.pop()!; // „Inne” zawsze na końcu
+  const inne = BUILTIN[BUILTIN.length - 1]!; // „Inne” zawsze na końcu
+  PARTIES.splice(0, PARTIES.length, ...BUILTIN.slice(0, -1));
   for (const c of custom) {
     PARTIES.push({ ...c, logo: logos[c.id], threshold: 5, turnoutSensitivity: 0 });
   }
