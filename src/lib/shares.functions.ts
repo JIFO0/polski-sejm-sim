@@ -99,3 +99,17 @@ export const deactivateShare = createServerFn({ method: "POST" })
       return { ok: false as const };
     }
   });
+
+export const togglePermanentShare = createServerFn({ method: "POST" })
+  .inputValidator((data) => ownerSchema.extend({ id: z.string().max(20) }).parse(data))
+  .handler(async ({ data }) => {
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
+    const { togglePermanentShareById } = await import("./server-db.server");
+    try {
+      const result = togglePermanentShareById(data.id);
+      return { ok: true as const, permanent: result.permanent, expiresAt: result.expiresAt };
+    } catch {
+      return { ok: false as const };
+    }
+  });

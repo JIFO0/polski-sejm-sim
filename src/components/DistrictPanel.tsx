@@ -61,7 +61,14 @@ export function DistrictPanel({
   const sum = Object.entries(state.shares)
     .filter(([id]) => !MERGED_INTO[id])
     .reduce((a, [, b]) => a + b, 0);
-  const unassigned = Math.max(0, 100 - sum);
+  // If we have result shares (effective), use those for unassigned display so it matches the eff-based sliders
+  const effSum = result
+    ? Object.entries(result.shares)
+        .filter(([id]) => !MERGED_INTO[id])
+        .reduce((a, [, b]) => a + b, 0)
+    : sum;
+  const unassigned = Math.max(0, 100 - effSum);
+
 
   return (
     <div className="panel flex h-full flex-col overflow-hidden">
@@ -161,12 +168,13 @@ export function DistrictPanel({
             const eff = result?.shares[p.id] ?? value;
             const partyVotes = Math.round(result?.votes[p.id] ?? (validVotes * eff) / 100);
             const seats = result?.seatsByParty[p.id] ?? 0;
+            const effDiffers = Math.abs(eff - value) >= 0.05;
             return (
               <div key={p.id} className="rounded-lg border border-border/70 bg-surface-strong/60 p-3">
                 <div className="flex items-center gap-2.5">
                   <PartyLogo id={p.id} size={26} />
                   <span className="truncate text-sm font-medium">{p.short}</span>
-                  <ShareInput value={value} onChange={(next) => setShare(p.id, next)} label={`Poparcie ${p.name} w okręgu`} max={independentSupport ? value + unassigned : 100} />
+                  <ShareInput value={eff} onChange={(next) => setShare(p.id, next)} label={`Poparcie ${p.name} w okręgu`} max={independentSupport ? eff + unassigned : 100} />
                   <span className="num w-9 rounded bg-ink/5 py-0.5 text-center text-xs font-bold">
                     {seats}
                   </span>
@@ -174,18 +182,19 @@ export function DistrictPanel({
                 <Slider
                   className="mt-2.5"
                   min={0}
-                  max={independentSupport ? Math.max(70, value + unassigned) : 100}
+                  max={independentSupport ? Math.max(70, eff + unassigned) : 100}
                   step={0.5}
-                  value={[value]}
+                  value={[eff]}
                   onValueChange={([v = 0]) => setShare(p.id, v)}
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  baza {base.toFixed(1)}%, po frekwencji {eff.toFixed(1)}% • szac. <strong className="text-ink">{partyVotes.toLocaleString("pl-PL")}</strong> głosów
+                  baza {base.toFixed(1)}%{effDiffers ? `, wpływ frekwencji → ${eff.toFixed(1)}%` : ""} • szac. <strong className="text-ink">{partyVotes.toLocaleString("pl-PL")}</strong> głosów
                   {mergerDef ? ` • wspólna lista (${mergerDef.members.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ")})` : ""}
                 </p>
               </div>
             );
           })}
+
         </div>
 
         {result ? (

@@ -353,6 +353,18 @@ export function clearAllPlatformData(): { ok: boolean; deletedEvents: number; de
   };
 }
 
+export function togglePermanentShareById(id: string): { permanent: boolean; expiresAt: string } {
+  const db = getDb();
+  const row = db.prepare("SELECT expires_at FROM shared_scenarios WHERE id = ?").get(id) as { expires_at: string } | undefined;
+  if (!row) return { permanent: false, expiresAt: "" };
+  const isPermanent = row.expires_at >= "9999";
+  const newExpiresAt = isPermanent
+    ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    : "9999-12-31T23:59:59.999Z";
+  db.prepare("UPDATE shared_scenarios SET expires_at = ?, active = 1 WHERE id = ?").run(newExpiresAt, id);
+  return { permanent: !isPermanent, expiresAt: newExpiresAt };
+}
+
 export function getDbStats() {
   let sizeBytes = 0;
   if (dbPathCached && fs.existsSync(dbPathCached)) {

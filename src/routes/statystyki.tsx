@@ -16,6 +16,7 @@ import {
   Loader2,
   Mail,
   MapPin,
+  Pin,
   RotateCcw,
   ShieldCheck,
   Trash2,
@@ -34,9 +35,10 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { getAnalyticsSummary, clearAllAnalyticsData } from "@/lib/analytics.functions";
-import { deactivateShare, listShares } from "@/lib/shares.functions";
+import { deactivateShare, listShares, togglePermanentShare } from "@/lib/shares.functions";
 import { EVENT_LABELS } from "@/lib/analytics-events";
 import { PARTIES } from "@/data/parties";
+
 
 const TITLE = "Statystyki SejmSim 2027";
 const DESCRIPTION = "Anonimowe, zbiorcze statystyki korzystania z symulatora SejmSim 2027.";
@@ -84,6 +86,8 @@ function StatsPage() {
   const [shares, setShares] = useState<ShareRow[]>([]);
   const fetchShares = useServerFn(listShares);
   const deactivate = useServerFn(deactivateShare);
+  const togglePermanent = useServerFn(togglePermanentShare);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -712,7 +716,7 @@ function StatsPage() {
                 <h2 className="font-display text-lg font-bold text-ink">Udostępnione linki serwera</h2>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Linki wygasają po 7 dniach. Każdy adres IP może mieć do 5 aktywnych linków naraz. Wszystko zapisywane jest bezpośrednio w lokalnej bazie na serwerze (bez Lovable).
+                Linki wygasają po 7 dniach. Każdy adres IP może mieć do 5 aktywnych linków naraz. Linki permanentne nigdy nie wygasają automatycznie.
               </p>
               <div className="mt-3 max-h-96 overflow-auto">
                 <table className="w-full text-sm">
@@ -722,28 +726,62 @@ function StatsPage() {
                       <th className="py-1 font-medium">Utworzony</th>
                       <th className="py-1 font-medium">Wygasa</th>
                       <th className="py-1 text-right font-medium">Otwarcia</th>
-                      <th className="py-1 text-right font-medium">Status</th>
+                      <th className="py-1 text-right font-medium" colSpan={2}>Akcje</th>
                     </tr>
                   </thead>
                   <tbody>
                     {shares.length === 0 ? (
-                      <tr><td colSpan={5} className="py-3 text-muted-foreground">Brak aktywnych linków.</td></tr>
+                      <tr><td colSpan={6} className="py-3 text-muted-foreground">Brak aktywnych linków.</td></tr>
                     ) : shares.map((sh) => {
-                      const live = sh.active && new Date(sh.expires_at).getTime() > Date.now();
+                      const isPermanent = sh.expires_at >= "9999";
+                      const live = sh.active && (isPermanent || new Date(sh.expires_at).getTime() > Date.now());
                       return (
                         <tr key={sh.id} className="border-t border-border/60">
                           <td className="py-1.5">
-                            <a href={`/?s=${sh.id}`} target="_blank" rel="noreferrer" className="font-medium text-ink underline-offset-2 hover:underline">{sh.name}</a>
+                            <div className="flex items-center gap-1.5">
+                              <a href={`/?s=${sh.id}`} target="_blank" rel="noreferrer" className="font-medium text-ink underline-offset-2 hover:underline">{sh.name}</a>
+                              {isPermanent && (
+                                <span className="inline-flex items-center gap-0.5 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                                  <Pin className="h-2.5 w-2.5" /> Permanentny
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="num py-1.5 text-xs">{new Date(sh.created_at).toLocaleString("pl-PL")}</td>
-                          <td className="num py-1.5 text-xs">{new Date(sh.expires_at).toLocaleString("pl-PL")}</td>
+                          <td className="num py-1.5 text-xs">
+                            {isPermanent ? (
+                              <span className="font-semibold text-primary">∞ Bezterminowy</span>
+                            ) : (
+                              new Date(sh.expires_at).toLocaleString("pl-PL")
+                            )}
+                          </td>
                           <td className="num py-1.5 text-right font-bold text-ink">{sh.views}</td>
                           <td className="py-1.5 text-right">
                             {live ? (
                               <Button
                                 size="sm"
+                                variant={isPermanent ? "secondary" : "outline"}
+                                className="min-h-9 gap-1 text-xs"
+                                title={isPermanent ? "Cofnij permanentność (wróć do 7 dni)" : "Ustaw jako permanentny (nie wygaśnie)"}
+                                onClick={async () => {
+                                  const r = await togglePermanent({ data: { login: login.trim(), key: key.trim(), id: sh.id } });
+                                  if (r.ok) {
+                                    setShares((all) => all.map((x) => x.id === sh.id ? { ...x, expires_at: r.expiresAt, active: true } : x));
+                                    toast.success(r.permanent ? "Link ustawiony jako permanentny." : "Link wróci do standardowego wygasania (7 dni).");
+                                  }
+                                }}
+                              >
+                                <Pin className="h-3 w-3" />
+                                {isPermanent ? "Cofnij stały" : "Permanentny"}
+                              </Button>
+                            ) : null}
+                          </td>
+                          <td className="py-1.5 text-right pl-1">
+                            {live ? (
+                              <Button
+                                size="sm"
                                 variant="outline"
-                                className="min-h-9 text-xs"
+                                className="min-h-9 text-xs text-destructive hover:text-destructive"
                                 onClick={async () => {
                                   const r = await deactivate({ data: { login: login.trim(), key: key.trim(), id: sh.id } });
                                   if (r.ok) setShares((all) => all.map((x) => (x.id === sh.id ? { ...x, active: false } : x)));
@@ -762,6 +800,7 @@ function StatsPage() {
                 </table>
               </div>
             </section>
+
 
             {/* Zestawienie wszystkich zdarzeń */}
             <section className="panel p-5">
