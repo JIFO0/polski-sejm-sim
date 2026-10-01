@@ -26,3 +26,9 @@
 - [x] Zwiększyć widoczność i reakcję cząsteczek na kursor
 - [x] Dodać historyczne mapy okręgów dla wyborów 2023, 2019, 2015 i 2011
 - [x] Dodać zwijanie głównych sekcji, z historią domyślnie zamkniętą
+
+- [ ] Naprawić mobilny zapis i nazwy pobierania scenariuszy
+- [ ] Dodać tryb niezależnego poparcia, pulę i pola procentowe
+- [ ] Dodać globalne menu dostępności
+- [ ] Uporządkować tutorial, parlament, historię i odstępy sekcji
+- [ ] Zweryfikować całość na telefonie i komputerze
