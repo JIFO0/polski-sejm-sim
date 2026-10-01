@@ -1,8 +1,9 @@
 export const OWNER_LOGIN = "JIFO";
 
-/** Panel właściciela: login JIFO + hasło z sekretu ANALYTICS_KEY (lub hasło główne). */
+/** Panel właściciela: login JIFO + hasło z sekretu ANALYTICS_KEY. */
 export function isOwner(login: string, key: string) {
-  const expected = process.env["ANALYTICS_KEY"] || "L7HJ,+Ki(aW]2^PtwZsKX$^}";
+  const expected = process.env["ANALYTICS_KEY"];
+  if (!expected || expected.length < 12) return false;
   return login.trim().toUpperCase() === OWNER_LOGIN && key === expected;
 }
 
