@@ -63,6 +63,16 @@ export function getDb(): DatabaseSync {
     CREATE INDEX IF NOT EXISTS idx_feedback_ip_created ON feedback(ip_hash, created_at);
   `);
 
+  const shareCols = db.prepare("PRAGMA table_info(shared_scenarios)").all() as { name: string }[];
+  if (!shareCols.some((col) => col.name === "content_hash")) {
+    db.exec("ALTER TABLE shared_scenarios ADD COLUMN content_hash TEXT");
+  }
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_share_active_hash
+    ON shared_scenarios(ip_hash, content_hash)
+    WHERE active = 1;
+  `);
+
   dbInstance = db;
   return db;
 }
@@ -76,8 +86,8 @@ export function runMaintenance(): void {
     const db = getDb();
     const nowIso = new Date().toISOString();
 
-    // 1. Delete expired or deactivated shared scenarios (7-day validity)
-    db.prepare("DELETE FROM shared_scenarios WHERE expires_at < ? OR active = 0").run(nowIso);
+    // Wygasłe linki znikają same. Wyłączone zostają, dopóki właściciel ich nie usunie.
+    db.prepare("DELETE FROM shared_scenarios WHERE active = 1 AND expires_at < ? AND expires_at < '9999-01-01'").run(nowIso);
 
     // 2. Emergency disk check: only if file size approaches 3.8GB, prune oldest events to guarantee < 4GB
     if (dbPathCached && fs.existsSync(dbPathCached)) {
@@ -133,11 +143,28 @@ export function countActiveSharesForIp(ipHash: string, nowIso: string): { count:
   };
 }
 
+export function findActiveShareByHash(
+  ipHash: string,
+  contentHash: string,
+  nowIso: string,
+): { id: string; expires_at: string } | null {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT id, expires_at FROM shared_scenarios
+       WHERE ip_hash = ? AND content_hash = ? AND active = 1 AND expires_at > ?
+       ORDER BY created_at DESC LIMIT 1`,
+    )
+    .get(ipHash, contentHash, nowIso) as { id: string; expires_at: string } | undefined;
+  return row ?? null;
+}
+
 export function insertSharedScenario(entry: {
   id: string;
   name: string;
   scenario: Record<string, unknown>;
   ipHash: string;
+  contentHash: string;
   expiresAt: string;
   createdAt?: string;
 }): boolean {
@@ -145,8 +172,8 @@ export function insertSharedScenario(entry: {
   const db = getDb();
   const nowIso = entry.createdAt ?? new Date().toISOString();
   db.prepare(`
-    INSERT INTO shared_scenarios (id, name, scenario, ip_hash, active, views, created_at, expires_at)
-    VALUES (?, ?, ?, ?, 1, 0, ?, ?)
+    INSERT INTO shared_scenarios (id, name, scenario, ip_hash, active, views, created_at, expires_at, content_hash)
+    VALUES (?, ?, ?, ?, 1, 0, ?, ?, ?)
   `).run(
     entry.id,
     entry.name,
@@ -154,6 +181,7 @@ export function insertSharedScenario(entry: {
     entry.ipHash,
     nowIso,
     entry.expiresAt,
+    entry.contentHash,
   );
   return true;
 }
@@ -222,6 +250,61 @@ export function deactivateShareById(id: string): boolean {
   const db = getDb();
   db.prepare("UPDATE shared_scenarios SET active = 0 WHERE id = ?").run(id);
   return true;
+}
+
+export function deleteShareById(id: string): boolean {
+  const db = getDb();
+  const res = db.prepare("DELETE FROM shared_scenarios WHERE id = ?").run(id);
+  return Number(res.changes) > 0;
+}
+
+export function countAnalyticsEvents(): number {
+  const db = getDb();
+  const row = db.prepare("SELECT COUNT(*) as count FROM analytics_events").get() as { count: number } | undefined;
+  return Number(row?.count ?? 0);
+}
+
+export function getShareLibraryStats(nowIso: string) {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT
+         COUNT(*) as total,
+         COALESCE(SUM(CASE WHEN active = 1 AND expires_at > ? THEN 1 ELSE 0 END), 0) as active,
+         COALESCE(SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END), 0) as inactive,
+         COALESCE(SUM(CASE WHEN expires_at >= '9999' THEN 1 ELSE 0 END), 0) as permanent,
+         COALESCE(SUM(views), 0) as views
+       FROM shared_scenarios`,
+    )
+    .get(nowIso) as { total: number; active: number; inactive: number; permanent: number; views: number };
+  return {
+    total: Number(row?.total ?? 0),
+    active: Number(row?.active ?? 0),
+    inactive: Number(row?.inactive ?? 0),
+    permanent: Number(row?.permanent ?? 0),
+    views: Number(row?.views ?? 0),
+  };
+}
+
+export function getFeedbackSummary(limit = 20) {
+  const db = getDb();
+  const agg = db.prepare("SELECT COUNT(*) as count, AVG(rating) as avg FROM feedback").get() as {
+    count: number;
+    avg: number | null;
+  };
+  const recent = db
+    .prepare(
+      `SELECT name, email, rating, message, created_at
+       FROM feedback
+       ORDER BY created_at DESC
+       LIMIT ?`,
+    )
+    .all(limit) as { name: string | null; email: string | null; rating: number; message: string; created_at: string }[];
+  return {
+    count: Number(agg?.count ?? 0),
+    avgRating: agg?.avg == null ? null : Number(agg.avg),
+    recent,
+  };
 }
 
 export function countTotalActiveShares(nowIso: string): number {

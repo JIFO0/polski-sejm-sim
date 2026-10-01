@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Info, UserRound } from "lucide-react";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { SupportButton } from "@/components/SupportButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
 
@@ -33,6 +34,7 @@ export function FloatingNav({
       }`}
     >
       <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-surface/90 p-1.5 shadow-lg shadow-black/5 backdrop-blur-md">
+        <ThemeToggle className="scale-90" />
         {mode === "about" ? (
           <Button
             variant="ghost"

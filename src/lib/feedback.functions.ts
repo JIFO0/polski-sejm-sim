@@ -15,7 +15,6 @@ export const sendFeedback = createServerFn({ method: "POST" })
   .inputValidator((data) => schema.parse(data))
   .handler(async ({ data }) => {
     const webhook = process.env["DISCORD_FEEDBACK_WEBHOOK_URL"];
-    if (!webhook) return { ok: false as const, error: "Opinie są chwilowo niedostępne." };
 
     const { sha256 } = await import("./owner-auth.server");
     const ip =
@@ -46,6 +45,7 @@ export const sendFeedback = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Nie udało się zapisać opinii." };
     }
 
+    if (webhook) {
     try {
       const res = await fetch(webhook, {
         method: "POST",
@@ -71,6 +71,7 @@ export const sendFeedback = createServerFn({ method: "POST" })
       if (!res.ok) console.error(`Discord webhook [${res.status}]: ${await res.text()}`);
     } catch (err) {
       console.error("Discord webhook error", err);
+    }
     }
 
     return { ok: true as const };

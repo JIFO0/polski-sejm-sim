@@ -125,14 +125,18 @@ export function effectiveShares(
 }
 
 function dhondt(votes: Record<string, number>, seats: number): Record<string, number> {
-  const ids = Object.keys(votes).filter((k) => (votes[k] ?? 0) > 0);
+  const ids = Object.keys(votes)
+    .filter((k) => (votes[k] ?? 0) > 0)
+    .sort();
   const result: Record<string, number> = Object.fromEntries(ids.map((k) => [k, 0]));
   for (let s = 0; s < seats; s++) {
     let best: string | null = null;
     let bestQ = -1;
     for (const id of ids) {
       const q = (votes[id] ?? 0) / ((result[id] ?? 0) + 1);
-      if (q > bestQ + 1e-12) {
+      // Porównanie względne: ta sama proporcja głosów daje ten sam mandat
+      // niezależnie od skali frekwencji (bezwzględny epsilon potrafił przerzucać remisy).
+      if (best === null || q > bestQ * (1 + 1e-9)) {
         bestQ = q;
         best = id;
       }
@@ -141,6 +145,14 @@ function dhondt(votes: Record<string, number>, seats: number): Record<string, nu
     result[best] = (result[best] ?? 0) + 1;
   }
   return result;
+}
+
+/** Czy któraś włączona partia ma profil elektoratu wrażliwy na frekwencję. */
+export function turnoutChangesSeats(scenario: Scenario): boolean {
+  return Object.entries(scenario.parties).some(([, settings]) => {
+    if (settings.enabled === false) return false;
+    return Math.abs(settings.turnoutSensitivity) > 0.01;
+  });
 }
 
 export interface DistrictResult {
@@ -171,12 +183,18 @@ export function simulate(scenario: Scenario): SimulationResult {
     d: District;
     shares: Record<string, number>;
     votes: Record<string, number>;
+    allocVotes: Record<string, number>;
     valid: number;
     electorate: number;
   }[] = [];
   const nationalVotes: Record<string, number> = {};
+  const allocNational: Record<string, number> = {};
   let totalVotes = 0;
+  let allocTotal = 0;
   let totalElectorate = 0;
+  // Same partie neutralne: frekwencja skaluje tylko liczbę głosów.
+  // Podział mandatów i progi liczymy wagą uprawnionych, nie lokalną frekwencją.
+  const reacts = turnoutChangesSeats(scenario);
 
   for (const d of DISTRICTS) {
     const state = scenario.districts[d.id] ?? {
@@ -194,20 +212,26 @@ export function simulate(scenario: Scenario): SimulationResult {
       scenario.mergers ?? [],
     );
     const valid = (electorate * state.turnout) / 100;
+    const allocValid = reacts ? valid : (electorate * BASE_TURNOUT) / 100;
     const votes: Record<string, number> = {};
+    const allocVotes: Record<string, number> = {};
     for (const [id, pct] of Object.entries(shares)) {
-      const v = (valid * pct) / 100;
-      votes[id] = v;
-      nationalVotes[id] = (nationalVotes[id] ?? 0) + v;
+      const shown = (valid * pct) / 100;
+      const weighted = (allocValid * pct) / 100;
+      votes[id] = shown;
+      allocVotes[id] = weighted;
+      nationalVotes[id] = (nationalVotes[id] ?? 0) + shown;
+      allocNational[id] = (allocNational[id] ?? 0) + weighted;
     }
     totalVotes += valid;
+    allocTotal += allocValid;
     totalElectorate += electorate;
-    perDistrict.push({ d, shares, votes, valid, electorate });
+    perDistrict.push({ d, shares, votes, allocVotes, valid, electorate });
   }
 
   const nationalShares: Record<string, number> = {};
-  for (const [id, v] of Object.entries(nationalVotes)) {
-    nationalShares[id] = totalVotes > 0 ? (v / totalVotes) * 100 : 0;
+  for (const [id, v] of Object.entries(allocNational)) {
+    nationalShares[id] = allocTotal > 0 ? (v / allocTotal) * 100 : 0;
   }
 
   const qualified = Object.keys(nationalVotes).filter((id) => {
@@ -218,9 +242,9 @@ export function simulate(scenario: Scenario): SimulationResult {
   });
 
   const seatsByParty: Record<string, number> = {};
-  const districts: DistrictResult[] = perDistrict.map(({ d, shares, votes, valid, electorate }) => {
+  const districts: DistrictResult[] = perDistrict.map(({ d, shares, votes, allocVotes, valid, electorate }) => {
     const eligible: Record<string, number> = {};
-    for (const id of qualified) eligible[id] = votes[id] ?? 0;
+    for (const id of qualified) eligible[id] = allocVotes[id] ?? 0;
     const seatsHere = dhondt(eligible, d.seats);
     for (const [id, n] of Object.entries(seatsHere)) {
       seatsByParty[id] = (seatsByParty[id] ?? 0) + n;
@@ -229,9 +253,9 @@ export function simulate(scenario: Scenario): SimulationResult {
     let bestSeats = -1;
     let bestVotes = -1;
     for (const [id, n] of Object.entries(seatsHere)) {
-      if (n > bestSeats || (n === bestSeats && (votes[id] ?? 0) > bestVotes)) {
+      if (n > bestSeats || (n === bestSeats && (allocVotes[id] ?? 0) > bestVotes)) {
         bestSeats = n;
-        bestVotes = votes[id] ?? 0;
+        bestVotes = allocVotes[id] ?? 0;
         winner = id;
       }
     }

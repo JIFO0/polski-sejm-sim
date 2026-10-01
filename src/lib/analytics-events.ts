@@ -25,6 +25,7 @@ export const EVENTS = [
   "about_view",
   "custom_party_add",
   "merger_create",
+  "theme_toggle",
 ] as const;
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
@@ -55,5 +56,6 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   about_view: "Wejścia na stronę o projekcie (/o-projekcie)",
   custom_party_add: "Dodane własne partie",
   merger_create: "Utworzone wspólne listy",
+  theme_toggle: "Przełączenia motywu",
 };
 

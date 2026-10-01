@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound, Users } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { toast } from "sonner";
 
 import { LogoMark } from "@/components/Logos";
@@ -15,6 +16,7 @@ import {
   MAJORITY,
   defaultScenario,
   simulate,
+  turnoutChangesSeats,
   type Coalition,
   type DistrictState,
   type Scenario,
@@ -373,6 +375,7 @@ function Index() {
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
             <nav className="flex flex-wrap items-center justify-end gap-2" aria-label="Nawigacja główna">
+            <ThemeToggle />
             <Button variant="ghost" size="sm" asChild>
               <Link to="/o-projekcie">
                 <Info className="mr-1.5 h-4 w-4" /> O projekcie
@@ -461,7 +464,19 @@ function Index() {
                 seatsByParty={result.seatsByParty}
                 highlight={highlight ?? undefined}
               />
-              <div className="mt-1 flex items-end justify-between">
+              <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5" aria-label="Legenda partii z mandatami">
+                {Object.entries(result.seatsByParty)
+                  .filter(([, seats]) => seats > 0)
+                  .sort((a, b) => b[1] - a[1] || (PARTY_MAP[a[0]]?.short ?? a[0]).localeCompare(PARTY_MAP[b[0]]?.short ?? b[0], "pl"))
+                  .map(([id, seats]) => (
+                    <li key={id} className="inline-flex items-center gap-1.5 text-xs" title={PARTY_MAP[id]?.name ?? id}>
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: PARTY_MAP[id]?.color ?? "#94A3B8" }} />
+                      <span className="font-semibold text-ink">{PARTY_MAP[id]?.short ?? id}</span>
+                      <span className="num text-muted-foreground">{seats}</span>
+                    </li>
+                  ))}
+              </ul>
+              <div className="mt-3 flex items-end justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">Największy klub</p>
                   <p className="font-display text-lg font-bold" style={{ color: leader?.color }}>
@@ -572,7 +587,7 @@ function Index() {
                 <span>0%</span>
                 <div
                   className="h-2 flex-1 rounded-full"
-                  style={{ background: `linear-gradient(90deg, #fff, ${focusColor})` }}
+                  style={{ background: `linear-gradient(90deg, var(--surface), ${focusColor})` }}
                 />
                 <span>maks. w kraju</span>
               </div>
@@ -726,6 +741,11 @@ function Index() {
                 value={[result.nationalTurnout]}
                 onValueChange={([v = 0]) => setGlobalTurnout(v)}
               />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {turnoutChangesSeats(scenario)
+                  ? "Frekwencja zmienia szacowaną liczbę głosów i, przez profil elektoratu, podział mandatów."
+                  : "Wszystkie partie są w grupie „Frekwencja nie wpływa”, więc mandaty zostają takie same. Zmienia się tylko szacowana liczba głosów."}
+              </p>
             </div>
 
             <div>

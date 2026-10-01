@@ -8,14 +8,11 @@ interface Particle {
   y: number;
   vx: number;
   vy: number;
-  r: number;
   from: number;
   to: number;
   t: number;
-  speed: number;
-  phase: number;
-  colorHold: number;
   partyColor: number;
+  colorHold: number;
 }
 
 function hexToRgb(hex: string) {
@@ -28,11 +25,16 @@ function hexToRgb(hex: string) {
 }
 
 const RGB = PARTY_COLORS.map(hexToRgb);
-const FALLBACK = [148, 163, 184] as const;
+const DOT = 1.45;
+
+function neutralRgb() {
+  const dark = document.documentElement.classList.contains("dark");
+  return dark ? ([186, 198, 216] as const) : ([148, 163, 184] as const);
+}
 
 /**
- * Tło: "polskie społeczeństwo" jako chmura punktów. Punkty delikatnie
- * rozstępują się przed kursorem i płynnie wracają na swoje miejsce (spring physics).
+ * Tło: równa siatka kropek tej samej wielkości.
+ * Kolor partii pojawia się tylko na chwilę przy kursorze, potem wraca do szarości.
  */
 export function ParticleField({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -62,28 +64,46 @@ export function ParticleField({ className }: { className?: string }) {
       canvas.height = Math.max(1, Math.floor(height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const density = Math.round((width * height) / 1700);
-      const count = Math.max(520, Math.min(1800, density));
-      particles = Array.from({ length: count }, (_, index) => {
-        const ox = Math.random() * width;
-        const oy = Math.random() * height;
-        return {
-          originX: ox,
-          originY: oy,
-          x: ox,
-          y: oy,
-          vx: 0,
-          vy: 0,
-          r: 1.15 + Math.random() * 1.75,
-          from: -1,
-          to: -1,
-          t: 1,
-          speed: 0.003 + Math.random() * 0.005,
-          phase: Math.random() * Math.PI * 2,
-          colorHold: Math.random() * 420,
-          partyColor: index % RGB.length,
-        };
-      });
+      const spacing = width < 640 ? 18 : 22;
+      const cols = Math.max(1, Math.floor(width / spacing));
+      const rows = Math.max(1, Math.floor(height / spacing));
+      const offsetX = (width - (cols - 1) * spacing) / 2;
+      const offsetY = (height - (rows - 1) * spacing) / 2;
+      particles = [];
+      let index = 0;
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const ox = offsetX + col * spacing;
+          const oy = offsetY + row * spacing;
+          particles.push({
+            originX: ox,
+            originY: oy,
+            x: ox,
+            y: oy,
+            vx: 0,
+            vy: 0,
+            from: -1,
+            to: -1,
+            t: 1,
+            partyColor: index % RGB.length,
+            colorHold: 0,
+          });
+          index += 1;
+        }
+      }
+    };
+
+    const paintDot = (x: number, y: number, from: number, to: number, t: number, alpha: number) => {
+      const neutral = neutralRgb();
+      const a = from === -1 ? neutral : (RGB[from] ?? neutral);
+      const b = to === -1 ? neutral : (RGB[to] ?? neutral);
+      const r = Math.round(a[0] + (b[0] - a[0]) * t);
+      const g = Math.round(a[1] + (b[1] - a[1]) * t);
+      const bl = Math.round(a[2] + (b[2] - a[2]) * t);
+      ctx.beginPath();
+      ctx.arc(x, y, DOT, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, ${alpha})`;
+      ctx.fill();
     };
 
     const onPointer = (e: PointerEvent) => {
@@ -98,14 +118,12 @@ export function ParticleField({ className }: { className?: string }) {
       pointer.y = -9999;
     };
 
-    const radius = 210;
+    const radius = 150;
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
       for (const p of particles) {
-        let boost = 0;
-
-        // Odpychanie od kursora
+        let near = 0;
         if (pointer.active) {
           const dx = p.x - pointer.x;
           const dy = p.y - pointer.y;
@@ -113,59 +131,40 @@ export function ParticleField({ className }: { className?: string }) {
           if (d2 < radius * radius) {
             const d = Math.sqrt(d2) || 1;
             const force = (1 - d / radius) ** 2;
-            boost = force;
-            // Impuls odpychający
-            p.vx += (dx / d) * force * 0.85;
-            p.vy += (dy / d) * force * 0.85;
-
-            if (force > 0.04 && p.to === -1) {
-              p.from = p.to;
-              p.to = p.partyColor;
-              p.t = 0;
-              p.colorHold = 80 + Math.random() * 120;
+            near = force;
+            p.vx += (dx / d) * force * 0.28;
+            p.vy += (dy / d) * force * 0.28;
+            if (force > 0.12) {
+              if (p.to !== p.partyColor) {
+                p.from = p.to;
+                p.to = p.partyColor;
+                p.t = 0;
+              }
+              p.colorHold = 28;
             }
           }
         }
 
-        // Siła sprężystości ściągająca punkt z powrotem na pozycję wyjściową (origin)
         const homeDx = p.originX - p.x;
         const homeDy = p.originY - p.y;
-        p.vx += homeDx * 0.022;
-        p.vy += homeDy * 0.022;
-
-        // Tłumienie prędkości (damping)
-        p.vx *= 0.89;
-        p.vy *= 0.89;
-
-        p.phase += 0.004;
-        p.vx += Math.cos(p.phase) * 0.0025;
-        p.vy += Math.sin(p.phase * 0.83) * 0.0025;
-
+        p.vx += homeDx * 0.085;
+        p.vy += homeDy * 0.085;
+        p.vx *= 0.78;
+        p.vy *= 0.78;
         p.x += p.vx;
         p.y += p.vy;
 
-        if (p.t < 1) p.t = Math.min(1, p.t + p.speed);
-        p.colorHold -= 1;
-        if (p.colorHold <= 0 && p.t >= 1) {
+        if (p.t < 1) p.t = Math.min(1, p.t + 0.08);
+        if (p.colorHold > 0) p.colorHold -= 1;
+        if (p.colorHold <= 0 && p.to !== -1 && p.t >= 1) {
           p.from = p.to;
-          p.to = p.to === -1 ? Math.floor(Math.random() * RGB.length) : -1;
+          p.to = -1;
           p.t = 0;
-          p.colorHold = p.to === -1 ? 220 + Math.random() * 620 : 90 + Math.random() * 220;
         }
-        const a = p.from === -1 ? FALLBACK : (RGB[p.from] ?? FALLBACK);
-        const b = p.to === -1 ? FALLBACK : (RGB[p.to] ?? FALLBACK);
-        const t = p.t;
-        const r = Math.round(a[0] + (b[0] - a[0]) * t);
-        const g = Math.round(a[1] + (b[1] - a[1]) * t);
-        const bl = Math.round(a[2] + (b[2] - a[2]) * t);
 
         const colored = p.to !== -1 || p.from !== -1;
-        const alpha = (colored ? 0.42 : 0.29) + boost * 0.16;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r + boost * 0.9, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, ${alpha})`;
-        ctx.fill();
+        const alpha = (colored ? 0.72 : 0.38) + near * 0.2;
+        paintDot(p.x, p.y, p.from, p.to, p.t, alpha);
       }
       raf = requestAnimationFrame(draw);
     };
@@ -173,11 +172,11 @@ export function ParticleField({ className }: { className?: string }) {
     build();
     if (reduced) {
       ctx.clearRect(0, 0, width, height);
+      const neutral = neutralRgb();
       for (const p of particles) {
-        const c = p.to === -1 ? FALLBACK : (RGB[p.to] ?? FALLBACK);
         ctx.beginPath();
-        ctx.arc(p.originX, p.originY, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${c[0]}, ${c[1]}, ${c[2]}, 0.29)`;
+        ctx.arc(p.originX, p.originY, DOT, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${neutral[0]}, ${neutral[1]}, ${neutral[2]}, 0.4)`;
         ctx.fill();
       }
     } else {

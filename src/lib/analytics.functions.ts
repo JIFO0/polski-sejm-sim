@@ -44,6 +44,18 @@ export const trackEvent = createServerFn({ method: "POST" })
 
 const summarySchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200) });
 
+const WEEKDAY_INDEX: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+
+function getPolishWeekdayIndex(isoString: string): number {
+  try {
+    const name = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Warsaw", weekday: "short" }).format(new Date(isoString));
+    return WEEKDAY_INDEX[name] ?? 0;
+  } catch {
+    const day = new Date(isoString).getUTCDay();
+    return day === 0 ? 6 : day - 1;
+  }
+}
+
 function getPolishHour(isoString: string): number {
   try {
     const d = new Date(isoString);
@@ -80,8 +92,10 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Nieprawidłowy login lub hasło." };
     }
 
-    const { getAllAnalytics, countTotalActiveShares, getDbStats } = await import("./server-db.server");
-    const rows = getAllAnalytics(500000);
+    const { getAllAnalytics, countTotalActiveShares, getDbStats, countAnalyticsEvents, getFeedbackSummary, getShareLibraryStats } =
+      await import("./server-db.server");
+    const totalEventsInDb = countAnalyticsEvents();
+    const rows = getAllAnalytics(Math.max(totalEventsInDb, 1));
 
     const countBy = (name: string) => rows.filter((r) => r.event === name).length;
 
@@ -147,7 +161,8 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
 
     // New enriched insights
     const districtViews = new Map<string, number>();
-    const coalitionTests = new Map<string, { count: number; majority: boolean }>();
+    const coalitionTests = new Map<string, { count: number; majorityHits: number }>();
+    const weekdayVisits = [0, 0, 0, 0, 0, 0, 0];
     const partyAdjustments = new Map<string, number>();
     const mapModeCounts = new Map<string, number>();
     const historyYearCounts = new Map<string, number>();
@@ -166,6 +181,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       if (r.event === "page_view") {
         hours[new Date(r.created_at).getUTCHours()]! += 1;
         hoursPolish[getPolishHour(r.created_at)]! += 1;
+        weekdayVisits[getPolishWeekdayIndex(r.created_at)]! += 1;
         if (meta) {
           const parts = meta.split("|");
           const dev = parts[0] || "nieznane";
@@ -177,9 +193,9 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
         districtViews.set(meta, (districtViews.get(meta) ?? 0) + 1);
       } else if (r.event === "coalition_test" && meta) {
         const [coalitionName = meta, maj] = meta.split(":");
-        const entry = coalitionTests.get(coalitionName) ?? { count: 0, majority: maj === "tak" || maj === "wiekszosc" };
+        const entry = coalitionTests.get(coalitionName) ?? { count: 0, majorityHits: 0 };
         entry.count += 1;
-        entry.majority = maj === "tak" || maj === "wiekszosc";
+        if (maj === "tak" || maj === "wiekszosc") entry.majorityHits += 1;
         coalitionTests.set(coalitionName, entry);
       } else if (r.event === "party_slider_adjust" && meta) {
         partyAdjustments.set(meta, (partyAdjustments.get(meta) ?? 0) + 1);
@@ -201,6 +217,11 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
     const nowIso = new Date().toISOString();
     const activeShares = countTotalActiveShares(nowIso);
     const dbStats = getDbStats();
+    const feedback = getFeedbackSummary(20);
+    const shareLibrary = getShareLibraryStats(nowIso);
+    const coalitionTestCount = [...coalitionTests.values()].reduce((sum, item) => sum + item.count, 0);
+    const coalitionMajorityHits = [...coalitionTests.values()].reduce((sum, item) => sum + item.majorityHits, 0);
+    const weekdayLabels = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
 
     return {
       ok: true as const,
@@ -210,7 +231,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       pageViewsByHourPolish: hoursPolish,
       turnoutBuckets: [...turnoutBuckets.entries()].map(([bucket, count]) => ({ bucket, count })).sort((a, b) => a.bucket.localeCompare(b.bucket, undefined, { numeric: true })),
       activeShares,
-      totalEvents: rows.length,
+      totalEvents: totalEventsInDb,
       pageViews: countBy("page_view"),
       supportClicks: countBy("support_click"),
       contactClicks: countBy("contact_click"),
@@ -225,7 +246,12 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       visitsByMonth,
       // Enriched options
       topDistricts: [...districtViews.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 12),
-      topCoalitions: [...coalitionTests.entries()].map(([members, data]) => ({ members, count: data.count, majority: data.majority })).sort((a, b) => b.count - a.count).slice(0, 10),
+      topCoalitions: [...coalitionTests.entries()].map(([members, data]) => ({ members, count: data.count, majorityHits: data.majorityHits })).sort((a, b) => b.count - a.count).slice(0, 10),
+      coalitionTestCount,
+      coalitionMajorityHits,
+      weekdayVisits: weekdayLabels.map((label, index) => ({ label, count: weekdayVisits[index] ?? 0 })),
+      feedback,
+      shareLibrary,
       partyAdjustments: [...partyAdjustments.entries()].map(([party, count]) => ({ party, count })).sort((a, b) => b.count - a.count),
       mapModes: [...mapModeCounts.entries()].map(([mode, count]) => ({ mode, count })).sort((a, b) => b.count - a.count),
       historicalViews: [...historyYearCounts.entries()].map(([year, count]) => ({ year, count })).sort((a, b) => b.count - a.count),

@@ -149,7 +149,7 @@ export function DistrictPanel({
             onValueChange={([v = 0]) => onChange({ ...state, turnout: v })}
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            Baza {BASE_TURNOUT}%. Wyższa frekwencja zwiększa liczbę oddanych głosów w okręgu i jego wagę w kraju.
+            Baza {BASE_TURNOUT}%. Wyższa frekwencja zwiększa liczbę głosów. Mandaty zmieniają się tylko wtedy, gdy któraś partia jest wrażliwa na frekwencję.
           </p>
         </div>
 

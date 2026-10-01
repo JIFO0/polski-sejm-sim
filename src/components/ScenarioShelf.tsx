@@ -106,6 +106,7 @@ export function ScenarioShelf({
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [sharingId, setSharingId] = useState<string | null>(null);
+  const shareLock = useRef(false);
   const [expandedOpen, setExpandedOpen] = useState(false);
   const createShareFn = useServerFn(createShare);
   const getShareFn = useServerFn(getShare);
@@ -187,6 +188,8 @@ export function ScenarioShelf({
   };
 
   const shareLink = async (item: SavedScenario) => {
+    if (shareLock.current) return;
+    shareLock.current = true;
     setSharingId(item.id);
     try {
       const res = await createShareFn({ data: { name: item.name.slice(0, 60), scenario: item.scenario as unknown as Record<string, unknown> } });
@@ -195,21 +198,27 @@ export function ScenarioShelf({
         toast.error(res.error + when);
         return;
       }
-      track({
-        event: "share_link_create",
-        ...(isScenarioModified(item.scenario) ? { shares: nationalSharesOf(item.scenario) } : {}),
-      });
+      if (!res.reused) {
+        track({
+          event: "share_link_create",
+          ...(isScenarioModified(item.scenario) ? { shares: nationalSharesOf(item.scenario) } : {}),
+        });
+      }
       const url = `${window.location.origin}/?s=${res.id}`;
       const expires = new Date(res.expiresAt).toLocaleDateString("pl-PL");
+      const notice = res.reused
+        ? `Ten scenariusz ma już link. Skopiowany ponownie, ważny do ${expires}.`
+        : `Link skopiowany (do 5 na IP). Ważny do ${expires}.`;
       try {
         await navigator.clipboard.writeText(url);
-        toast.success(`Link skopiowany (do 5 na IP). Ważny do ${expires}.`);
+        toast.success(notice);
       } catch {
         window.prompt(`Link ważny do ${expires}:`, url);
       }
     } catch {
       toast.error("Nie udało się utworzyć linku.");
     } finally {
+      shareLock.current = false;
       setSharingId(null);
     }
   };

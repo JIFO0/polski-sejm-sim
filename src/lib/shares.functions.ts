@@ -19,6 +19,24 @@ function randomId() {
   return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
 }
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+}
+
+function scenarioFingerprint(scenario: Record<string, unknown>) {
+  const copy = { ...scenario };
+  delete copy["createdAt"];
+  return stableStringify(copy);
+}
+
 export const createShare = createServerFn({ method: "POST" })
   .inputValidator((data) => createSchema.parse(data))
   .handler(async ({ data }) => {
@@ -28,8 +46,13 @@ export const createShare = createServerFn({ method: "POST" })
       getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ??
       "unknown";
     const ipHash = await sha256(`sejmometr:${ip}`);
-    const { countActiveSharesForIp, insertSharedScenario } = await import("./server-db.server");
+    const { countActiveSharesForIp, findActiveShareByHash, insertSharedScenario } = await import("./server-db.server");
     const now = new Date().toISOString();
+    const contentHash = await sha256(scenarioFingerprint(data.scenario));
+    const existing = findActiveShareByHash(ipHash, contentHash, now);
+    if (existing) {
+      return { ok: true as const, id: existing.id, expiresAt: existing.expires_at, reused: true as const };
+    }
 
     const activeInfo = countActiveSharesForIp(ipHash, now);
     if (activeInfo.count >= MAX_ACTIVE_PER_IP) {
@@ -48,10 +71,15 @@ export const createShare = createServerFn({ method: "POST" })
         name: data.name,
         scenario: data.scenario as Record<string, unknown>,
         ipHash,
+        contentHash,
         expiresAt,
       });
-      return { ok: true as const, id, expiresAt };
+      return { ok: true as const, id, expiresAt, reused: false as const };
     } catch (err) {
+      const again = findActiveShareByHash(ipHash, contentHash, now);
+      if (again) {
+        return { ok: true as const, id: again.id, expiresAt: again.expires_at, reused: true as const };
+      }
       console.error("share insert error", err);
       return { ok: false as const, error: "Nie udało się utworzyć linku." };
     }
@@ -78,7 +106,7 @@ export const listShares = createServerFn({ method: "POST" })
     if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
     const { listSharedScenariosForOwner } = await import("./server-db.server");
     try {
-      const rows = listSharedScenariosForOwner(200);
+      const rows = listSharedScenariosForOwner(1000);
       return { ok: true as const, shares: rows.map(({ scenario: _s, ip_hash: _h, ...rest }) => rest) };
     } catch (err) {
       console.error("list shares error", err);
@@ -97,6 +125,20 @@ export const deactivateShare = createServerFn({ method: "POST" })
       return { ok: true as const };
     } catch {
       return { ok: false as const };
+    }
+  });
+
+export const deleteShare = createServerFn({ method: "POST" })
+  .inputValidator((data) => ownerSchema.extend({ id: z.string().max(20) }).parse(data))
+  .handler(async ({ data }) => {
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
+    const { deleteShareById } = await import("./server-db.server");
+    try {
+      const removed = deleteShareById(data.id);
+      return removed ? { ok: true as const } : { ok: false as const, error: "Nie znaleziono linku." };
+    } catch {
+      return { ok: false as const, error: "Nie udało się usunąć linku." };
     }
   });
 

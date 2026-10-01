@@ -74,7 +74,7 @@ export function Hemicycle({
             cx={s.x}
             cy={s.y}
             r={1.22}
-            fill={s.party === "_empty" ? "#E2E8F0" : (PARTY_MAP[s.party]?.color ?? "#94A3B8")}
+            fill={s.party === "_empty" ? "var(--seat-empty)" : (PARTY_MAP[s.party]?.color ?? "#94A3B8")}
             opacity={s.party === "_empty" ? 0.6 : dim ? 0.16 : 1}
             style={{ transition: "fill 300ms ease, opacity 250ms ease" }}
           />

@@ -11,8 +11,11 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { useDarkTheme } from "@/components/ThemeToggle";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
+const THEME_BOOT = `(function(){try{var t=localStorage.getItem("sejmsim.theme");var dark=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(dark)document.documentElement.classList.add("dark");document.documentElement.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;
 
 function NotFoundComponent() {
   return (
@@ -119,6 +122,7 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="pl">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <HeadContent />
       </head>
       <body>
@@ -131,12 +135,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const dark = useDarkTheme();
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <Toaster position="top-center" richColors />
+      <Toaster position="top-center" richColors theme={dark ? "dark" : "light"} />
     </QueryClientProvider>
   );
 }

@@ -2,15 +2,17 @@ import { useMemo, useState } from "react";
 import { DISTRICTS, MAP_VIEWBOX } from "@/data/districts";
 import { PARTY_MAP } from "@/data/parties";
 import type { SimulationResult } from "@/lib/simulation";
+import { useDarkTheme } from "@/components/ThemeToggle";
 
 export type MapMode = "winner" | "party";
 
-function mix(hex: string, amount: number) {
+function mix(hex: string, amount: number, dark: boolean) {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
-  const w = (v: number) => Math.round(v + (255 - v) * (1 - amount));
+  const target = dark ? 18 : 255;
+  const w = (v: number) => Math.round(v + (target - v) * (1 - amount));
   return `rgb(${w(r)}, ${w(g)}, ${w(b)})`;
 }
 
@@ -28,6 +30,8 @@ export function PolandMap({
   onSelect: (id: number) => void;
 }) {
   const [hover, setHover] = useState<number | null>(null);
+  const dark = useDarkTheme();
+  const empty = dark ? "#334155" : "#E2E8F0";
 
   const byId = useMemo(
     () => Object.fromEntries(result.districts.map((d) => [d.id, d])),
@@ -41,16 +45,16 @@ export function PolandMap({
 
   const fillFor = (id: number) => {
     const d = byId[id];
-    if (!d) return "#E2E8F0";
+    if (!d) return empty;
     if (mode === "party") {
       const color = PARTY_MAP[focusParty]?.color ?? "#64748B";
       const share = d.shares[focusParty] ?? 0;
-      return mix(color, 0.12 + 0.88 * Math.min(1, share / maxShare));
+      return mix(color, 0.12 + 0.88 * Math.min(1, share / maxShare), dark);
     }
-    if (!d.winner) return "#E2E8F0";
+    if (!d.winner) return empty;
     const color = PARTY_MAP[d.winner]?.color ?? "#64748B";
     const lead = d.seats > 0 ? (d.seatsByParty[d.winner] ?? 0) / d.seats : 0;
-    return mix(color, 0.42 + 0.58 * Math.min(1, lead * 1.9));
+    return mix(color, 0.42 + 0.58 * Math.min(1, lead * 1.9), dark);
   };
 
   const hovered = hover != null ? byId[hover] : null;

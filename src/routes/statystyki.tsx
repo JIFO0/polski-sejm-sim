@@ -35,7 +35,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { getAnalyticsSummary, clearAllAnalyticsData } from "@/lib/analytics.functions";
-import { deactivateShare, listShares, togglePermanentShare } from "@/lib/shares.functions";
+import { deactivateShare, deleteShare, listShares, togglePermanentShare } from "@/lib/shares.functions";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { EVENT_LABELS } from "@/lib/analytics-events";
 import { PARTIES } from "@/data/parties";
 
@@ -86,6 +87,7 @@ function StatsPage() {
   const [shares, setShares] = useState<ShareRow[]>([]);
   const fetchShares = useServerFn(listShares);
   const deactivate = useServerFn(deactivateShare);
+  const removeShare = useServerFn(deleteShare);
   const togglePermanent = useServerFn(togglePermanentShare);
 
   const [loading, setLoading] = useState(false);
@@ -200,6 +202,7 @@ function StatsPage() {
             <ArrowLeft className="mr-1.5 h-4 w-4" /> Wróć do symulatora
           </Link>
         </Button>
+        <ThemeToggle />
       </nav>
 
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-5 pb-16 pt-6">
@@ -323,7 +326,7 @@ function StatsPage() {
                   <HardDrive className="h-5 w-5 text-primary" />
                   <div>
                     <h2 className="font-display text-base font-bold text-ink">Magazyn lokalny & Limit rozmiaru 4 GB</h2>
-                    <p className="text-xs text-muted-foreground">Baza SQLite na urządzeniu/serwerze, bezterminowa retencja</p>
+                    <p className="text-xs text-muted-foreground">Zdarzenia, opinie i wyłączone linki zostają w bazie. Najstarsze zdarzenia znikają tylko, gdy plik zbliża się do 4 GB.</p>
                   </div>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
@@ -569,17 +572,22 @@ function StatsPage() {
                 <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" /> Najczęściej testowane koalicje
                 </h2>
-                <p className="mt-1 text-xs text-muted-foreground">Zestawienia partii sprawdzane w sekcji „Kto z kim?”.</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Zestawienia partii sprawdzane w sekcji „Kto z kim?”.
+                  {summary.coalitionTestCount > 0
+                    ? ` Większość 231+ w ${summary.coalitionMajorityHits} z ${summary.coalitionTestCount} testów (${Math.round((summary.coalitionMajorityHits / summary.coalitionTestCount) * 100)}%).`
+                    : ""}
+                </p>
                 <div className="mt-4 flex flex-col gap-2">
                   {summary.topCoalitions.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Brak zarejestrowanych testów koalicji.</p>
                   ) : (
-                    summary.topCoalitions.map(({ members, count, majority }) => (
+                    summary.topCoalitions.map(({ members, count, majorityHits }) => (
                       <div key={members} className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 text-xs">
                         <span className="font-semibold text-foreground truncate">{formatCoalition(members)}</span>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${majority ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-muted text-muted-foreground"}`}>
-                            {majority ? "Większość (231+)" : "Brak większości"}
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${majorityHits > 0 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-muted text-muted-foreground"}`}>
+                            większość {majorityHits}/{count}
                           </span>
                           <span className="num font-bold text-ink">×{count}</span>
                         </div>
@@ -716,7 +724,8 @@ function StatsPage() {
                 <h2 className="font-display text-lg font-bold text-ink">Udostępnione linki serwera</h2>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Linki wygasają po 7 dniach. Każdy adres IP może mieć do 5 aktywnych linków naraz. Linki permanentne nigdy nie wygasają automatycznie.
+                Linki wygasają po 7 dniach. Każdy adres IP może mieć do 5 aktywnych linków naraz. Ten sam scenariusz z jednego IP nie tworzy drugiego linku.
+                Dezaktywacja wyłącza link, usunięcie kasuje go z bazy. W bibliotece: {summary.shareLibrary.total} linków, {summary.shareLibrary.views} otwarć, {summary.shareLibrary.permanent} bezterminowych, {summary.shareLibrary.inactive} wyłączonych.
               </p>
               <div className="mt-3 max-h-96 overflow-auto">
                 <table className="w-full text-sm">
@@ -731,7 +740,7 @@ function StatsPage() {
                   </thead>
                   <tbody>
                     {shares.length === 0 ? (
-                      <tr><td colSpan={6} className="py-3 text-muted-foreground">Brak aktywnych linków.</td></tr>
+                      <tr><td colSpan={6} className="py-3 text-muted-foreground">Brak linków.</td></tr>
                     ) : shares.map((sh) => {
                       const isPermanent = sh.expires_at >= "9999";
                       const live = sh.active && (isPermanent || new Date(sh.expires_at).getTime() > Date.now());
@@ -777,21 +786,40 @@ function StatsPage() {
                             ) : null}
                           </td>
                           <td className="py-1.5 text-right pl-1">
-                            {live ? (
+                            <div className="flex justify-end gap-1">
+                              {live ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="min-h-9 text-xs"
+                                  onClick={async () => {
+                                    const r = await deactivate({ data: { login: login.trim(), key: key.trim(), id: sh.id } });
+                                    if (r.ok) setShares((all) => all.map((x) => (x.id === sh.id ? { ...x, active: false } : x)));
+                                  }}
+                                >
+                                  Dezaktywuj
+                                </Button>
+                              ) : (
+                                <span className="self-center text-xs text-muted-foreground">{sh.active ? "wygasł" : "wyłączony"}</span>
+                              )}
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="min-h-9 text-xs text-destructive hover:text-destructive"
+                                className="min-h-9 gap-1 text-xs text-destructive hover:text-destructive"
                                 onClick={async () => {
-                                  const r = await deactivate({ data: { login: login.trim(), key: key.trim(), id: sh.id } });
-                                  if (r.ok) setShares((all) => all.map((x) => (x.id === sh.id ? { ...x, active: false } : x)));
+                                  if (!window.confirm(`Usunąć link „${sh.name}” na stałe? Tej operacji nie cofniesz.`)) return;
+                                  const r = await removeShare({ data: { login: login.trim(), key: key.trim(), id: sh.id } });
+                                  if (r.ok) {
+                                    setShares((all) => all.filter((x) => x.id !== sh.id));
+                                    toast.success("Link usunięty z bazy.");
+                                  } else {
+                                    toast.error("error" in r && r.error ? r.error : "Nie udało się usunąć linku.");
+                                  }
                                 }}
                               >
-                                Dezaktywuj
+                                <Trash2 className="h-3 w-3" /> Usuń
                               </Button>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">{sh.active ? "wygasł" : "wyłączony"}</span>
-                            )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -801,6 +829,52 @@ function StatsPage() {
               </div>
             </section>
 
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" /> Wejścia według dnia tygodnia
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">Kiedy w tygodniu ludzie faktycznie otwierają symulator (czas polski).</p>
+              <div className="mt-4 grid grid-cols-7 gap-2">
+                {summary.weekdayVisits.map(({ label, count }) => {
+                  const max = Math.max(1, ...summary.weekdayVisits.map((day) => day.count));
+                  return (
+                    <div key={label} className="flex flex-col items-center gap-1 text-center">
+                      <div className="flex h-24 w-full items-end rounded-md bg-muted">
+                        <div className="w-full rounded-md bg-primary" style={{ height: `${Math.max(6, (count / max) * 100)}%` }} />
+                      </div>
+                      <span className="text-[10px] font-semibold text-muted-foreground">{label.slice(0, 3)}</span>
+                      <span className="num text-xs font-bold text-ink">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                <Mail className="h-4 w-4 text-primary" /> Opinie z formularza
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {summary.feedback.count === 0
+                  ? "Nikt jeszcze nie wysłał opinii. Zapisują się w bazie nawet wtedy, gdy powiadomienie na Discordzie się nie uda."
+                  : `${summary.feedback.count} opinii, średnia ocena ${summary.feedback.avgRating?.toFixed(1) ?? "—"}/10.`}
+              </p>
+              <div className="mt-4 flex flex-col gap-3">
+                {summary.feedback.recent.map((item, index) => (
+                  <article key={`${item.created_at}-${index}`} className="rounded-lg border border-border/70 p-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="text-sm font-semibold text-ink">
+                        {item.name?.trim() || "Anonim"} · {item.rating}/10
+                      </p>
+                      <p className="num text-[11px] text-muted-foreground">{new Date(item.created_at).toLocaleString("pl-PL")}</p>
+                    </div>
+                    {item.email ? <p className="mt-0.5 text-xs text-muted-foreground">{item.email}</p> : null}
+                    <p className="mt-2 text-sm text-foreground">{item.message}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
 
             {/* Zestawienie wszystkich zdarzeń */}
             <section className="panel p-5">
