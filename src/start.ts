@@ -41,6 +41,20 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 // from cross-site requests.
 const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
+  origin: (origin) => {
+    if (!origin) return true;
+    try {
+      const u = new URL(origin);
+      return (
+        u.hostname === "sejmsim.pl" ||
+        u.hostname.endsWith(".sejmsim.pl") ||
+        u.hostname === "localhost" ||
+        u.hostname === "127.0.0.1"
+      );
+    } catch {
+      return false;
+    }
+  },
 });
 
 export const startInstance = createStart(() => ({
