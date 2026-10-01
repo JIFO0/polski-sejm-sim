@@ -68,7 +68,6 @@ function AboutProject() {
           </Button>
 
           <div className="flex items-center gap-2">
-            <AccessibilityMenu />
             <FeedbackDialog />
             <Button variant="outline" size="sm" asChild>
               <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">

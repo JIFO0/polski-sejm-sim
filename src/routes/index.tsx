@@ -257,6 +257,7 @@ function Index() {
               </a>
             </Button>
             <SupportButton size="sm" />
+            <AccessibilityMenu />
           </nav>
           <div className="grid items-start gap-8 xl:grid-cols-[minmax(22rem,0.8fr)_minmax(36rem,1.2fr)]">
             <div className="max-w-2xl">
