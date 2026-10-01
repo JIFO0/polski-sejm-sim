@@ -4,6 +4,7 @@ import { PARTIES, PARTY_MAP } from "@/data/parties";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PartyLogo } from "@/components/PartyLogo";
+import { ShareInput } from "@/components/ShareInput";
 import { BASE_TURNOUT, type DistrictResult, type DistrictState } from "@/lib/simulation";
 
 export function DistrictPanel({
@@ -13,6 +14,7 @@ export function DistrictPanel({
   onChange,
   onReset,
   onClose,
+  independentSupport,
 }: {
   districtId: number;
   state: DistrictState;
@@ -20,16 +22,35 @@ export function DistrictPanel({
   onChange: (next: DistrictState) => void;
   onReset: () => void;
   onClose: () => void;
+  independentSupport: boolean;
 }) {
   const district = DISTRICTS.find((d) => d.id === districtId);
   if (!district) return null;
 
   const setShare = (pid: string, value: number) => {
-    const shares = { ...state.shares, [pid]: value };
+    const current = state.shares[pid] ?? 0;
+    const otherTotal = Object.entries(state.shares).reduce(
+      (total, [id, share]) => total + (id === pid ? 0 : share),
+      0,
+    );
+    const available = Math.max(0, 100 - otherTotal);
+    const snapped = Math.abs(value - available) <= 0.35 ? available : value;
+    let shares: Record<string, number>;
+    if (independentSupport) {
+      shares = { ...state.shares, [pid]: Math.min(snapped, available) };
+    } else {
+      const target = Math.min(100, Math.max(0, snapped));
+      const scale = otherTotal > 0 ? (100 - target) / otherTotal : 0;
+      shares = Object.fromEntries(
+        Object.entries(state.shares).map(([id, share]) => [id, id === pid ? target : share * scale]),
+      );
+      if (!(pid in shares)) shares[pid] = target;
+    }
     onChange({ ...state, shares });
   };
 
   const sum = Object.values(state.shares).reduce((a, b) => a + b, 0);
+  const unassigned = Math.max(0, 100 - sum);
 
   return (
     <div className="panel flex h-full flex-col overflow-hidden">
@@ -75,7 +96,7 @@ export function DistrictPanel({
         <div className="space-y-3">
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-semibold">Poparcie partii</span>
-            <span className="num text-xs text-muted-foreground">suma {sum.toFixed(1)}%</span>
+            <span className="num text-xs font-semibold text-muted-foreground">Nieprzypisane {unassigned.toFixed(1)}%</span>
           </div>
 
           {PARTIES.map((p) => {
@@ -88,9 +109,7 @@ export function DistrictPanel({
                 <div className="flex items-center gap-2.5">
                   <PartyLogo id={p.id} size={26} />
                   <span className="truncate text-sm font-medium">{p.short}</span>
-                  <span className="num ml-auto text-sm font-bold" style={{ color: p.color }}>
-                    {value.toFixed(1)}%
-                  </span>
+                  <ShareInput value={value} onChange={(next) => setShare(p.id, next)} label={`Poparcie ${p.name} w okręgu`} max={independentSupport ? value + unassigned : 100} />
                   <span className="num w-9 rounded bg-ink/5 py-0.5 text-center text-xs font-bold">
                     {seats}
                   </span>
@@ -98,7 +117,7 @@ export function DistrictPanel({
                 <Slider
                   className="mt-2.5"
                   min={0}
-                  max={70}
+                  max={independentSupport ? Math.max(70, value + unassigned) : 100}
                   step={0.5}
                   value={[value]}
                   onValueChange={([v = 0]) => setShare(p.id, v)}

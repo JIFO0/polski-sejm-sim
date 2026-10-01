@@ -21,7 +21,7 @@ export function CollapsibleSection({
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="mb-3 h-auto min-h-11 w-full justify-between rounded-lg border border-border/70 bg-surface/70 px-4 py-3 text-left hover:bg-surface"
+          className="mb-1 h-auto min-h-11 w-full justify-between rounded-b-none rounded-t-lg border border-border/70 bg-surface/85 px-4 py-3 text-left shadow-sm hover:bg-surface"
           aria-label={`${open ? "Zwiń" : "Rozwiń"} sekcję ${title}`}
         >
           <span className="font-display text-lg font-bold text-ink">{title}</span>

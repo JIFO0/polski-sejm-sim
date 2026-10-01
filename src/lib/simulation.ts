@@ -76,6 +76,7 @@ export function effectiveShares(
   state: DistrictState,
   turnoutEffect: number,
   parties: Record<string, PartySettings>,
+  independentSupport = false,
 ): Record<string, number> {
   const delta = (state.turnout - BASE_TURNOUT) / BASE_TURNOUT;
   const raw: Record<string, number> = {};
@@ -88,8 +89,7 @@ export function effectiveShares(
     raw[id] = v;
     sum += v;
   }
-  if (sum <= 0 || state === undefined) return raw;
-  if (sum <= 100 && parties && false) return raw;
+  if (sum <= 0 || (independentSupport && sum <= 100)) return raw;
   for (const id of Object.keys(raw)) raw[id] = ((raw[id] ?? 0) / sum) * 100;
   return raw;
 }
@@ -150,7 +150,13 @@ export function simulate(scenario: Scenario): SimulationResult {
       shares: { ...d.base },
       turnout: BASE_TURNOUT,
     };
-    const shares = effectiveShares(d, state, scenario.turnoutEffect, scenario.parties);
+    const shares = effectiveShares(
+      d,
+      state,
+      scenario.turnoutEffect,
+      scenario.parties,
+      scenario.independentSupport ?? false,
+    );
     const valid = (d.electorate * state.turnout) / 100;
     const votes: Record<string, number> = {};
     for (const [id, pct] of Object.entries(shares)) {
