@@ -14,3 +14,4 @@
 - Project background and author information live on the dedicated `/o-projekcie` route so the simulator remains task-focused and search engines can index the content independently.
 - Historical election results are read-only PKW reference data, never loadable simulator presets, so user-created scenarios remain distinct.
 - Scenario support values are stored as raw percentages; independent-support mode preserves an unassigned pool, while standard mode scales other parties to 100%.
+- Anonimowe statystyki: zdarzenia (page_view, turnout_set, scenario_save/download/share) z src/lib/analytics.ts trafiają przez trackEvent do public.analytics_events (RLS, tylko service_role); podgląd dla właściciela na /statystyki z kluczem ANALYTICS_KEY (secret), bez ciasteczek i bez IP.
