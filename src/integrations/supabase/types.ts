@@ -65,6 +65,39 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_scenarios: {
+        Row: {
+          active: boolean
+          created_at: string
+          expires_at: string
+          id: string
+          ip_hash: string
+          name: string
+          scenario: Json
+          views: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string
+          id: string
+          ip_hash: string
+          name: string
+          scenario: Json
+          views?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_hash?: string
+          name?: string
+          scenario?: Json
+          views?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
