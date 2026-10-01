@@ -37,6 +37,31 @@ export function track(input: TrackInput) {
   });
 }
 
+function detectTrafficSource(): string {
+  try {
+    const referrer = document.referrer;
+    if (!referrer) return "bezpośrednie";
+    const host = new URL(referrer).hostname.toLowerCase();
+    if (host.includes("google")) return "google";
+    if (host.includes("twitter") || host.includes("t.co") || host.includes("x.com")) return "twitter/x";
+    if (host.includes("facebook") || host.includes("fb.com")) return "facebook";
+    if (host.includes("wykop")) return "wykop";
+    if (host.includes("reddit")) return "reddit";
+    if (host.includes("sejmsim")) return "wewnętrzne";
+    return host.replace(/^www\./, "").slice(0, 30);
+  } catch {
+    return "inne";
+  }
+}
+
+function detectDevice(): string {
+  if (typeof window === "undefined") return "komputer";
+  const w = window.innerWidth;
+  if (w < 768) return "telefon";
+  if (w < 1100) return "tablet";
+  return "komputer";
+}
+
 let pageViewSent = false;
 
 export function trackPageViewOncePerSession() {
@@ -48,5 +73,8 @@ export function trackPageViewOncePerSession() {
     // Pamięć sesji zablokowana — i tak wysyłamy jedno zdarzenie na załadowanie strony.
   }
   pageViewSent = true;
-  track({ event: "page_view", meta: window.innerWidth < 768 ? "telefon" : window.innerWidth < 1100 ? "tablet" : "komputer" });
+  track({
+    event: "page_view",
+    meta: `${detectDevice()}|${detectTrafficSource()}`,
+  });
 }

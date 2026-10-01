@@ -358,6 +358,7 @@ export function ScenarioShelf({
           variant="link"
           size="sm"
           onClick={() => {
+            track({ event: "scenario_reset" });
             handleLoad(defaultScenario(), "Sondaż bazowy (Reset)", "reset");
           }}
           className="h-auto min-h-11 px-1 text-right text-[11px]"

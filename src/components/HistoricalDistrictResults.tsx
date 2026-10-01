@@ -6,6 +6,7 @@ import {
   type HistoricalDistrictYear,
 } from "@/data/historicalDistricts";
 import { Button } from "@/components/ui/button";
+import { track } from "@/lib/analytics";
 
 function mix(hex: string, amount: number) {
   const h = hex.replace("#", "");
@@ -46,6 +47,7 @@ export function HistoricalDistrictResults() {
 
   const chooseYear = (nextYear: HistoricalDistrictYear) => {
     setYear(nextYear);
+    track({ event: "historical_view", meta: String(nextYear) });
     const next = HISTORICAL_DISTRICT_ELECTIONS.find((item) => item.year === nextYear);
     if (next && !next.committees.some((item) => item.id === committeeId)) setCommitteeId(next.committees[0]!.id);
   };

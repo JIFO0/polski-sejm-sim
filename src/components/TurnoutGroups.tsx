@@ -3,6 +3,7 @@ import { PARTIES } from "@/data/parties";
 import { PartyLogo } from "@/components/PartyLogo";
 import { Button } from "@/components/ui/button";
 import type { PartySettings } from "@/lib/simulation";
+import { track } from "@/lib/analytics";
 
 type Side = "lower" | "neutral" | "higher";
 
@@ -14,13 +15,18 @@ const sideFor = (sensitivity: number): Side => {
 
 export function TurnoutGroups({
   settings,
-  onMove,
+  onMove: rawOnMove,
   embedded = false,
 }: {
   settings: Record<string, PartySettings>;
   onMove: (partyId: string, side: Side) => void;
   embedded?: boolean;
 }) {
+  const onMove = (partyId: string, side: Side) => {
+    track({ event: "turnout_group_move", meta: `${partyId}:${side}` });
+    rawOnMove(partyId, side);
+  };
+
   const parties = PARTIES.filter((party) => party.id !== "inne");
   const groups: { side: Side; title: string; note: string }[] = [
     { side: "lower", title: "Zyskują przy niższej frekwencji", note: "Bardziej zdyscyplinowany elektorat" },

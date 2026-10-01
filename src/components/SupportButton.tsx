@@ -1,5 +1,6 @@
 import { Coffee } from "lucide-react";
 import type { AnchorHTMLAttributes } from "react";
+import { track } from "@/lib/analytics";
 
 export interface SupportButtonProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   size?: "sm" | "default" | "lg";
@@ -13,6 +14,11 @@ export function SupportButton({
   className = "",
   ...props
 }: SupportButtonProps) {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    track({ event: "support_click" });
+    props.onClick?.(e);
+  };
+
   if (iconOnly) {
     return (
       <a
@@ -21,6 +27,7 @@ export function SupportButton({
         rel="noreferrer"
         title="Wesprzyj projekt (Buy Me a Coffee)"
         aria-label="Wesprzyj projekt"
+        onClick={handleClick}
         className={`group relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/35 bg-amber-500/10 text-amber-700 dark:text-amber-300 transition-all duration-200 hover:bg-amber-500/20 hover:border-amber-500/60 hover:scale-105 active:scale-95 shadow-xs ${className}`}
         {...props}
       >
@@ -41,6 +48,7 @@ export function SupportButton({
       target="_blank"
       rel="noreferrer"
       aria-label="Wesprzyj projekt na Buy Me a Coffee"
+      onClick={handleClick}
       className={`group inline-flex items-center justify-center rounded-full font-medium transition-all duration-200 border border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-200 hover:bg-amber-500/20 hover:border-amber-500/60 hover:text-amber-950 dark:hover:text-amber-100 shadow-xs active:scale-[0.98] ${sizeClasses} ${className}`}
       {...props}
     >

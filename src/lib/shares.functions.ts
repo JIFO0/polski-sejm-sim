@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
-const MAX_ACTIVE_PER_IP = 3;
+const MAX_ACTIVE_PER_IP = 5;
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const createSchema = z.object({
@@ -28,57 +28,44 @@ export const createShare = createServerFn({ method: "POST" })
       getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ??
       "unknown";
     const ipHash = await sha256(`sejmometr:${ip}`);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { countActiveSharesForIp, insertSharedScenario } = await import("./server-db.server");
     const now = new Date().toISOString();
 
-    const { data: active, error: qErr } = await supabaseAdmin
-      .from("shared_scenarios")
-      .select("expires_at")
-      .eq("ip_hash", ipHash)
-      .eq("active", true)
-      .gt("expires_at", now)
-      .order("expires_at", { ascending: true });
-    if (qErr) {
-      console.error("share query", qErr);
-      return { ok: false as const, error: "Nie udało się utworzyć linku." };
-    }
-    if ((active?.length ?? 0) >= MAX_ACTIVE_PER_IP) {
+    const activeInfo = countActiveSharesForIp(ipHash, now);
+    if (activeInfo.count >= MAX_ACTIVE_PER_IP) {
       return {
         ok: false as const,
-        error: `Możesz mieć najwyżej ${MAX_ACTIVE_PER_IP} aktywne linki naraz.`,
-        nextAt: active?.[0]?.expires_at ?? null,
+        error: `Możesz mieć najwyżej ${MAX_ACTIVE_PER_IP} aktywnych linków naraz.`,
+        nextAt: activeInfo.oldestExpiresAt,
       };
     }
 
     const id = randomId();
     const expiresAt = new Date(Date.now() + TTL_MS).toISOString();
-    const { error } = await supabaseAdmin.from("shared_scenarios").insert({
-      id,
-      name: data.name,
-      scenario: data.scenario as never,
-      ip_hash: ipHash,
-      expires_at: expiresAt,
-    });
-    if (error) {
-      console.error("share insert", error);
+    try {
+      insertSharedScenario({
+        id,
+        name: data.name,
+        scenario: data.scenario as Record<string, unknown>,
+        ipHash,
+        expiresAt,
+      });
+      return { ok: true as const, id, expiresAt };
+    } catch (err) {
+      console.error("share insert error", err);
       return { ok: false as const, error: "Nie udało się utworzyć linku." };
     }
-    return { ok: true as const, id, expiresAt };
   });
 
 export const getShare = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string().regex(/^[a-z0-9]{6,20}$/) }).parse(data))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row } = await supabaseAdmin
-      .from("shared_scenarios")
-      .select("name, scenario, expires_at, active, views")
-      .eq("id", data.id)
-      .maybeSingle();
+    const { getSharedScenarioById, incrementShareViews } = await import("./server-db.server");
+    const row = getSharedScenarioById(data.id);
     if (!row || !row.active || new Date(row.expires_at).getTime() < Date.now()) {
       return { ok: false as const, error: "Ten link wygasł lub został wyłączony." };
     }
-    await supabaseAdmin.from("shared_scenarios").update({ views: row.views + 1 }).eq("id", data.id);
+    incrementShareViews(data.id);
     return { ok: true as const, name: row.name, scenario: row.scenario, expiresAt: row.expires_at };
   });
 
@@ -89,14 +76,14 @@ export const listShares = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { isOwner } = await import("./owner-auth.server");
     if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
-      .from("shared_scenarios")
-      .select("id, name, active, views, created_at, expires_at")
-      .order("created_at", { ascending: false })
-      .limit(200);
-    if (error) return { ok: false as const, error: "Nie udało się odczytać linków." };
-    return { ok: true as const, shares: rows ?? [] };
+    const { listSharedScenariosForOwner } = await import("./server-db.server");
+    try {
+      const rows = listSharedScenariosForOwner(200);
+      return { ok: true as const, shares: rows };
+    } catch (err) {
+      console.error("list shares error", err);
+      return { ok: false as const, error: "Nie udało się odczytać linków." };
+    }
   });
 
 export const deactivateShare = createServerFn({ method: "POST" })
@@ -104,7 +91,11 @@ export const deactivateShare = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { isOwner } = await import("./owner-auth.server");
     if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("shared_scenarios").update({ active: false }).eq("id", data.id);
-    return { ok: !error };
+    const { deactivateShareById } = await import("./server-db.server");
+    try {
+      deactivateShareById(data.id);
+      return { ok: true as const };
+    } catch {
+      return { ok: false as const };
+    }
   });

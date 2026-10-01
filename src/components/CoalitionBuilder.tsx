@@ -1,9 +1,11 @@
+import { useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { PARTIES, PARTY_MAP } from "@/data/parties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PartyLogo } from "@/components/PartyLogo";
 import { MAJORITY, type Coalition } from "@/lib/simulation";
+import { track } from "@/lib/analytics";
 
 export function CoalitionBuilder({
   coalitions,
@@ -18,15 +20,28 @@ export function CoalitionBuilder({
   onChange: (next: Coalition[]) => void;
   onHover: (members: string[] | null) => void;
 }) {
+  const coalitionTrackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const update = (id: string, patch: Partial<Coalition>) =>
     onChange(coalitions.map((c) => (c.id === id ? { ...c, ...patch } : c)));
 
-  const toggle = (c: Coalition, pid: string) =>
-    update(c.id, {
-      members: c.members.includes(pid)
-        ? c.members.filter((m) => m !== pid)
-        : [...c.members, pid],
-    });
+  const toggle = (c: Coalition, pid: string) => {
+    const nextMembers = c.members.includes(pid)
+      ? c.members.filter((m) => m !== pid)
+      : [...c.members, pid];
+    update(c.id, { members: nextMembers });
+
+    if (nextMembers.length > 0) {
+      if (coalitionTrackRef.current) clearTimeout(coalitionTrackRef.current);
+      coalitionTrackRef.current = setTimeout(() => {
+        const seats = nextMembers.reduce((s, m) => s + (seatsByParty[m] ?? 0), 0);
+        track({
+          event: "coalition_test",
+          meta: `${[...nextMembers].sort().join("+")}:${seats >= MAJORITY ? "tak" : "nie"}`,
+        });
+      }, 1500);
+    }
+  };
 
   const add = () =>
     onChange([

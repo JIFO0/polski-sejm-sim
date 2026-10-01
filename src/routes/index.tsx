@@ -134,8 +134,13 @@ function Index() {
     }));
   }, []);
 
+  const partyTrackRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
   /** Zmiana krajowego poparcia przy zachowaniu regionalnych różnic. */
   const nationalSwing = useCallback((pid: string, target: number) => {
+    if (partyTrackRef.current[pid]) clearTimeout(partyTrackRef.current[pid]);
+    partyTrackRef.current[pid] = setTimeout(() => track({ event: "party_slider_adjust", meta: pid }), 1500);
+
     setScenario((s) => {
       const current = DISTRICTS.reduce(
         (acc, d) => acc + (s.districts[d.id]?.shares[pid] ?? 0) * d.electorate,
@@ -381,7 +386,10 @@ function Index() {
               </div>
               <div className="flex rounded-lg border border-border p-0.5">
                 <button
-                  onClick={() => setMode("winner")}
+                  onClick={() => {
+                    setMode("winner");
+                    track({ event: "map_mode_change", meta: "zwyciezca" });
+                  }}
                   className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
                     mode === "winner" ? "bg-ink text-background" : "text-muted-foreground"
                   }`}
@@ -389,7 +397,10 @@ function Index() {
                   Zwycięzca
                 </button>
                 <button
-                  onClick={() => setMode("party")}
+                  onClick={() => {
+                    setMode("party");
+                    track({ event: "map_mode_change", meta: `partia:${focusParty}` });
+                  }}
                   className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
                     mode === "party" ? "bg-ink text-background" : "text-muted-foreground"
                   }`}
@@ -404,7 +415,10 @@ function Index() {
                 {PARTIES.filter((p) => p.id !== "inne").map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => setFocusParty(p.id)}
+                    onClick={() => {
+                      setFocusParty(p.id);
+                      track({ event: "map_mode_change", meta: `partia:${p.id}` });
+                    }}
                     className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                       focusParty === p.id
                         ? "border-transparent text-white"
@@ -424,7 +438,11 @@ function Index() {
               mode={mode}
               focusParty={focusParty}
               selected={selected}
-              onSelect={(id) => setSelected(id)}
+              onSelect={(id) => {
+                setSelected(id);
+                const d = DISTRICTS.find((item) => item.id === id);
+                if (d) track({ event: "district_view", meta: `${d.id}. ${d.name}` });
+              }}
             />
 
             {mode === "party" ? (

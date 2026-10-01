@@ -33,7 +33,10 @@
 - [x] Uporządkować tutorial, parlament, historię i odstępy sekcji
 - [x] Zweryfikować całość na telefonie i komputerze
 
-- [x] Linki do scenariuszy na serwerze (7 dni, max 3 na IP)
+- [x] Linki do scenariuszy na serwerze (7 dni, do 5 na IP)
 - [x] Nowy przycisk i rozszerzone opcje dostępności
 - [x] Rozszerzone statystyki, login JIFO, zarządzanie linkami
 - [x] Progi wyborcze jako osobna sekcja, nowy tekst wprowadzenia
+- [x] Niezależny lokalny magazyn SQLite (bez Lovable) z twardym limitem 4 GB
+- [x] Nowe anonimowe wskaźniki telemetryczne (okręgi, koalicje, suwaki, urządzenia, źródła) bez konieczności zgód RODO
+

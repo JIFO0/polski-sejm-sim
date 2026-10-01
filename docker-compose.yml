@@ -10,7 +10,10 @@ services:
       PORT: "3000"
       NITRO_HOST: "0.0.0.0"
       NITRO_PORT: "3000"
+      DATA_DIR: "/app/data"
+      ANALYTICS_KEY: "jifo2027"
     ports:
       - "8084:3000"
     volumes:
       - /home/jifo/websites/sejmsim:/app:ro
+      - /home/jifo/websites/sejmsim/data:/app/data:rw
