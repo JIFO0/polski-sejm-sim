@@ -142,6 +142,7 @@ export function DistrictPanel({
           </div>
           <Slider
             className="mt-3"
+            aria-label="Frekwencja w okręgu"
             min={20}
             max={95}
             step={0.5}
@@ -181,6 +182,7 @@ export function DistrictPanel({
                 </div>
                 <Slider
                   className="mt-2.5"
+                  aria-label={`Poparcie ${p.name} w okręgu`}
                   min={0}
                   max={independentSupport ? Math.max(70, eff + unassigned) : 100}
                   step={0.5}

@@ -58,6 +58,7 @@ const DEFAULT_SETTINGS = { threshold: 5 as const, turnoutSensitivity: 0, enabled
 const isParty = (party: Party | undefined): party is Party => Boolean(party);
 
 export const Route = createFileRoute("/")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: TITLE },
@@ -410,7 +411,9 @@ function Index() {
                   <h1 className="mt-1 font-display text-4xl font-bold leading-[0.95] text-ink sm:text-5xl md:text-6xl">
                     SejmSim
                     <span className="text-primary">.</span>
-                    <span className="sr-only"> SejmSim: kalkulator Sejmu, kalkulator siedzeń i symulator wyborów 2027 sejmsim.pl</span>
+                    <span className="mt-2 block font-sans text-base font-semibold leading-snug text-muted-foreground sm:text-lg">
+                      Symulator wyborów do Sejmu 2027
+                    </span>
                   </h1>
                 </div>
               </div>
@@ -700,6 +703,7 @@ function Index() {
                         ) : null}
                         <Slider
                           className="mt-2.5"
+                          aria-label={`Poparcie ${p.name} w kraju`}
                           min={0}
                           max={scenario.independentSupport ? Math.max(55, share + unassignedShare) : 100}
                           step={0.1}
@@ -736,6 +740,7 @@ function Index() {
               </div>
               <Slider
                 className="mt-3"
+                aria-label="Frekwencja we wszystkich okręgach"
                 min={30}
                 max={90}
                 step={0.5}
@@ -758,6 +763,7 @@ function Index() {
               </div>
               <Slider
                 className="mt-3"
+                aria-label="Siła profilu elektoratu"
                 min={0}
                 max={2}
                 step={0.05}
