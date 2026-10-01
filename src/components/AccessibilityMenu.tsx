@@ -29,10 +29,10 @@ const OPTIONS: { key: keyof AccessibilitySettings; label: string; description: s
 
 function applySettings(settings: AccessibilitySettings) {
   const root = document.documentElement;
-  root.dataset.highContrast = String(settings.contrast);
-  root.dataset.largeText = String(settings.largeText);
-  root.dataset.reduceMotion = String(settings.reduceMotion);
-  root.dataset.readableFont = String(settings.readableFont);
+  root.dataset["highContrast"] = String(settings.contrast);
+  root.dataset["largeText"] = String(settings.largeText);
+  root.dataset["reduceMotion"] = String(settings.reduceMotion);
+  root.dataset["readableFont"] = String(settings.readableFont);
 }
 
 export function AccessibilityMenu({ compact = false }: { compact?: boolean }) {

@@ -45,7 +45,7 @@ export function ParticleField({ className }: { className?: string }) {
 
     const reduced =
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      document.documentElement.dataset.reduceMotion === "true";
+      document.documentElement.dataset["reduceMotion"] === "true";
     let width = 0;
     let height = 0;
     let dpr = 1;

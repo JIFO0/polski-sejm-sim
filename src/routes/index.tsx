@@ -185,7 +185,7 @@ function Index() {
     a.download = `scenariusz-sejm-2027-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Scenariusz zapisany do pliku");
+    toast.success("Pobrano plik scenariusza");
   };
 
   const load = async (file: File) => {
