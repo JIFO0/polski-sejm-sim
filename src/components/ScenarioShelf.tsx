@@ -70,6 +70,13 @@ function decodeScenario(encoded: string): Scenario | null {
   }
 }
 
+function scenarioPartyMap(sc: Scenario): Record<string, { short: string; color: string; name: string }> {
+  const map: Record<string, { short: string; color: string; name: string }> = { ...PARTY_MAP };
+  for (const c of sc.customParties ?? []) map[c.id] = c;
+  for (const m of sc.mergers ?? []) map[m.id] = m;
+  return map;
+}
+
 export function ScenarioShelf({
   scenario,
   onLoad,
@@ -326,9 +333,13 @@ export function ScenarioShelf({
             saved.map((item) => {
               const isActive = activeScenarioId === item.id;
               const shares = nationalSharesOf(item.scenario);
-              const topParties = PARTIES.filter((p) => (shares[p.id] ?? 0) > 0)
-                .sort((a, b) => (shares[b.id] ?? 0) - (shares[a.id] ?? 0))
-                .slice(0, 3);
+              const mergedMembers = new Set((item.scenario.mergers ?? []).flatMap((m) => m.members));
+              const sMap = scenarioPartyMap(item.scenario);
+              const topParties = Object.keys(shares)
+                .filter((pid) => pid !== "inne" && !mergedMembers.has(pid) && (shares[pid] ?? 0) > 0 && sMap[pid])
+                .sort((a, b) => (shares[b] ?? 0) - (shares[a] ?? 0))
+                .slice(0, 3)
+                .map((pid) => ({ id: pid, ...sMap[pid] }));
 
               return (
                 <div
@@ -464,8 +475,12 @@ export function ScenarioShelf({
                 {saved.map((item) => {
                   const isActive = activeScenarioId === item.id;
                   const shares = nationalSharesOf(item.scenario);
-                  const rankedParties = PARTIES.filter((p) => (shares[p.id] ?? 0) > 0)
-                    .sort((a, b) => (shares[b.id] ?? 0) - (shares[a.id] ?? 0));
+                  const mergedMembers = new Set((item.scenario.mergers ?? []).flatMap((m) => m.members));
+                  const sMap = scenarioPartyMap(item.scenario);
+                  const rankedParties = Object.keys(shares)
+                    .filter((pid) => pid !== "inne" && !mergedMembers.has(pid) && (shares[pid] ?? 0) > 0 && sMap[pid])
+                    .sort((a, b) => (shares[b] ?? 0) - (shares[a] ?? 0))
+                    .map((pid) => ({ id: pid, ...sMap[pid] }));
 
                   return (
                     <div

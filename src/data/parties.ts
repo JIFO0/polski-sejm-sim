@@ -134,6 +134,8 @@ export interface MergerDef extends CustomPartyDef {
   members: string[];
   /** Procent sumy poparcia członków zachowany przez wspólną listę (0–100). */
   retention: number;
+  /** Zapisane poparcie członków w okręgach w chwili utworzenia listy (do podziału przy usunięciu). */
+  memberShares?: Record<number, Record<string, number>>;
 }
 
 const BUILTIN = PARTIES.slice();
@@ -190,7 +192,12 @@ export function resultParties() {
   return PARTIES.filter((p) => p.id !== "inne" && !MERGED_INTO[p.id]);
 }
 
-/** Partie z własnym poparciem (bez „Inne” i bez samych list). */
+/** Partie z własnym poparciem do edycji (bez „Inne” i bez członków wspólnych list — w tym koalicje). */
 export function supportParties() {
-  return PARTIES.filter((p) => p.id !== "inne" && !MERGER_IDS.has(p.id));
+  return PARTIES.filter((p) => p.id !== "inne" && !MERGED_INTO[p.id]);
+}
+
+/** Partie, które można połączyć we wspólną listę (niebędące jeszcze w koalicji ani same koalicją). */
+export function mergeableParties() {
+  return PARTIES.filter((p) => p.id !== "inne" && !MERGER_IDS.has(p.id) && !MERGED_INTO[p.id]);
 }

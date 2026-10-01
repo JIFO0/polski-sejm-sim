@@ -7,8 +7,13 @@ import type { AnalyticsEvent } from "@/lib/analytics-events";
 /** Krajowe poparcie (średnia ważona liczbą wyborców) zaokrąglone do 0.1 pkt. */
 export function nationalSharesOf(scenario: Scenario): Record<string, number> {
   const weight = DISTRICTS.reduce((total, district) => total + district.electorate, 0);
+  const allParties = new Map<string, { id: string }>();
+  for (const p of PARTIES) allParties.set(p.id, p);
+  for (const c of scenario.customParties ?? []) allParties.set(c.id, c);
+  for (const m of scenario.mergers ?? []) allParties.set(m.id, m);
+
   return Object.fromEntries(
-    PARTIES.map((party) => [
+    Array.from(allParties.values()).map((party) => [
       party.id,
       Math.round(
         (DISTRICTS.reduce(

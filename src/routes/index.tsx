@@ -133,18 +133,44 @@ function Index() {
     );
   }, [scenario.districts]);
 
+  useEffect(() => {
+    if (MERGED_INTO[focusParty]) {
+      setFocusParty(MERGED_INTO[focusParty] ?? resultParties()[0]?.id ?? "ko");
+    }
+  }, [registryVersion, focusParty]);
+
   const unassignedShare = Math.max(
     0,
-    100 - Object.values(nationalRawShares).reduce((total, share) => total + share, 0),
+    100 -
+      PARTIES.filter((p) => !MERGED_INTO[p.id]).reduce(
+        (total, p) => total + (nationalRawShares[p.id] ?? 0),
+        0,
+      ),
   );
 
   const resetDistrict = useCallback((id: number) => {
     const base = DISTRICTS.find((d) => d.id === id);
     if (!base) return;
-    setScenario((s) => ({
-      ...s,
-      districts: { ...s.districts, [id]: { shares: { ...base.base }, turnout: BASE_TURNOUT } },
-    }));
+    setScenario((s) => {
+      const shares = { ...base.base };
+      for (const m of s.mergers ?? []) {
+        let joint = 0;
+        for (const mid of m.members) {
+          joint += shares[mid] ?? 0;
+          delete shares[mid];
+        }
+        const kept = Math.round(joint * (m.retention / 100) * 10) / 10;
+        const lost = Math.round((joint - kept) * 10) / 10;
+        shares[m.id] = kept;
+        if (!s.independentSupport && shares["inne"] != null) {
+          shares["inne"] = Math.round((shares["inne"] + lost) * 10) / 10;
+        }
+      }
+      return {
+        ...s,
+        districts: { ...s.districts, [id]: { shares, turnout: BASE_TURNOUT } },
+      };
+    });
   }, []);
 
   const partyTrackRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -168,7 +194,7 @@ function Index() {
         const st = districts[d.id] ?? blankState(d.id);
         const currentParty = st.shares[pid] ?? 0;
         const otherTotal = Object.entries(st.shares).reduce(
-          (total, [id, share]) => total + (id === pid ? 0 : share),
+          (total, [id, share]) => total + (id === pid || MERGED_INTO[id] ? 0 : share),
           0,
         );
         const targetHere = Math.min(100, Math.max(0, currentParty + delta));
@@ -179,7 +205,7 @@ function Index() {
           : Object.fromEntries(
               Object.entries(st.shares).map(([id, share]) => [
                 id,
-                id === pid ? targetHere : otherTotal > 0 ? share * ((100 - targetHere) / otherTotal) : share,
+                id === pid ? targetHere : MERGED_INTO[id] ? 0 : otherTotal > 0 ? share * ((100 - targetHere) / otherTotal) : share,
               ]),
             );
         if (!(pid in shares)) shares[pid] = targetHere;
@@ -485,7 +511,8 @@ function Index() {
                 onChange={(next) => setDistrict(selected, next)}
                 onReset={() => resetDistrict(selected)}
                 onClose={() => setSelected(null)}
-                    independentSupport={scenario.independentSupport ?? false}
+                independentSupport={scenario.independentSupport ?? false}
+                mergers={scenario.mergers}
               />
             ) : (
               <div
@@ -520,6 +547,7 @@ function Index() {
                     const seats = result.seatsByParty[p.id] ?? 0;
                     const settings = scenario.parties[p.id] ?? DEFAULT_SETTINGS;
                     const inSejm = result.qualified.includes(p.id);
+                    const mergerDef = scenario.mergers?.find((m) => m.id === p.id);
                     return (
                       <div
                         key={p.id}
@@ -532,8 +560,8 @@ function Index() {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold">{p.short}</p>
                             <p className="truncate text-[11px] text-muted-foreground">
-                              {MERGED_INTO[p.id]
-                                ? `w liście ${PARTY_MAP[MERGED_INTO[p.id]!]?.short ?? ""}`
+                              {mergerDef
+                                ? `wspólna lista (${mergerDef.members.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ")})`
                                 : `próg ${settings.threshold}%${inSejm ? "" : ", poniżej progu"}`}
                             </p>
                           </div>

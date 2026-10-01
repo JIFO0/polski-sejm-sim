@@ -106,17 +106,24 @@ export function PolandMap({
               </div>
             ) : (
             <div className="mt-1.5 space-y-0.5">
+              {hovered.winner && PARTY_MAP[hovered.winner] ? (
+                <div className="mb-1 flex items-center gap-1.5 border-b border-border/50 pb-1 text-[11px] font-semibold">
+                  <span className="text-muted-foreground">Wygrana:</span>
+                  <span className="h-2 w-2 rounded-full" style={{ background: PARTY_MAP[hovered.winner]?.color }} />
+                  <span className="truncate text-ink">{PARTY_MAP[hovered.winner]?.name}</span>
+                </div>
+              ) : null}
               {Object.entries(hovered.seatsByParty)
                 .filter(([, n]) => n > 0)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 4)
+                .slice(0, 5)
                 .map(([pid, n]) => (
                   <div key={pid} className="flex items-center gap-1.5 text-xs">
                     <span
                       className="h-2 w-2 rounded-full"
                       style={{ background: PARTY_MAP[pid]?.color }}
                     />
-                    <span className="text-muted-foreground">{PARTY_MAP[pid]?.short}</span>
+                    <span className="truncate text-muted-foreground">{PARTY_MAP[pid]?.short}</span>
                     <span className="num ml-auto font-semibold">{n}</span>
                   </div>
                 ))}

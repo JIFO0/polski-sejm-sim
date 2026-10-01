@@ -1,6 +1,6 @@
 import { RotateCcw, X } from "lucide-react";
 import { DISTRICTS } from "@/data/districts";
-import { MERGED_INTO, PARTIES, PARTY_MAP, MERGER_IDS } from "@/data/parties";
+import { MERGED_INTO, PARTIES, PARTY_MAP, type MergerDef } from "@/data/parties";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PartyLogo } from "@/components/PartyLogo";
@@ -15,6 +15,7 @@ export function DistrictPanel({
   onReset,
   onClose,
   independentSupport,
+  mergers = [],
 }: {
   districtId: number;
   state: DistrictState;
@@ -23,14 +24,14 @@ export function DistrictPanel({
   onReset: () => void;
   onClose: () => void;
   independentSupport: boolean;
+  mergers?: MergerDef[];
 }) {
   const district = DISTRICTS.find((d) => d.id === districtId);
   if (!district) return null;
 
   const setShare = (pid: string, value: number) => {
-    const current = state.shares[pid] ?? 0;
     const otherTotal = Object.entries(state.shares).reduce(
-      (total, [id, share]) => total + (id === pid ? 0 : share),
+      (total, [id, share]) => total + (id === pid || MERGED_INTO[id] ? 0 : share),
       0,
     );
     const available = Math.max(0, 100 - otherTotal);
@@ -42,14 +43,19 @@ export function DistrictPanel({
       const target = Math.min(100, Math.max(0, snapped));
       const scale = otherTotal > 0 ? (100 - target) / otherTotal : 0;
       shares = Object.fromEntries(
-        Object.entries(state.shares).map(([id, share]) => [id, id === pid ? target : share * scale]),
+        Object.entries(state.shares).map(([id, share]) => [
+          id,
+          id === pid ? target : MERGED_INTO[id] ? 0 : share * scale,
+        ]),
       );
       if (!(pid in shares)) shares[pid] = target;
     }
     onChange({ ...state, shares });
   };
 
-  const sum = Object.values(state.shares).reduce((a, b) => a + b, 0);
+  const sum = Object.entries(state.shares)
+    .filter(([id]) => !MERGED_INTO[id])
+    .reduce((a, [, b]) => a + b, 0);
   const unassigned = Math.max(0, 100 - sum);
 
   return (
@@ -99,9 +105,12 @@ export function DistrictPanel({
             <span className="num text-xs font-semibold text-muted-foreground">Nieprzypisane {unassigned.toFixed(1)}%</span>
           </div>
 
-          {PARTIES.filter((p) => !MERGER_IDS.has(p.id)).map((p) => {
-            const base = district.base[p.id] ?? 0;
-            const value = state.shares[p.id] ?? 0;
+          {PARTIES.filter((p) => !MERGED_INTO[p.id]).map((p) => {
+            const mergerDef = mergers.find((m) => m.id === p.id);
+            const base = mergerDef
+              ? mergerDef.members.reduce((acc, mid) => acc + (district.base[mid] ?? 0), 0) * (mergerDef.retention / 100)
+              : (district.base[p.id] ?? 0);
+            const value = state.shares[p.id] ?? (mergerDef ? base : 0);
             const eff = result?.shares[p.id] ?? value;
             const seats = result?.seatsByParty[p.id] ?? 0;
             return (
@@ -124,7 +133,7 @@ export function DistrictPanel({
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
                   baza {base.toFixed(1)}%, po frekwencji {eff.toFixed(1)}%
-                  {MERGED_INTO[p.id] ? `, w liście ${PARTY_MAP[MERGED_INTO[p.id]!]?.short ?? ""}` : ""}
+                  {mergerDef ? ` • wspólna lista (${mergerDef.members.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ")})` : ""}
                 </p>
               </div>
             );

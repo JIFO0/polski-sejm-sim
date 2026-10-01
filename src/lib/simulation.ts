@@ -95,16 +95,26 @@ export function effectiveShares(
     sum += v;
   }
   for (const m of mergers) {
-    let joint = 0;
-    for (const member of m.members) {
-      joint += raw[member] ?? 0;
-      delete raw[member];
+    if (raw[m.id] == null) {
+      let joint = 0;
+      for (const member of m.members) {
+        joint += raw[member] ?? 0;
+      }
+      const kept = joint * Math.min(1, Math.max(0, m.retention / 100));
+      if (parties[m.id]?.enabled !== false) {
+        raw[m.id] = kept;
+        sum += kept;
+      }
+      const lost = joint - (parties[m.id]?.enabled !== false ? kept : 0);
+      if (!independentSupport && raw["inne"] != null) raw["inne"] += lost;
+      else sum -= lost;
     }
-    const kept = joint * Math.min(1, Math.max(0, m.retention / 100));
-    if (parties[m.id]?.enabled !== false) raw[m.id] = kept;
-    const lost = joint - (parties[m.id]?.enabled !== false ? kept : 0);
-    if (!independentSupport && raw["inne"] != null) raw["inne"] += lost;
-    else sum -= lost;
+    for (const member of m.members) {
+      if (raw[member] != null) {
+        sum -= raw[member]!;
+        delete raw[member];
+      }
+    }
   }
   if (sum <= 0 || (independentSupport && sum <= 100)) return raw;
   for (const id of Object.keys(raw)) raw[id] = ((raw[id] ?? 0) / sum) * 100;

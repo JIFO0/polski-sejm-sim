@@ -1,15 +1,16 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { DISTRICTS } from "@/data/districts";
 import {
   MERGED_INTO,
   PARTY_MAP,
-  supportParties,
+  mergeableParties,
   writeCustomLogo,
   type CustomPartyDef,
   type MergerDef,
 } from "@/data/parties";
-import type { Scenario } from "@/lib/simulation";
+import { BASE_TURNOUT, type Scenario } from "@/lib/simulation";
 import { track } from "@/lib/analytics";
 import { PartyLogo } from "@/components/PartyLogo";
 import { Button } from "@/components/ui/button";
@@ -147,13 +148,43 @@ export function CustomPartiesPanel({
     setScenario((s) => {
       const parties = { ...s.parties };
       delete parties[id];
+      const targetMerger = s.mergers?.find((m) => m.id === id);
+
       const districts = Object.fromEntries(
         Object.entries(s.districts).map(([k, d]) => {
+          const did = Number(k);
           const shares = { ...d.shares };
+          const mergerShare = shares[id] ?? 0;
           delete shares[id];
+
+          if (targetMerger) {
+            const savedMembers = targetMerger.memberShares?.[did];
+            const savedSum = savedMembers ? Object.values(savedMembers).reduce((a, b) => a + b, 0) : 0;
+            for (const mid of targetMerger.members) {
+              if (savedSum > 0 && savedMembers?.[mid] != null) {
+                const ratio = savedMembers[mid] / savedSum;
+                shares[mid] = Math.round(mergerShare * ratio * 10) / 10;
+              } else {
+                const baseVal = DISTRICTS.find((x) => x.id === did)?.base[mid] ?? 0;
+                shares[mid] = baseVal;
+              }
+            }
+          }
           return [k, { ...d, shares }];
         }),
       );
+
+      let coalitions = s.coalitions;
+      if (targetMerger) {
+        coalitions = s.coalitions.map((c) =>
+          c.members.includes(id)
+            ? { ...c, members: [...c.members.filter((x) => x !== id), ...targetMerger.members] }
+            : c,
+        );
+      } else {
+        coalitions = s.coalitions.map((c) => ({ ...c, members: c.members.filter((x) => x !== id) }));
+      }
+
       return {
         ...s,
         parties,
@@ -163,7 +194,7 @@ export function CustomPartiesPanel({
           .filter((m) => m.id !== id)
           .map((m) => ({ ...m, members: m.members.filter((x) => x !== id) }))
           .filter((m) => m.members.length >= 2),
-        coalitions: s.coalitions.map((c) => ({ ...c, members: c.members.filter((x) => x !== id) })),
+        coalitions,
       };
     });
   };
@@ -178,29 +209,91 @@ export function CustomPartiesPanel({
     const first = PARTY_MAP[draft[0]!];
     const name = draft.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ");
     track({ event: "merger_create", meta: [...draft].sort().join("+").slice(0, 40) });
-    setScenario((s) => ({
-      ...s,
-      mergers: [
-        ...(s.mergers ?? []),
-        { id, name, short: name.slice(0, 10), color: first?.color ?? "#475569", members: draft, retention: 85 },
-      ],
-      parties: { ...s.parties, [id]: { threshold: 8, turnoutSensitivity: 0, enabled: true } },
-      coalitions: s.coalitions.map((c) =>
-        c.members.some((m) => draft.includes(m))
-          ? { ...c, members: [...c.members.filter((m) => !draft.includes(m)), id] }
-          : c,
-      ),
-    }));
+
+    setScenario((s) => {
+      const memberShares: Record<number, Record<string, number>> = {};
+      const nextDistricts: Record<number, { shares: Record<string, number>; turnout: number }> = {};
+      const retention = 0.85;
+
+      for (const d of DISTRICTS) {
+        const currentSt = s.districts[d.id] ?? { shares: { ...d.base }, turnout: BASE_TURNOUT };
+        const dMembers: Record<string, number> = {};
+        let joint = 0;
+        for (const mid of draft) {
+          const val = currentSt.shares[mid] ?? d.base[mid] ?? 0;
+          dMembers[mid] = val;
+          joint += val;
+        }
+        memberShares[d.id] = dMembers;
+
+        const kept = Math.round(joint * retention * 10) / 10;
+        const lost = Math.round((joint - kept) * 10) / 10;
+
+        const nextShares = { ...currentSt.shares, [id]: kept };
+        for (const mid of draft) {
+          delete nextShares[mid];
+        }
+        if (!s.independentSupport && nextShares["inne"] != null) {
+          nextShares["inne"] = Math.round((nextShares["inne"] + lost) * 10) / 10;
+        }
+        nextDistricts[d.id] = { ...currentSt, shares: nextShares };
+      }
+
+      return {
+        ...s,
+        districts: nextDistricts,
+        mergers: [
+          ...(s.mergers ?? []),
+          {
+            id,
+            name,
+            short: name.slice(0, 10),
+            color: first?.color ?? "#475569",
+            members: draft,
+            retention: 85,
+            memberShares,
+          },
+        ],
+        parties: { ...s.parties, [id]: { threshold: 8, turnoutSensitivity: 0, enabled: true } },
+        coalitions: s.coalitions.map((c) =>
+          c.members.some((m) => draft.includes(m))
+            ? { ...c, members: [...c.members.filter((m) => !draft.includes(m)), id] }
+            : c,
+        ),
+      };
+    });
     setDraft([]);
   };
 
   const patchMerger = (id: string, patch: Partial<MergerDef>) =>
-    setScenario((s) => ({
-      ...s,
-      mergers: (s.mergers ?? []).map((m) => (m.id === id ? { ...m, ...patch } : m)),
-    }));
+    setScenario((s) => {
+      let nextDistricts = s.districts;
+      const targetMerger = s.mergers?.find((m) => m.id === id);
+      if (targetMerger && patch.retention != null && patch.retention !== targetMerger.retention) {
+        const oldR = Math.max(1, targetMerger.retention);
+        const newR = patch.retention;
+        const factor = newR / oldR;
+        nextDistricts = Object.fromEntries(
+          Object.entries(s.districts).map(([did, dst]) => {
+            const currentVal = dst.shares[id] ?? 0;
+            const newVal = Math.round(currentVal * factor * 10) / 10;
+            const diff = newVal - currentVal;
+            const nextShares = { ...dst.shares, [id]: newVal };
+            if (!s.independentSupport && nextShares["inne"] != null) {
+              nextShares["inne"] = Math.max(0, Math.round((nextShares["inne"] - diff) * 10) / 10);
+            }
+            return [did, { ...dst, shares: nextShares }];
+          }),
+        );
+      }
+      return {
+        ...s,
+        districts: nextDistricts,
+        mergers: (s.mergers ?? []).map((m) => (m.id === id ? { ...m, ...patch } : m)),
+      };
+    });
 
-  const candidates = supportParties().filter((p) => !MERGED_INTO[p.id]);
+  const candidates = mergeableParties();
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
