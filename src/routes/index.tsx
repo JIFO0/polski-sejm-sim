@@ -74,6 +74,10 @@ function Index() {
   );
   const fileRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    trackPageViewOncePerSession();
+  }, []);
+
   const result = useMemo(() => simulate(scenario), [scenario]);
   const resultById = useMemo(
     () => Object.fromEntries(result.districts.map((d) => [d.id, d])),
@@ -168,7 +172,10 @@ function Index() {
     });
   }, []);
 
+  const turnoutTrackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setGlobalTurnout = useCallback((value: number) => {
+    if (turnoutTrackRef.current) clearTimeout(turnoutTrackRef.current);
+    turnoutTrackRef.current = setTimeout(() => track({ event: "turnout_set", turnout: value }), 1500);
     setScenario((s) => {
       const districts = { ...s.districts };
       for (const d of DISTRICTS)
