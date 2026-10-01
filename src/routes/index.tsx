@@ -178,6 +178,11 @@ function Index() {
   }, []);
 
   const save = () => {
+    track({
+      event: "scenario_download",
+      shares: nationalSharesOf(scenario),
+      turnout: scenario.districts[1]?.turnout ?? BASE_TURNOUT,
+    });
     const blob = new Blob([JSON.stringify(scenario, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
