@@ -54,11 +54,43 @@ function detectTrafficSource(): string {
   }
 }
 
-function detectDevice(): string {
+import { BASE_TURNOUT } from "@/lib/simulation";
+
+/** Sprawdza czy scenariusz różni się czymkolwiek od domyślnego punktu wyjścia ewybory.eu */
+export function isScenarioModified(scenario: Scenario): boolean {
+  if (!scenario || !scenario.districts) return false;
+  for (const d of DISTRICTS) {
+    const st = scenario.districts[d.id];
+    if (!st) return true;
+    if (Math.abs((st.turnout ?? BASE_TURNOUT) - BASE_TURNOUT) > 0.05) return true;
+    for (const [partyId, baseShare] of Object.entries(d.base)) {
+      if (Math.abs((st.shares[partyId] ?? 0) - baseShare) > 0.05) return true;
+    }
+  }
+  return false;
+}
+
+export function detectDevice(): "telefon" | "tablet" | "komputer" {
   if (typeof window === "undefined") return "komputer";
-  const w = window.innerWidth;
-  if (w < 768) return "telefon";
-  if (w < 1100) return "tablet";
+  const ua = (navigator.userAgent || "").toLowerCase();
+  const maxTouchPoints = navigator.maxTouchPoints || 0;
+
+  // Tablety (w tym iPad na nowym iOS, który zgłasza się jako Macintosh z touch screenem)
+  const isIPad = /ipad/i.test(ua) || (maxTouchPoints > 1 && /macintosh/i.test(ua));
+  const isTabletUA = isIPad || (/android/i.test(ua) && !/mobile/i.test(ua)) || /tablet/i.test(ua);
+
+  // Smartfony / urządzenia mobilne
+  const isMobileUA =
+    /mobile|iphone|ipod|android.*mobile|blackberry|iemobile|opera mini|webos|windows phone/i.test(ua);
+
+  const w = window.innerWidth || (document.documentElement ? document.documentElement.clientWidth : 0);
+
+  if (isTabletUA) return "tablet";
+  if (isMobileUA) return "telefon";
+
+  // Rezerwa na podstawie rozdzielczości i punktów dotyku
+  if (w > 0 && w < 768) return "telefon";
+  if ((w >= 768 && w < 1024) || (maxTouchPoints > 0 && w < 1180)) return "tablet";
   return "komputer";
 }
 
@@ -78,3 +110,4 @@ export function trackPageViewOncePerSession() {
     meta: `${detectDevice()}|${detectTrafficSource()}`,
   });
 }
+

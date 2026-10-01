@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, BarChart3, ExternalLink, Globe, Mail, MapPinned, Play, Save, UsersRound } from "lucide-react";
 
@@ -7,6 +8,7 @@ import { ParticleField } from "@/components/ParticleField";
 import { SupportButton } from "@/components/SupportButton";
 import { Button } from "@/components/ui/button";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
+import { track, trackPageViewOncePerSession } from "@/lib/analytics";
 
 const TITLE = "O projekcie i twórcy | SejmSim 2027 (sejmsim.pl) — Iwo Laskowski";
 const DESCRIPTION =
@@ -50,6 +52,11 @@ const features = [
 ];
 
 function AboutProject() {
+  useEffect(() => {
+    trackPageViewOncePerSession();
+    track({ event: "about_view" });
+  }, []);
+
   return (
     <div className="relative min-h-dvh overflow-hidden">
       <ParticleField className="pointer-events-none fixed inset-0 z-0 h-dvh w-screen" />
@@ -70,7 +77,12 @@ function AboutProject() {
           <div className="flex items-center gap-2">
             <FeedbackDialog />
             <Button variant="outline" size="sm" asChild>
-              <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
+              <a
+                href="https://jifo.dev/#kontakt"
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => track({ event: "contact_click" })}
+              >
                 Kontakt <ExternalLink className="ml-1 h-3.5 w-3.5" />
               </a>
             </Button>
@@ -177,7 +189,12 @@ function AboutProject() {
                     </a>
                   </Button>
                   <Button variant="ghost" size="sm" asChild>
-                    <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
+                    <a
+                      href="https://jifo.dev/#kontakt"
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => track({ event: "contact_click" })}
+                    >
                       <Mail className="mr-1.5 h-3.5 w-3.5" /> Kontakt z Iwo
                     </a>
                   </Button>

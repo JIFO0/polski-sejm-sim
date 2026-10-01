@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
-import { nationalSharesOf, track } from "@/lib/analytics";
+import { isScenarioModified, nationalSharesOf, track } from "@/lib/analytics";
 import { PARTIES } from "@/data/parties";
 import {
   Dialog,
@@ -137,7 +137,10 @@ export function ScenarioShelf({
     if (!persist([entry, ...saved].slice(0, 10))) return;
     setActiveScenarioId(newId);
     setName("");
-    track({ event: "scenario_save", shares: nationalSharesOf(scenario) });
+    track({
+      event: "scenario_save",
+      ...(isScenarioModified(scenario) ? { shares: nationalSharesOf(scenario) } : {}),
+    });
     toast.success(`Scenariusz "${title}" zapisany!`);
   };
 
@@ -150,7 +153,10 @@ export function ScenarioShelf({
         toast.error(res.error + when);
         return;
       }
-      track({ event: "share_link_create", shares: nationalSharesOf(item.scenario) });
+      track({
+        event: "share_link_create",
+        ...(isScenarioModified(item.scenario) ? { shares: nationalSharesOf(item.scenario) } : {}),
+      });
       const url = `${window.location.origin}/?s=${res.id}`;
       const expires = new Date(res.expiresAt).toLocaleDateString("pl-PL");
       try {
@@ -174,9 +180,13 @@ export function ScenarioShelf({
   };
 
   const share = async () => {
-    track({ event: "scenario_share", shares: nationalSharesOf(scenario) });
+    track({
+      event: "scenario_share",
+      ...(isScenarioModified(scenario) ? { shares: nationalSharesOf(scenario) } : {}),
+    });
     const url = new URL(window.location.href);
     url.hash = `scenario=${encodeScenario(scenario)}`;
+
     try {
       await navigator.clipboard.writeText(url.toString());
       toast.success("Link do scenariusza skopiowany do schowka");

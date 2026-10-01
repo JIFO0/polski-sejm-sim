@@ -1,10 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, BarChart3, Database, HardDrive, Laptop, Link2, Loader2, MapPin, ShieldCheck, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BarChart3,
+  Calendar,
+  Clock,
+  Coffee,
+  Database,
+  HardDrive,
+  Info,
+  Laptop,
+  Link2,
+  Loader2,
+  Mail,
+  MapPin,
+  RotateCcw,
+  ShieldCheck,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getAnalyticsSummary } from "@/lib/analytics.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { getAnalyticsSummary, clearAllAnalyticsData } from "@/lib/analytics.functions";
 import { deactivateShare, listShares } from "@/lib/shares.functions";
 import { EVENT_LABELS } from "@/lib/analytics-events";
 import { PARTIES } from "@/data/parties";
@@ -39,6 +68,16 @@ function formatCoalition(membersStr: string) {
   return pids.map((pid) => PARTY_SHORTS[pid] ?? pid).join(" + ");
 }
 
+function getPolishWeekday(dateStr: string): string {
+  try {
+    const d = new Date(dateStr + "T12:00:00Z");
+    const name = new Intl.DateTimeFormat("pl-PL", { weekday: "short" }).format(d);
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  } catch {
+    return "";
+  }
+}
+
 function StatsPage() {
   const [login, setLogin] = useState("JIFO");
   const [key, setKey] = useState("");
@@ -49,6 +88,15 @@ function StatsPage() {
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const fetchSummary = useServerFn(getAnalyticsSummary);
+  const clearDataFn = useServerFn(clearAllAnalyticsData);
+
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [hoveredHour, setHoveredHour] = useState<number | null>(null);
+  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [clearPassword, setClearPassword] = useState("");
+  const [clearing, setClearing] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -62,6 +110,10 @@ function StatsPage() {
         setSummary(null);
       } else {
         setSummary(res);
+        if (res.visitsByMonth.length > 0 && selectedMonth === "all") {
+          // Domyślnie ustawiamy bieżący miesiąc
+          setSelectedMonth(res.visitsByMonth[0]?.month ?? "all");
+        }
       }
     } catch {
       setError("Nie udało się pobrać statystyk.");
@@ -69,6 +121,69 @@ function StatsPage() {
       setLoading(false);
     }
   };
+
+  const handleClearAll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!clearPassword.trim()) return;
+    setClearing(true);
+    try {
+      const res = await clearDataFn({
+        data: {
+          login: login.trim(),
+          key: key.trim(),
+          confirmPassword: clearPassword.trim(),
+        },
+      });
+      if (!res.ok) {
+        toast.error(res.error || "Błąd czyszczenia danych.");
+        return;
+      }
+      toast.success(
+        `Wyczyszczono bazę: usunięto ${res.result.deletedEvents} zdarzeń i ${res.result.deletedShares} linków.`
+      );
+      setClearDialogOpen(false);
+      setClearPassword("");
+      await load();
+    } catch {
+      toast.error("Wystąpił błąd podczas usuwania danych.");
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const hoursData = useMemo(() => {
+    if (!summary) return Array(24).fill(0);
+    return summary.pageViewsByHourPolish ?? summary.pageViewsByHourUtc ?? Array(24).fill(0);
+  }, [summary]);
+
+  const maxHourly = useMemo(() => Math.max(1, ...hoursData), [hoursData]);
+  const peakHour = useMemo(() => {
+    let max = -1;
+    let idx = 0;
+    hoursData.forEach((count, h) => {
+      if (count > max) {
+        max = count;
+        idx = h;
+      }
+    });
+    return idx;
+  }, [hoursData]);
+
+  const activeMonthObj = useMemo(() => {
+    if (!summary || selectedMonth === "all") return null;
+    return summary.visitsByMonth.find((m) => m.month === selectedMonth) ?? null;
+  }, [selectedMonth, summary]);
+
+  const displayedDays = useMemo(() => {
+    if (!summary) return [];
+    if (activeMonthObj) return activeMonthObj.days;
+    return summary.visitsByDay;
+  }, [activeMonthObj, summary]);
+
+  const maxDaily = useMemo(() => {
+    if (!displayedDays.length) return 1;
+    return Math.max(1, ...displayedDays.map((d) => d.count));
+  }, [displayedDays]);
 
   return (
     <div className="min-h-dvh bg-background">
@@ -125,21 +240,76 @@ function StatsPage() {
           </form>
         ) : (
           <div className="flex flex-col gap-6">
-            {/* Karty podsumowania */}
-            <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {[
-                { label: "Wejścia na stronę", value: summary.pageViews },
-                { label: "Zapisane warianty", value: summary.scenarioSaves },
-                { label: "Pobrane pliki", value: summary.scenarioDownloads },
-                { label: "Aktywne linki (max 5/IP)", value: summary.activeShares },
-                { label: "Zmiany frekwencji", value: summary.turnoutSets },
-                { label: "Wszystkie akcje", value: summary.totalEvents },
-              ].map((card) => (
-                <div key={card.label} className="panel p-4">
-                  <p className="num text-2xl font-bold text-ink">{card.value}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{card.label}</p>
+            {/* Główne karty podsumowania */}
+            <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+              <div className="panel p-4">
+                <p className="text-xs text-muted-foreground">Wejścia na stronę</p>
+                <p className="num text-2xl font-bold text-ink mt-1">{summary.pageViews}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Wszystkie sesje</p>
+              </div>
+
+              <div className="panel p-4 border-amber-500/30 bg-amber-500/5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Buy Me a Coffee</p>
+                  <Coffee className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 </div>
-              ))}
+                <p className="num text-2xl font-bold text-amber-950 dark:text-amber-100 mt-1">
+                  {summary.supportClicks}
+                </p>
+                <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80 mt-0.5">
+                  Kliknięcia w link wsparcia
+                </p>
+              </div>
+
+              <div className="panel p-4 border-sky-500/30 bg-sky-500/5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-sky-800 dark:text-sky-300">Kontakt (jifo.dev)</p>
+                  <Mail className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                </div>
+                <p className="num text-2xl font-bold text-sky-950 dark:text-sky-100 mt-1">
+                  {summary.contactClicks}
+                </p>
+                <p className="text-[11px] text-sky-700/80 dark:text-sky-300/80 mt-0.5">
+                  Przejścia do kontaktu
+                </p>
+              </div>
+
+              <div className="panel p-4 border-indigo-500/30 bg-indigo-500/5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300">O projekcie</p>
+                  <Info className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <p className="num text-2xl font-bold text-indigo-950 dark:text-indigo-100 mt-1">
+                  {summary.aboutViews}
+                </p>
+                <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
+                  Odwiedziny podstrony
+                </p>
+              </div>
+            </section>
+
+            {/* Druga linia podsumowania */}
+            <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="panel p-4">
+                <p className="text-xs text-muted-foreground">Zapisane warianty</p>
+                <p className="num text-2xl font-bold text-ink mt-1">{summary.scenarioSaves}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">W bibliotece</p>
+              </div>
+              <div className="panel p-4">
+                <p className="text-xs text-muted-foreground">Pobrane pliki</p>
+                <p className="num text-2xl font-bold text-ink mt-1">{summary.scenarioDownloads}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Eksporty JSON</p>
+              </div>
+              <div className="panel p-4">
+                <p className="text-xs text-muted-foreground">Aktywne linki (max 5/IP)</p>
+                <p className="num text-2xl font-bold text-ink mt-1">{summary.activeShares}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Ważność 7 dni</p>
+              </div>
+              <div className="panel p-4">
+                <p className="text-xs text-muted-foreground">Wszystkie akcje w bazie</p>
+                <p className="num text-2xl font-bold text-ink mt-1">{summary.totalEvents}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Zapisane bezterminowo</p>
+              </div>
             </section>
 
             {/* Stan magazynu i limit 4GB */}
@@ -149,12 +319,217 @@ function StatsPage() {
                   <HardDrive className="h-5 w-5 text-primary" />
                   <div>
                     <h2 className="font-display text-base font-bold text-ink">Magazyn lokalny & Limit rozmiaru 4 GB</h2>
-                    <p className="text-xs text-muted-foreground">Baza SQLite na urządzeniu/serwerze, niezależna od Lovable</p>
+                    <p className="text-xs text-muted-foreground">Baza SQLite na urządzeniu/serwerze, bezterminowa retencja</p>
                   </div>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
                   <ShieldCheck className="h-3.5 w-3.5" /> Limit 4 GB aktywny: {summary.dbStats.sizeFormatted}
                 </div>
+              </div>
+            </section>
+
+            {/* WYKRES: WEJŚCIA WG GODZINY (CZAS POLSKI) */}
+            <section className="panel p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-primary" /> Wejścia według godziny (czas polski)
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Rozkład godzinowy wszystkich wizyt (strefa Europe/Warsaw, 00:00 – 23:59).
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-md bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground">
+                  <span>Szczyt:</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400">
+                    {peakHour}:00 ({hoursData[peakHour] ?? 0} wizyt)
+                  </span>
+                </div>
+              </div>
+
+              {/* Interaktywny wykres słupkowy 24h z tłem kolumn */}
+              <div className="mt-6 flex h-48 items-end gap-1 sm:gap-1.5 pt-6 pb-2 border-b border-border/50">
+                {hoursData.map((count, h) => {
+                  const pct = Math.round((count / maxHourly) * 100);
+                  const isPeak = count === maxHourly && count > 0;
+                  const isHovered = hoveredHour === h;
+                  return (
+                    <div
+                      key={h}
+                      className="group relative flex flex-1 flex-col items-center h-full justify-end cursor-pointer"
+                      onMouseEnter={() => setHoveredHour(h)}
+                      onMouseLeave={() => setHoveredHour(null)}
+                    >
+                      {/* Etykieta tooltip nad słupkiem */}
+                      <div
+                        className={`absolute -top-7 z-20 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-bold shadow-md transition-all pointer-events-none ${
+                          isHovered
+                            ? "opacity-100 scale-100 bg-ink text-background"
+                            : "opacity-0 scale-95"
+                        }`}
+                      >
+                        {h}:00 — {count} {count === 1 ? "wejście" : "wejść"}
+                      </div>
+
+                      {/* Tło kolumny slotu godzinowego */}
+                      <div className="w-full flex-1 flex items-end rounded-t bg-muted/30 border-x border-t border-border/20 overflow-hidden relative">
+                        <div
+                          className={`w-full rounded-t transition-all duration-300 ${
+                            isPeak
+                              ? "bg-amber-500 hover:bg-amber-400 dark:bg-amber-400"
+                              : "bg-primary hover:bg-primary/80"
+                          } ${isHovered ? "ring-2 ring-foreground/20 brightness-110" : ""}`}
+                          style={{ height: count > 0 ? `${Math.max(8, pct)}%` : "0%" }}
+                        />
+                      </div>
+
+                      {/* Etykieta godziny na osi X */}
+                      <span
+                        className={`num mt-1.5 text-[9px] sm:text-[10px] transition-colors ${
+                          isHovered ? "font-bold text-primary" : "text-muted-foreground"
+                        }`}
+                      >
+                        {h % 3 === 0 ? `${h}h` : ""}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>00:00 (północ)</span>
+                <span>12:00 (południe)</span>
+                <span>23:00 (wieczór)</span>
+              </div>
+            </section>
+
+            {/* WEJŚCIA WG DNIA (BIEŻĄCY I POPRZEDNIE MIESIĄCE) */}
+            <section className="panel p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" /> Wejścia według dnia (w tym i poprzednich miesiącach)
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Przeglądaj dzienne natężenie ruchu z podziałem na miesiące kalendarzowe.
+                  </p>
+                </div>
+
+                {/* Selektor miesięcy */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {summary.visitsByMonth.map((m, idx) => (
+                    <Button
+                      key={m.month}
+                      variant={selectedMonth === m.month ? "default" : "outline"}
+                      size="sm"
+                      className="text-xs h-8"
+                      onClick={() => setSelectedMonth(m.month)}
+                    >
+                      {m.label} {idx === 0 ? "(bieżący)" : ""} ({m.count})
+                    </Button>
+                  ))}
+                  <Button
+                    variant={selectedMonth === "all" ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs h-8"
+                    onClick={() => setSelectedMonth("all")}
+                  >
+                    Wszystkie miesiące ({summary.pageViews})
+                  </Button>
+                </div>
+              </div>
+
+              {/* Informacja o wybranym okresie */}
+              <div className="mt-4 flex items-center justify-between rounded-lg bg-surface/70 border border-border/70 px-3.5 py-2 text-xs">
+                <span className="text-muted-foreground">
+                  Okres: <strong className="text-foreground">{activeMonthObj ? activeMonthObj.label : "Wszystkie zarejestrowane dni"}</strong>
+                </span>
+                <span className="font-semibold text-ink">
+                  Łącznie wizyt w okresie: <span className="num text-primary font-bold text-sm">{displayedDays.reduce((acc, d) => acc + d.count, 0)}</span>
+                </span>
+              </div>
+
+              {/* Wizualny wykres dzienny dla wybranego miesiąca */}
+              {displayedDays.length > 0 && (
+                <div className="mt-4 pt-2">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Wizualizacja natężenia dziennego
+                  </p>
+                  <div className="flex h-32 items-end gap-1 overflow-x-auto pb-2 border-b border-border/50">
+                    {[...displayedDays].reverse().map(({ day, count }) => {
+                      const pct = Math.round((count / maxDaily) * 100);
+                      const isHovered = hoveredDay === day;
+                      const dayNumber = day.slice(8);
+                      const weekday = getPolishWeekday(day);
+                      return (
+                        <div
+                          key={day}
+                          className="group relative flex flex-1 min-w-[20px] max-w-[40px] flex-col items-center h-full justify-end cursor-pointer"
+                          onMouseEnter={() => setHoveredDay(day)}
+                          onMouseLeave={() => setHoveredDay(null)}
+                        >
+                          <div
+                            className={`absolute -top-7 z-20 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-bold shadow-md transition-all pointer-events-none ${
+                              isHovered ? "opacity-100 scale-100 bg-ink text-background" : "opacity-0 scale-95"
+                            }`}
+                          >
+                            {day} ({weekday}): {count} {count === 1 ? "wejście" : "wejść"}
+                          </div>
+
+                          <div className="w-full flex-1 flex items-end rounded-t bg-muted/30 overflow-hidden relative">
+                            <div
+                              className="w-full rounded-t bg-primary transition-all duration-300 group-hover:bg-primary/80"
+                              style={{ height: count > 0 ? `${Math.max(8, pct)}%` : "0%" }}
+                            />
+                          </div>
+
+                          <span className={`num mt-1 text-[9px] ${isHovered ? "font-bold text-primary" : "text-muted-foreground"}`}>
+                            {dayNumber}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tabela szczegółowa dni */}
+              <div className="mt-4 max-h-72 overflow-y-auto rounded-lg border border-border/60">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 sticky top-0">
+                    <tr className="text-left text-xs text-muted-foreground">
+                      <th className="py-2 px-3 font-medium">Dzień</th>
+                      <th className="py-2 px-3 font-medium">Dzień tygodnia</th>
+                      <th className="py-2 px-3 font-medium">Wykres</th>
+                      <th className="py-2 px-3 text-right font-medium">Wejścia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayedDays.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-4 text-center text-xs text-muted-foreground">
+                          Brak zarejestrowanych wejść w tym okresie.
+                        </td>
+                      </tr>
+                    ) : (
+                      displayedDays.map(({ day, count }) => (
+                        <tr key={day} className="border-t border-border/50 hover:bg-muted/20">
+                          <td className="num py-2 px-3 font-medium text-foreground">{day}</td>
+                          <td className="py-2 px-3 text-xs text-muted-foreground">{getPolishWeekday(day)}</td>
+                          <td className="py-2 px-3">
+                            <div className="h-2 w-32 max-w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-primary"
+                                style={{ width: `${(count / maxDaily) * 100}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td className="num py-2 px-3 text-right font-bold text-ink">{count}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </section>
 
@@ -281,11 +656,11 @@ function StatsPage() {
             <section className="panel p-5">
               <h2 className="font-display text-lg font-bold text-ink">Średnie poparcie w tworzonych scenariuszach</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Na podstawie zapisywanych, pobieranych i udostępnianych scenariuszy.
+                Na podstawie zapisywanych, pobieranych i udostępnianych scenariuszy (z wyłączeniem scenariusza domyślnego).
               </p>
               <div className="mt-4 flex flex-col gap-2">
                 {summary.avgShares.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Brak zapisanych scenariuszy.</p>
+                  <p className="text-sm text-muted-foreground">Brak zmodyfikowanych scenariuszy użytkowników.</p>
                 ) : (
                   summary.avgShares.map(({ party, avg, count }) => (
                     <div key={party} className="flex items-center gap-3">
@@ -329,47 +704,6 @@ function StatsPage() {
                 })}
               </div>
             </section>
-
-            {/* Wejścia dzienne i godziny */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <section className="panel p-5">
-                <h2 className="font-display text-lg font-bold text-ink">Wejścia dzienne</h2>
-                <div className="mt-3 max-h-72 overflow-y-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-xs text-muted-foreground">
-                        <th className="py-1 font-medium">Dzień</th>
-                        <th className="py-1 text-right font-medium">Wejścia</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summary.visitsByDay.map(({ day, count }) => (
-                        <tr key={day} className="border-t border-border/60">
-                          <td className="num py-1.5 text-foreground">{day}</td>
-                          <td className="num py-1.5 text-right font-semibold text-ink">{count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-
-              <section className="panel p-5">
-                <h2 className="font-display text-lg font-bold text-ink">Wejścia wg godziny (czas polski)</h2>
-                <div className="mt-6 flex h-40 items-end gap-0.5">
-                  {Array.from({ length: 24 }, (_, h) => {
-                    const v = summary.pageViewsByHourUtc[(h + 22) % 24] ?? 0;
-                    const max = Math.max(1, ...summary.pageViewsByHourUtc);
-                    return (
-                      <div key={h} className="flex flex-1 flex-col items-center gap-1" title={`${h}:00 — ${v}`}>
-                        <div className="w-full rounded-t bg-primary/80" style={{ height: `${(v / max) * 100}%` }} />
-                        <span className="num text-[9px] text-muted-foreground">{h}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            </div>
 
             {/* Udostępnione linki serwera */}
             <section className="panel p-5">
@@ -442,9 +776,77 @@ function StatsPage() {
               </div>
             </section>
 
-            <Button variant="outline" size="sm" className="self-start" onClick={() => void load()}>
-              Odśwież dane
-            </Button>
+            {/* Strefa czyszczenia bazy danych */}
+            <section className="panel p-5 border-destructive/30 bg-destructive/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-display font-bold text-destructive text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" /> Strefa czyszczenia danych
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Trwałe usunięcie wszystkich zdarzeń telemetrycznych oraz aktywnych linków z bazy SQLite.
+                </p>
+              </div>
+
+              <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="shrink-0 gap-1.5">
+                    <Trash2 className="h-4 w-4" /> Wyczyść wszystkie dane
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="text-destructive flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" /> Potwierdzenie czyszczenia bazy danych
+                    </DialogTitle>
+                    <DialogDescription>
+                      Ta operacja trwale usunie wszystkie zgromadzone zdarzenia analityczne oraz aktywne linki scenariuszy z lokalnej bazy serwera SQLite.
+                      Tej operacji nie można cofnąć.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleClearAll} className="space-y-4 pt-2">
+                    <div>
+                      <label className="text-xs font-semibold text-foreground">
+                        Aby potwierdzić, wpisz hasło właściciela JIFO:
+                      </label>
+                      <Input
+                        type="password"
+                        value={clearPassword}
+                        onChange={(e) => setClearPassword(e.target.value)}
+                        placeholder="Wpisz hasło"
+                        className="mt-1.5"
+                        autoFocus
+                      />
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setClearDialogOpen(false);
+                          setClearPassword("");
+                        }}
+                      >
+                        Anuluj
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="destructive"
+                        disabled={clearing || !clearPassword.trim()}
+                      >
+                        {clearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        Potwierdź i usuń dane
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </section>
+
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={() => void load()}>
+                <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Odśwież dane
+              </Button>
+            </div>
           </div>
         )}
       </main>

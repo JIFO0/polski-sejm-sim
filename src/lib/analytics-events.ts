@@ -21,6 +21,8 @@ export const EVENTS = [
   "turnout_group_move",
   "scenario_reset",
   "support_click",
+  "contact_click",
+  "about_view",
 ] as const;
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
@@ -46,5 +48,8 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   historical_view: "Wyniki historyczne PKW",
   turnout_group_move: "Grupy wrażliwości frekwencji",
   scenario_reset: "Przywrócenia stanu wyjściowego",
-  support_click: "Kliknięcia wsparcia (kawa)",
+  support_click: "Kliknięcia wsparcia (Buy Me a Coffee)",
+  contact_click: "Kliknięcia w kontakt (jifo.dev/#kontakt)",
+  about_view: "Wejścia na stronę o projekcie (/o-projekcie)",
 };
+

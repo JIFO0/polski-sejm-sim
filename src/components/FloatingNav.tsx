@@ -4,6 +4,7 @@ import { ArrowLeft, Info, UserRound } from "lucide-react";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { SupportButton } from "@/components/SupportButton";
 import { Button } from "@/components/ui/button";
+import { track } from "@/lib/analytics";
 
 export function FloatingNav({
   mode = "simulator",
@@ -72,7 +73,12 @@ export function FloatingNav({
           title="Kontakt z twórcą (JIFO)"
           aria-label="Kontakt z twórcą"
         >
-          <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
+          <a
+            href="https://jifo.dev/#kontakt"
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => track({ event: "contact_click" })}
+          >
             <UserRound className="h-4 w-4" />
           </a>
         </Button>

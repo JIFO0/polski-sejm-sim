@@ -18,7 +18,7 @@ import {
   type DistrictState,
   type Scenario,
 } from "@/lib/simulation";
-import { nationalSharesOf, track, trackPageViewOncePerSession } from "@/lib/analytics";
+import { isScenarioModified, nationalSharesOf, track, trackPageViewOncePerSession } from "@/lib/analytics";
 import { ParticleField } from "@/components/ParticleField";
 import { PolandMap, type MapMode } from "@/components/PolandMap";
 import { Hemicycle } from "@/components/Hemicycle";
@@ -193,7 +193,7 @@ function Index() {
   const save = () => {
     track({
       event: "scenario_download",
-      shares: nationalSharesOf(scenario),
+      ...(isScenarioModified(scenario) ? { shares: nationalSharesOf(scenario) } : {}),
       turnout: scenario.districts[1]?.turnout ?? BASE_TURNOUT,
     });
     const blob = new Blob([JSON.stringify(scenario, null, 2)], { type: "application/json" });
@@ -270,7 +270,12 @@ function Index() {
             </Button>
             <FeedbackDialog />
             <Button variant="outline" size="sm" asChild>
-              <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">
+              <a
+                href="https://jifo.dev/#kontakt"
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => track({ event: "contact_click" })}
+              >
                 <UserRound className="mr-1.5 h-4 w-4" /> Kontakt
               </a>
             </Button>

@@ -332,6 +332,22 @@ export function insertFeedbackRecord(entry: {
   return true;
 }
 
+export function clearAllPlatformData(): { ok: boolean; deletedEvents: number; deletedShares: number } {
+  const db = getDb();
+  const resEvents = db.prepare("DELETE FROM analytics_events").run();
+  const resShares = db.prepare("DELETE FROM shared_scenarios").run();
+  try {
+    db.exec("VACUUM;");
+  } catch {
+    // vacuum optional
+  }
+  return {
+    ok: true,
+    deletedEvents: Number(resEvents.changes),
+    deletedShares: Number(resShares.changes),
+  };
+}
+
 export function getDbStats() {
   let sizeBytes = 0;
   if (dbPathCached && fs.existsSync(dbPathCached)) {
@@ -346,3 +362,4 @@ export function getDbStats() {
     underLimit: sizeBytes < 4 * 1024 * 1024 * 1024,
   };
 }
+

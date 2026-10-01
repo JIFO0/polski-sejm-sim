@@ -28,6 +28,34 @@ export const trackEvent = createServerFn({ method: "POST" })
 
 const summarySchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200) });
 
+function getPolishHour(isoString: string): number {
+  try {
+    const d = new Date(isoString);
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Warsaw",
+      hour: "numeric",
+      hourCycle: "h23",
+    });
+    return parseInt(formatter.format(d), 10) % 24;
+  } catch {
+    return new Date(isoString).getUTCHours();
+  }
+}
+
+function getPolishDay(isoString: string): string {
+  try {
+    const d = new Date(isoString);
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Warsaw",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(d);
+  } catch {
+    return isoString.slice(0, 10);
+  }
+}
+
 export const getAnalyticsSummary = createServerFn({ method: "POST" })
   .inputValidator((data) => summarySchema.parse(data))
   .handler(async ({ data }) => {
@@ -67,16 +95,39 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
     const byDay = new Map<string, number>();
     for (const r of rows) {
       if (r.event !== "page_view") continue;
-      const day = r.created_at.slice(0, 10);
+      const day = getPolishDay(r.created_at);
       byDay.set(day, (byDay.get(day) ?? 0) + 1);
     }
     const visitsByDay = [...byDay.entries()]
       .map(([day, count]) => ({ day, count }))
       .sort((a, b) => b.day.localeCompare(a.day));
 
+    // Pogrupowanie według miesięcy (YYYY-MM)
+    const monthMap = new Map<string, { month: string; label: string; count: number; days: { day: string; count: number }[] }>();
+    for (const { day, count } of visitsByDay) {
+      const ym = day.slice(0, 7);
+      if (!monthMap.has(ym)) {
+        let label = ym;
+        try {
+          const [y, m] = ym.split("-").map(Number);
+          const d = new Date(Date.UTC(y, m - 1, 15));
+          const monthName = new Intl.DateTimeFormat("pl-PL", { month: "long" }).format(d);
+          label = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${y}`;
+        } catch {
+          label = ym;
+        }
+        monthMap.set(ym, { month: ym, label, count: 0, days: [] });
+      }
+      const mObj = monthMap.get(ym)!;
+      mObj.count += count;
+      mObj.days.push({ day, count });
+    }
+    const visitsByMonth = [...monthMap.values()].sort((a, b) => b.month.localeCompare(a.month));
+
     const eventCounts = new Map<string, number>();
     const metaCounts = new Map<string, number>();
     const hours = Array.from({ length: 24 }, () => 0);
+    const hoursPolish = Array.from({ length: 24 }, () => 0);
 
     // New enriched insights
     const districtViews = new Map<string, number>();
@@ -98,6 +149,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
 
       if (r.event === "page_view") {
         hours[new Date(r.created_at).getUTCHours()]! += 1;
+        hoursPolish[getPolishHour(r.created_at)]! += 1;
         if (meta) {
           const parts = meta.split("|");
           const dev = parts[0] || "nieznane";
@@ -139,10 +191,14 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       eventCounts: [...eventCounts.entries()].map(([event, count]) => ({ event, count })).sort((a, b) => b.count - a.count),
       metaCounts: [...metaCounts.entries()].map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count).slice(0, 60),
       pageViewsByHourUtc: hours,
+      pageViewsByHourPolish: hoursPolish,
       turnoutBuckets: [...turnoutBuckets.entries()].map(([bucket, count]) => ({ bucket, count })).sort((a, b) => a.bucket.localeCompare(b.bucket, undefined, { numeric: true })),
       activeShares,
       totalEvents: rows.length,
       pageViews: countBy("page_view"),
+      supportClicks: countBy("support_click"),
+      contactClicks: countBy("contact_click"),
+      aboutViews: countBy("about_view"),
       scenarioSaves: countBy("scenario_save"),
       scenarioDownloads: countBy("scenario_download"),
       scenarioShares: countBy("scenario_share"),
@@ -150,6 +206,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       avgTurnout,
       avgShares,
       visitsByDay,
+      visitsByMonth,
       // Enriched options
       topDistricts: [...districtViews.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 12),
       topCoalitions: [...coalitionTests.entries()].map(([members, data]) => ({ members, count: data.count, majority: data.majority })).sort((a, b) => b.count - a.count).slice(0, 10),
@@ -162,3 +219,22 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       dbStats,
     };
   });
+
+const clearDataSchema = z.object({
+  login: z.string().max(50),
+  key: z.string().min(1).max(200),
+  confirmPassword: z.string().min(1).max(200),
+});
+
+export const clearAllAnalyticsData = createServerFn({ method: "POST" })
+  .inputValidator((data) => clearDataSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key) || !isOwner(data.login, data.confirmPassword)) {
+      return { ok: false as const, error: "Nieprawidłowe hasło potwierdzające." };
+    }
+    const { clearAllPlatformData } = await import("./server-db.server");
+    const result = clearAllPlatformData();
+    return { ok: true as const, result };
+  });
+
