@@ -122,6 +122,40 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  html[data-large-text="true"] {
+    font-size: 112.5%;
+  }
+
+  html[data-readable-font="true"] {
+    --font-display: Arial, ui-sans-serif, system-ui, sans-serif;
+    --font-sans: Arial, ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, monospace;
+  }
+
+  html[data-high-contrast="true"] {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.08 0 0);
+    --ink: oklch(0.05 0 0);
+    --surface: oklch(1 0 0);
+    --surface-strong: oklch(0.94 0 0);
+    --muted-foreground: oklch(0.3 0 0);
+    --border: oklch(0.25 0 0);
+    --input: oklch(0.25 0 0);
+  }
+
+  html[data-reduce-motion="true"] *,
+  html[data-reduce-motion="true"] *::before,
+  html[data-reduce-motion="true"] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html[data-reduce-motion="true"] [data-particle-field] {
+    display: none;
+  }
+
   body {
     background-color: color-mix(in oklch, var(--color-background) 93%, transparent);
     color: var(--color-foreground);

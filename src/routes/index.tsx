@@ -31,8 +31,12 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { PartyLogo } from "@/components/PartyLogo";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { AccessibilityMenu } from "@/components/AccessibilityMenu";
+import { ShareInput } from "@/components/ShareInput";
 
 const TITLE = "SejmSim 2027 (sejmsim.pl) — symulator wyborów do Sejmu";
 const DESC =
@@ -99,6 +103,24 @@ function Index() {
     setScenario((s) => ({ ...s, districts: { ...s.districts, [id]: next } }));
   }, []);
 
+  const nationalRawShares = useMemo(() => {
+    const weight = DISTRICTS.reduce((total, district) => total + district.electorate, 0);
+    return Object.fromEntries(
+      PARTIES.map((party) => [
+        party.id,
+        DISTRICTS.reduce(
+          (total, district) => total + (scenario.districts[district.id]?.shares[party.id] ?? 0) * district.electorate,
+          0,
+        ) / weight,
+      ]),
+    );
+  }, [scenario.districts]);
+
+  const unassignedShare = Math.max(
+    0,
+    100 - Object.values(nationalRawShares).reduce((total, share) => total + share, 0),
+  );
+
   const resetDistrict = useCallback((id: number) => {
     const base = DISTRICTS.find((d) => d.id === id);
     if (!base) return;
@@ -108,7 +130,7 @@ function Index() {
     }));
   }, []);
 
-  /** Przesunięcie poparcia partii jednakowo we wszystkich okręgach. */
+  /** Zmiana krajowego poparcia przy zachowaniu regionalnych różnic. */
   const nationalSwing = useCallback((pid: string, target: number) => {
     setScenario((s) => {
       const current = DISTRICTS.reduce(
@@ -117,16 +139,30 @@ function Index() {
       );
       const weight = DISTRICTS.reduce((acc, d) => acc + d.electorate, 0);
       const avg = current / weight;
-      const delta = target - avg;
+      const boundedTarget = Math.min(100, Math.max(0, target));
+      const delta = boundedTarget - avg;
       const districts = { ...s.districts };
       for (const d of DISTRICTS) {
         const st = districts[d.id] ?? blankState(d.id);
+        const currentParty = st.shares[pid] ?? 0;
+        const otherTotal = Object.entries(st.shares).reduce(
+          (total, [id, share]) => total + (id === pid ? 0 : share),
+          0,
+        );
+        const targetHere = Math.min(100, Math.max(0, currentParty + delta));
+        const available = Math.max(0, 100 - otherTotal);
+        const snapped = Math.abs(targetHere - available) <= 0.35 ? available : targetHere;
+        const shares = s.independentSupport
+          ? { ...st.shares, [pid]: Math.min(snapped, available) }
+          : Object.fromEntries(
+              Object.entries(st.shares).map(([id, share]) => [
+                id,
+                id === pid ? targetHere : otherTotal > 0 ? share * ((100 - targetHere) / otherTotal) : share,
+              ]),
+            );
         districts[d.id] = {
           turnout: st.turnout,
-          shares: {
-            ...st.shares,
-            [pid]: Math.max(0, +((st.shares[pid] ?? 0) + delta).toFixed(2)),
-          },
+          shares,
         };
       }
       return { ...s, districts };
@@ -209,7 +245,8 @@ function Index() {
           }}
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
-          <nav className="flex items-center justify-end gap-2" aria-label="Nawigacja główna">
+            <nav className="flex flex-wrap items-center justify-end gap-2" aria-label="Nawigacja główna">
+              <AccessibilityMenu />
             <Button variant="ghost" size="sm" asChild>
               <Link to="/o-projekcie">
                 <Info className="mr-1.5 h-4 w-4" /> O projekcie
@@ -248,7 +285,7 @@ function Index() {
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 <Button onClick={save}>
-                  <Download className="mr-1.5 h-4 w-4" /> Zapisz scenariusz
+                  <Download className="mr-1.5 h-4 w-4" /> Pobierz scenariusz
                 </Button>
                 <Button variant="outline" onClick={() => fileRef.current?.click()}>
                   <Upload className="mr-1.5 h-4 w-4" /> Wczytaj plik
@@ -283,7 +320,7 @@ function Index() {
               style={{ "--leader-color": leader?.color ?? "var(--border)" } as CSSProperties}
             >
               <div className="flex items-baseline justify-between">
-                <p className="eyebrow">Skład Sejmu w tym scenariuszu</p>
+                <h2 className="font-display text-lg font-bold text-ink">Skład parlamentu w tym scenariuszu</h2>
                 <p className="num text-xs text-muted-foreground">
                   frekwencja {result.nationalTurnout.toFixed(1)}%
                 </p>
@@ -311,6 +348,14 @@ function Index() {
       </header>
 
       <main className="relative z-10 mx-auto max-w-[1400px] space-y-14 px-5 py-12">
+        <section className="border-l-4 border-primary bg-surface/80 px-5 py-4 backdrop-blur-sm" aria-labelledby="tutorial-title">
+          <p className="eyebrow">Jak stworzyć scenariusz</p>
+          <h2 id="tutorial-title" className="mt-1 font-display text-lg font-bold text-ink">Od poparcia do większości parlamentarnej</h2>
+          <p className="mt-2 max-w-5xl text-sm leading-relaxed text-muted-foreground">
+            Ustaw poparcie dla każdej partii, a opcjonalnie także frekwencję i jej wpływ na rozkład głosów.
+            Następnie połącz partie w koalicje, aby sprawdzić, które bloki mogą utworzyć rząd i osiągnąć większość 231 mandatów.
+          </p>
+        </section>
         <CollapsibleSection title="Symulacja w okręgach">
         {/* MAPA + PANEL */}
         <section className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
@@ -391,6 +436,7 @@ function Index() {
                 onChange={(next) => setDistrict(selected, next)}
                 onReset={() => resetDistrict(selected)}
                 onClose={() => setSelected(null)}
+                    independentSupport={scenario.independentSupport ?? false}
               />
             ) : (
               <div
@@ -399,11 +445,26 @@ function Index() {
               >
                 <h3 className="font-display text-lg font-bold text-ink">Wynik ogólnokrajowy</h3>
                 <p className="text-sm text-muted-foreground">
-                  Suwak ustawia poparcie partii jednakowo we wszystkich okręgach.
+                  Suwak i pole procentowe zmieniają poparcie z zachowaniem regionalnych różnic.
                 </p>
+                <label className="mt-4 flex min-h-12 cursor-pointer items-start gap-3 rounded-md border border-border bg-surface/70 p-3">
+                  <Checkbox
+                    checked={scenario.independentSupport ?? false}
+                    onCheckedChange={(checked) => setScenario((current) => ({ ...current, independentSupport: checked === true }))}
+                    className="mt-0.5 h-5 w-5"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-foreground">Wybór proporcjonalny</span>
+                    <span className="block text-xs text-muted-foreground">Zmiana jednej partii nie zmienia wyników pozostałych.</span>
+                  </span>
+                </label>
+                <div className="mt-3 flex items-center justify-between rounded-md bg-muted px-3 py-2">
+                  <span className="text-sm font-semibold">Głosy nieprzypisane</span>
+                  <span className="num text-base font-bold text-primary">{unassignedShare.toFixed(1)}%</span>
+                </div>
                 <div className="mt-4 space-y-3">
                   {displayedParties.map((p) => {
-                    const share = result.nationalShares[p.id] ?? 0;
+                    const share = scenario.independentSupport ? (nationalRawShares[p.id] ?? 0) : (result.nationalShares[p.id] ?? 0);
                     const seats = result.seatsByParty[p.id] ?? 0;
                     const settings = scenario.parties[p.id] ?? DEFAULT_SETTINGS;
                     const inSejm = result.qualified.includes(p.id);
@@ -423,12 +484,12 @@ function Index() {
                               {inSejm ? "" : ", poniżej progu"}
                             </p>
                           </div>
-                          <span
-                            className="num ml-auto text-sm font-bold"
-                            style={{ color: p.color }}
-                          >
-                            {share.toFixed(1)}%
-                          </span>
+                          <ShareInput
+                            value={share}
+                            onChange={(next) => nationalSwing(p.id, next)}
+                            label={`Krajowe poparcie ${p.name}`}
+                            max={scenario.independentSupport ? share + unassignedShare : 100}
+                          />
                           <span className="num w-10 rounded bg-ink/5 py-0.5 text-center text-sm font-bold">
                             {seats}
                           </span>
@@ -436,7 +497,7 @@ function Index() {
                         <Slider
                           className="mt-2.5"
                           min={0}
-                          max={55}
+                          max={scenario.independentSupport ? Math.max(55, share + unassignedShare) : 100}
                           step={0.1}
                           value={[share]}
                           onValueChange={([v = 0]) => nationalSwing(p.id, v)}
@@ -450,13 +511,6 @@ function Index() {
             )}
           </div>
         </section>
-        </CollapsibleSection>
-
-        <CollapsibleSection title="Wyniki dawnych wyborów" defaultOpen={false}>
-          <div className="space-y-6">
-            <HistoricalResults />
-            <HistoricalDistrictResults />
-          </div>
         </CollapsibleSection>
 
         {/* KOALICJE */}
@@ -583,7 +637,7 @@ function Index() {
         </section>
         </CollapsibleSection>
 
-        <section className="grid gap-6 border-y border-border bg-surface/80 px-1 py-8 backdrop-blur-sm md:grid-cols-[1fr_auto] md:items-center">
+        <section className="grid gap-6 border-y border-border bg-surface/80 px-5 py-8 backdrop-blur-sm md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <p className="eyebrow">Autor projektu</p>
             <h2 className="mt-2 font-display text-2xl font-bold text-ink">Iwo Laskowski, JIFO</h2>
@@ -602,7 +656,7 @@ function Index() {
           </div>
         </section>
 
-        <footer className="border-t border-border bg-background/90 pt-6 text-xs leading-relaxed text-muted-foreground">
+        <footer className="border-t border-border bg-background/90 px-5 py-6 text-xs leading-relaxed text-muted-foreground">
           <p>
             Dane wyjściowe: średnia sondażowa i symulacja okręgowa z ewybory.eu (stan na 30 września
             2026). Mandaty liczone metodą D'Hondta osobno w każdym z 41 okręgów, z progami
@@ -622,6 +676,13 @@ function Index() {
             Sprawdź aktualne sondaże na ewybory.eu <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
           </a>
         </footer>
+
+        <CollapsibleSection title="Wyniki dawnych wyborów" defaultOpen={false} className="pb-6">
+          <div className="space-y-6">
+            <HistoricalResults />
+            <HistoricalDistrictResults />
+          </div>
+        </CollapsibleSection>
       </main>
     </div>
   );
