@@ -160,7 +160,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       } else if (r.event === "district_view" && meta) {
         districtViews.set(meta, (districtViews.get(meta) ?? 0) + 1);
       } else if (r.event === "coalition_test" && meta) {
-        const [coalitionName, maj] = meta.split(":");
+        const [coalitionName = meta, maj] = meta.split(":");
         const entry = coalitionTests.get(coalitionName) ?? { count: 0, majority: maj === "tak" || maj === "wiekszosc" };
         entry.count += 1;
         entry.majority = maj === "tak" || maj === "wiekszosc";

@@ -66,7 +66,7 @@ export const getShare = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Ten link wygasł lub został wyłączony." };
     }
     incrementShareViews(data.id);
-    return { ok: true as const, name: row.name, scenario: row.scenario, expiresAt: row.expires_at };
+    return { ok: true as const, name: row.name, scenarioJson: JSON.stringify(row.scenario), expiresAt: row.expires_at };
   });
 
 const ownerSchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200) });
