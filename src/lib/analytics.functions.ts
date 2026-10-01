@@ -3,21 +3,37 @@ import { z } from "zod";
 import { EVENTS } from "./analytics-events";
 
 const trackSchema = z.object({
-  event: z.enum(EVENTS),
-  meta: z.string().max(100).optional(),
-  shares: z.record(z.string(), z.number().min(0).max(100)).optional(),
-  turnout: z.number().min(0).max(100).optional(),
+  event: z.string().max(60),
+  meta: z.string().max(200).optional(),
+  shares: z.record(z.string(), z.number()).optional(),
+  turnout: z.number().optional(),
 });
 
 export const trackEvent = createServerFn({ method: "POST" })
-  .inputValidator((data) => trackSchema.parse(data))
-  .handler(async ({ data }) => {
-    const { insertAnalyticsEvent } = await import("./server-db.server");
+  .inputValidator((data) => {
     try {
+      return trackSchema.parse(data);
+    } catch {
+      return { event: "unknown" };
+    }
+  })
+  .handler(async ({ data }) => {
+    if (!data?.event || data.event === "unknown") return { ok: false };
+    try {
+      const { insertAnalyticsEvent } = await import("./server-db.server");
+      let sanitizedShares: Record<string, number> | null = null;
+      if (data.shares && typeof data.shares === "object") {
+        sanitizedShares = {};
+        for (const [k, v] of Object.entries(data.shares)) {
+          if (typeof v === "number" && !isNaN(v)) {
+            sanitizedShares[k.slice(0, 50)] = Math.max(0, Math.min(100, Math.round(v * 10) / 10));
+          }
+        }
+      }
       insertAnalyticsEvent(data.event, {
-        shares: data.shares ?? null,
-        turnout: data.turnout ?? null,
-        meta: data.meta ?? null,
+        shares: sanitizedShares,
+        turnout: typeof data.turnout === "number" && !isNaN(data.turnout) ? Math.max(0, Math.min(100, data.turnout)) : null,
+        meta: data.meta ? String(data.meta).slice(0, 200) : null,
       });
       return { ok: true };
     } catch (err) {

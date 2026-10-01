@@ -235,14 +235,19 @@ export function countTotalActiveShares(nowIso: string): number {
 }
 
 export function insertAnalyticsEvent(event: string, payload: Record<string, unknown>): boolean {
-  maybeRunMaintenance();
-  const db = getDb();
-  const nowIso = new Date().toISOString();
-  db.prepare(`
-    INSERT INTO analytics_events (event, payload, created_at)
-    VALUES (?, ?, ?)
-  `).run(event, JSON.stringify(payload), nowIso);
-  return true;
+  try {
+    maybeRunMaintenance();
+    const db = getDb();
+    const nowIso = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO analytics_events (event, payload, created_at)
+      VALUES (?, ?, ?)
+    `).run(event, JSON.stringify(payload), nowIso);
+    return true;
+  } catch (err) {
+    console.error("[server-db] insertAnalyticsEvent error:", err);
+    return false;
+  }
 }
 
 export interface AnalyticsRow {

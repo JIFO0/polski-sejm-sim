@@ -50,7 +50,7 @@ export function defaultScenario(): Scenario {
   for (const p of PARTIES) {
     parties[p.id] = {
       threshold: p.threshold,
-      turnoutSensitivity: 0,
+      turnoutSensitivity: p.turnoutSensitivity,
       enabled: true,
     };
   }
@@ -88,8 +88,9 @@ export function effectiveShares(
   let sum = 0;
   for (const [id, pct] of Object.entries(state.shares)) {
     const settings = parties[id];
-    if (!settings?.enabled) continue;
-    const sens = settings.turnoutSensitivity ?? 0;
+    if (settings?.enabled === false) continue;
+    const fallbackSens = PARTY_MAP[id]?.turnoutSensitivity ?? 0;
+    const sens = settings?.turnoutSensitivity !== undefined ? settings.turnoutSensitivity : fallbackSens;
     const v = Math.max(0, pct * (1 + sens * turnoutEffect * delta));
     raw[id] = v;
     sum += v;

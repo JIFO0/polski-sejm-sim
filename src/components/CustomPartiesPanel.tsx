@@ -239,6 +239,12 @@ export function CustomPartiesPanel({
         nextDistricts[d.id] = { ...currentSt, shares: nextShares };
       }
 
+      let sensSum = 0;
+      for (const mid of draft) {
+        sensSum += s.parties[mid]?.turnoutSensitivity ?? PARTY_MAP[mid]?.turnoutSensitivity ?? 0;
+      }
+      const mergerSens = draft.length > 0 ? Math.round((sensSum / draft.length) * 100) / 100 : 0;
+
       return {
         ...s,
         districts: nextDistricts,
@@ -254,7 +260,7 @@ export function CustomPartiesPanel({
             memberShares,
           },
         ],
-        parties: { ...s.parties, [id]: { threshold: 8, turnoutSensitivity: 0, enabled: true } },
+        parties: { ...s.parties, [id]: { threshold: 8, turnoutSensitivity: mergerSens, enabled: true } },
         coalitions: s.coalitions.map((c) =>
           c.members.some((m) => draft.includes(m))
             ? { ...c, members: [...c.members.filter((m) => !draft.includes(m)), id] }

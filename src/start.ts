@@ -3,6 +3,8 @@ import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/r
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
+import { getRequest } from "@tanstack/react-start/server";
+
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
     return await next();
@@ -10,11 +12,27 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
     if (error != null && typeof error === "object" && "statusCode" in error) {
       throw error;
     }
-    console.error(error);
-    return new Response(renderErrorPage(), {
-      status: 500,
-      headers: { "content-type": "text/html; charset=utf-8" },
-    });
+    console.error("Server error caught in middleware:", error);
+
+    try {
+      const req = getRequest();
+      const accept = req?.headers?.get?.("accept") ?? "";
+      const isServerFn =
+        req?.url?.includes("/_serverFn") ||
+        req?.headers?.has?.("x-tanstack-start-serverfn");
+
+      if (isServerFn || !accept.includes("text/html")) {
+        throw error;
+      }
+
+      return new Response(renderErrorPage(), {
+        status: 500,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    } catch (e) {
+      if (e === error) throw e;
+      throw error;
+    }
   }
 });
 

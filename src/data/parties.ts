@@ -179,7 +179,21 @@ export function syncCustomEntities(custom: CustomPartyDef[] = [], mergers: Merge
     PARTIES.push({ ...c, ...(logos[c.id] ? { logo: logos[c.id] } : {}), threshold: 5, turnoutSensitivity: 0 });
   }
   for (const m of mergers) {
-    PARTIES.push({ id: m.id, name: m.name, short: m.short, color: m.color, ...(logos[m.id] ? { logo: logos[m.id] } : {}), threshold: 8, turnoutSensitivity: 0 });
+    let mergerSens = 0;
+    for (const member of m.members) {
+      const p = BUILTIN.find((b) => b.id === member);
+      mergerSens += p?.turnoutSensitivity ?? 0;
+    }
+    mergerSens = m.members.length > 0 ? Math.round((mergerSens / m.members.length) * 100) / 100 : 0;
+    PARTIES.push({
+      id: m.id,
+      name: m.name,
+      short: m.short,
+      color: m.color,
+      ...(logos[m.id] ? { logo: logos[m.id] } : {}),
+      threshold: 8,
+      turnoutSensitivity: mergerSens,
+    });
     MERGER_IDS.add(m.id);
     for (const member of m.members) MERGED_INTO[member] = m.id;
   }

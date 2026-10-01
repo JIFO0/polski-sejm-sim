@@ -251,11 +251,21 @@ function Index() {
       const parsed = JSON.parse(await file.text()) as Scenario;
       if (parsed?.version !== 1 || !parsed.districts) throw new Error("zły format");
       const base = defaultScenario();
+      const mergedParties: Record<string, PartySettings> = {};
+      for (const [k, v] of Object.entries({ ...base.parties, ...parsed.parties })) {
+        mergedParties[k] = {
+          ...v,
+          turnoutSensitivity:
+            v.turnoutSensitivity !== undefined
+              ? v.turnoutSensitivity
+              : (base.parties[k]?.turnoutSensitivity ?? PARTY_MAP[k]?.turnoutSensitivity ?? 0),
+        };
+      }
       setScenario({
         ...base,
         ...parsed,
         districts: { ...base.districts, ...parsed.districts },
-        parties: { ...base.parties, ...parsed.parties },
+        parties: mergedParties,
       });
       toast.success(`Wczytano: ${parsed.name ?? "scenariusz"}`);
     } catch {
@@ -265,11 +275,21 @@ function Index() {
 
   const loadScenario = useCallback((next: Scenario) => {
     const base = defaultScenario();
+    const mergedParties: Record<string, PartySettings> = {};
+    for (const [k, v] of Object.entries({ ...base.parties, ...next.parties })) {
+      mergedParties[k] = {
+        ...v,
+        turnoutSensitivity:
+          v.turnoutSensitivity !== undefined
+            ? v.turnoutSensitivity
+            : (base.parties[k]?.turnoutSensitivity ?? PARTY_MAP[k]?.turnoutSensitivity ?? 0),
+      };
+    }
     setScenario({
       ...base,
       ...next,
       districts: { ...base.districts, ...next.districts },
-      parties: { ...base.parties, ...next.parties },
+      parties: mergedParties,
     });
   }, []);
 
@@ -418,6 +438,13 @@ function Index() {
             Następnie połącz partie w koalicje, aby sprawdzić, które bloki mogą utworzyć rząd i osiągnąć większość 231 mandatów.
           </p>
         </section>
+        <CollapsibleSection title="Własne partie i wspólne listy" defaultOpen={false}>
+          <CustomPartiesPanel
+            scenario={scenario}
+            setScenario={setScenario}
+            onLogoChange={() => setLogoVersion((v) => v + 1)}
+          />
+        </CollapsibleSection>
         <CollapsibleSection title="Symulacja w okręgach">
         {/* MAPA + PANEL */}
         <section className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
@@ -594,28 +621,7 @@ function Index() {
         </section>
         </CollapsibleSection>
 
-        <CollapsibleSection title="Własne partie i wspólne listy">
-          <CustomPartiesPanel
-            scenario={scenario}
-            setScenario={setScenario}
-            onLogoChange={() => setLogoVersion((v) => v + 1)}
-          />
-        </CollapsibleSection>
-
-        {/* KOALICJE */}
-        <CollapsibleSection title="Koalicje i większość">
-        <section>
-          <CoalitionBuilder
-            coalitions={scenario.coalitions}
-            seatsByParty={result.seatsByParty}
-            qualified={result.qualified}
-            onChange={(next: Coalition[]) => setScenario((s) => ({ ...s, coalitions: next }))}
-            onHover={(members) => setHighlight(members ? new Set(members) : null)}
-          />
-        </section>
-        </CollapsibleSection>
-
-        {/* USTAWIENIA MODELU */}
+        {/* FREKWENCJA - centralnie pod symulacją w okręgach */}
         <CollapsibleSection title="Frekwencja">
         <section className="space-y-6">
           <div className="panel p-5 md:p-6">
@@ -669,6 +675,19 @@ function Index() {
               <TurnoutGroups settings={scenario.parties} onMove={setTurnoutSide} embedded />
             </div>
           </div>
+        </section>
+        </CollapsibleSection>
+
+        {/* KOALICJE */}
+        <CollapsibleSection title="Koalicje i większość">
+        <section>
+          <CoalitionBuilder
+            coalitions={scenario.coalitions}
+            seatsByParty={result.seatsByParty}
+            qualified={result.qualified}
+            onChange={(next: Coalition[]) => setScenario((s) => ({ ...s, coalitions: next }))}
+            onHover={(members) => setHighlight(members ? new Set(members) : null)}
+          />
         </section>
         </CollapsibleSection>
 

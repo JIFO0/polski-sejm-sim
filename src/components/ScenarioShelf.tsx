@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
 import { isScenarioModified, nationalSharesOf, track } from "@/lib/analytics";
-import { PARTIES } from "@/data/parties";
+import { PARTIES, PARTY_MAP } from "@/data/parties";
 import {
   Dialog,
   DialogContent,
@@ -37,12 +37,17 @@ function validScenario(value: unknown): value is Scenario {
 
 function readSaved(): SavedScenario[] {
   try {
-    const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]") as unknown;
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     return parsed
       .filter(
         (item): item is SavedScenario =>
-          Boolean(item) && typeof item === "object" && validScenario((item as SavedScenario).scenario),
+          Boolean(item) &&
+          typeof item === "object" &&
+          typeof (item as SavedScenario).name === "string" &&
+          validScenario((item as SavedScenario).scenario),
       )
       .slice(0, 10);
   } catch {
@@ -71,9 +76,21 @@ function decodeScenario(encoded: string): Scenario | null {
 }
 
 function scenarioPartyMap(sc: Scenario): Record<string, { short: string; color: string; name: string }> {
-  const map: Record<string, { short: string; color: string; name: string }> = { ...PARTY_MAP };
-  for (const c of sc.customParties ?? []) map[c.id] = c;
-  for (const m of sc.mergers ?? []) map[m.id] = m;
+  const map: Record<string, { short: string; color: string; name: string }> = {};
+  for (const p of PARTIES) {
+    map[p.id] = { short: p.short, color: p.color, name: p.name };
+  }
+  if (typeof PARTY_MAP === "object" && PARTY_MAP) {
+    for (const [k, v] of Object.entries(PARTY_MAP)) {
+      if (v) map[k] = { short: v.short, color: v.color, name: v.name };
+    }
+  }
+  for (const c of sc.customParties ?? []) {
+    if (c) map[c.id] = { short: c.short, color: c.color, name: c.name };
+  }
+  for (const m of sc.mergers ?? []) {
+    if (m) map[m.id] = { short: m.short, color: m.color, name: m.name };
+  }
   return map;
 }
 
@@ -142,22 +159,31 @@ export function ScenarioShelf({
   };
 
   const saveLocal = () => {
-    const title = name.trim() || `Scenariusz ${saved.length + 1}`;
-    const newId = createId();
-    const entry: SavedScenario = {
-      id: newId,
-      name: title,
-      savedAt: new Date().toISOString(),
-      scenario: { ...scenario, name: title, createdAt: new Date().toISOString() },
-    };
-    if (!persist([entry, ...saved].slice(0, 10))) return;
-    setActiveScenarioId(newId);
-    setName("");
-    track({
-      event: "scenario_save",
-      ...(isScenarioModified(scenario) ? { shares: nationalSharesOf(scenario) } : {}),
-    });
-    toast.success(`Scenariusz "${title}" zapisany!`);
+    try {
+      const title = name.trim() || `Scenariusz ${saved.length + 1}`;
+      const newId = createId();
+      const entry: SavedScenario = {
+        id: newId,
+        name: title,
+        savedAt: new Date().toISOString(),
+        scenario: { ...scenario, name: title, createdAt: new Date().toISOString() },
+      };
+      if (!persist([entry, ...saved].slice(0, 10))) return;
+      setActiveScenarioId(newId);
+      setName("");
+      try {
+        track({
+          event: "scenario_save",
+          ...(isScenarioModified(scenario) ? { shares: nationalSharesOf(scenario) } : {}),
+        });
+      } catch (trackErr) {
+        console.warn("Analytics track failed in saveLocal", trackErr);
+      }
+      toast.success(`Scenariusz "${title}" zapisany!`);
+    } catch (err) {
+      console.error("saveLocal error:", err);
+      toast.error("Wystąpił błąd podczas zapisywania scenariusza.");
+    }
   };
 
   const shareLink = async (item: SavedScenario) => {
