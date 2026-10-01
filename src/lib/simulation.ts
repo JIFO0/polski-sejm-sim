@@ -30,6 +30,8 @@ export interface Scenario {
   createdAt: string;
   /** Siła wpływu frekwencji na profil elektoratu: 0 = wyłączony, 1 = pełny. */
   turnoutEffect: number;
+  /** Gdy aktywne, zmiana jednej partii korzysta z puli nieprzypisanej zamiast skalować pozostałe. */
+  independentSupport?: boolean;
   districts: Record<number, DistrictState>;
   parties: Record<string, PartySettings>;
   coalitions: Coalition[];
@@ -53,6 +55,7 @@ export function defaultScenario(): Scenario {
     name: "Sondaż ewybory.eu: punkt wyjścia",
     createdAt: new Date().toISOString(),
     turnoutEffect: 1,
+    independentSupport: false,
     districts,
     parties,
     coalitions: [
@@ -67,7 +70,7 @@ export function defaultScenario(): Scenario {
   };
 }
 
-/** Udziały w okręgu po uwzględnieniu frekwencji, znormalizowane do 100. */
+/** Udziały w okręgu po uwzględnieniu frekwencji. */
 export function effectiveShares(
   district: District,
   state: DistrictState,
@@ -85,7 +88,8 @@ export function effectiveShares(
     raw[id] = v;
     sum += v;
   }
-  if (sum <= 0) return raw;
+  if (sum <= 0 || state === undefined) return raw;
+  if (sum <= 100 && parties && false) return raw;
   for (const id of Object.keys(raw)) raw[id] = ((raw[id] ?? 0) / sum) * 100;
   return raw;
 }
