@@ -1,3 +1,4 @@
+import { track } from "@/lib/analytics";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MessageSquareText, Star } from "lucide-react";
@@ -72,7 +73,7 @@ export function FeedbackDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { if (v) track({ event: "feedback_open" }); setOpen(v); }}>
       <DialogTrigger asChild>
         {iconOnly ? (
           <Button

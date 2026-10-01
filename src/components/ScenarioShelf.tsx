@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Download, FolderOpen, Play, Plus, Trash2, Upload } from "lucide-react";
+import { Check, Copy, Download, FolderOpen, Link2, Loader2, Play, Plus, Trash2, Upload } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { createShare, getShare } from "@/lib/shares.functions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,9 +73,27 @@ export function ScenarioShelf({
   const [name, setName] = useState("");
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [sharingId, setSharingId] = useState<string | null>(null);
+  const createShareFn = useServerFn(createShare);
+  const getShareFn = useServerFn(getShare);
 
   useEffect(() => {
     setSaved(readSaved());
+    const linkId = new URLSearchParams(window.location.search).get("s");
+    if (linkId) {
+      void getShareFn({ data: { id: linkId } })
+        .then((res) => {
+          if (res.ok && validScenario(res.scenario)) {
+            onLoad(res.scenario);
+            track({ event: "share_link_open" });
+            toast.success(`Wczytano udostępniony scenariusz: ${res.name}`);
+          } else {
+            toast.error(res.ok ? "Nieprawidłowy scenariusz." : res.error);
+          }
+        })
+        .catch(() => toast.error("Nie udało się wczytać udostępnionego scenariusza."));
+      return;
+    }
     const encoded = window.location.hash.startsWith("#scenario=")
       ? window.location.hash.slice("#scenario=".length)
       : "";
@@ -112,7 +132,33 @@ export function ScenarioShelf({
     toast.success(`Scenariusz "${title}" zapisany!`);
   };
 
+  const shareLink = async (item: SavedScenario) => {
+    setSharingId(item.id);
+    try {
+      const res = await createShareFn({ data: { name: item.name.slice(0, 60), scenario: item.scenario as unknown as Record<string, unknown> } });
+      if (!res.ok) {
+        const when = "nextAt" in res && res.nextAt ? ` Najbliższy wygaśnie ${new Date(res.nextAt).toLocaleString("pl-PL")}.` : "";
+        toast.error(res.error + when);
+        return;
+      }
+      track({ event: "share_link_create", shares: nationalSharesOf(item.scenario) });
+      const url = `${window.location.origin}/?s=${res.id}`;
+      const expires = new Date(res.expiresAt).toLocaleDateString("pl-PL");
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success(`Link skopiowany. Ważny do ${expires}.`);
+      } catch {
+        window.prompt(`Link ważny do ${expires}:`, url);
+      }
+    } catch {
+      toast.error("Nie udało się utworzyć linku.");
+    } finally {
+      setSharingId(null);
+    }
+  };
+
   const handleLoad = (target: Scenario, label: string, id: string) => {
+    if (id !== "reset") track({ event: "scenario_load" });
     onLoad(target);
     setActiveScenarioId(id);
     toast.success(`Wczytano: ${label}`);
@@ -156,6 +202,7 @@ export function ScenarioShelf({
       };
       if (!persist([entry, ...saved].slice(0, 10))) return;
       onLoad(parsed);
+      track({ event: "scenario_upload" });
       setActiveScenarioId(newId);
       toast.success(`Wczytano i dodano do biblioteki: ${title}`);
     } catch {
@@ -267,6 +314,17 @@ export function ScenarioShelf({
                       onClick={() => handleLoad(item.scenario, item.name, item.id)}
                     >
                       <Play className="h-3 w-3 fill-current" /> Wczytaj
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="min-h-11 min-w-11 text-muted-foreground hover:text-ink"
+                      onClick={() => void shareLink(item)}
+                      disabled={sharingId === item.id}
+                      aria-label={`Udostępnij link do ${item.name} (ważny 7 dni)`}
+                      title="Udostępnij link (ważny 7 dni)"
+                    >
+                      {sharingId === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
                     </Button>
                     <Button
                       variant="ghost"
