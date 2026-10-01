@@ -66,7 +66,7 @@ export const getShare = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Ten link wygasł lub został wyłączony." };
     }
     incrementShareViews(data.id);
-    return { ok: true as const, name: row.name, scenario: row.scenario, expiresAt: row.expires_at };
+    return { ok: true as const, name: row.name, scenarioJson: JSON.stringify(row.scenario), expiresAt: row.expires_at };
   });
 
 const ownerSchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200) });
@@ -79,7 +79,7 @@ export const listShares = createServerFn({ method: "POST" })
     const { listSharedScenariosForOwner } = await import("./server-db.server");
     try {
       const rows = listSharedScenariosForOwner(200);
-      return { ok: true as const, shares: rows };
+      return { ok: true as const, shares: rows.map(({ scenario: _s, ip_hash: _h, ...rest }) => rest) };
     } catch (err) {
       console.error("list shares error", err);
       return { ok: false as const, error: "Nie udało się odczytać linków." };

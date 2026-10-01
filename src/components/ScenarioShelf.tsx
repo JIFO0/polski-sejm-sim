@@ -91,9 +91,18 @@ export function ScenarioShelf({
     const linkId = new URLSearchParams(window.location.search).get("s");
     if (linkId) {
       void getShareFn({ data: { id: linkId } })
-        .then((res) => {
-          if (res.ok && validScenario(res.scenario)) {
-            onLoad(res.scenario);
+        .then((raw) => {
+          const res = raw as { ok: true; scenarioJson: string; name: string } | { ok: false; error: string };
+          let parsed: unknown = null;
+          if (res.ok) {
+            try {
+              parsed = JSON.parse(res.scenarioJson);
+            } catch {
+              parsed = null;
+            }
+          }
+          if (res.ok && validScenario(parsed)) {
+            onLoad(parsed);
             track({ event: "share_link_open" });
             toast.success(`Wczytano udostępniony scenariusz: ${res.name}`);
           } else {

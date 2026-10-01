@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Minus } from "lucide-react";
-import { PARTIES } from "@/data/parties";
+import { supportParties } from "@/data/parties";
 import { PartyLogo } from "@/components/PartyLogo";
 import { Button } from "@/components/ui/button";
 import type { PartySettings } from "@/lib/simulation";
@@ -27,7 +27,7 @@ export function TurnoutGroups({
     rawOnMove(partyId, side);
   };
 
-  const parties = PARTIES.filter((party) => party.id !== "inne");
+  const parties = supportParties();
   const groups: { side: Side; title: string; note: string }[] = [
     { side: "lower", title: "Zyskują przy niższej frekwencji", note: "Bardziej zdyscyplinowany elektorat" },
     { side: "neutral", title: "Frekwencja nie wpływa", note: "Poparcie pozostaje bez korekty" },

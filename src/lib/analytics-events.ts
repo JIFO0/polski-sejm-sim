@@ -23,6 +23,8 @@ export const EVENTS = [
   "support_click",
   "contact_click",
   "about_view",
+  "custom_party_add",
+  "merger_create",
 ] as const;
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
@@ -51,5 +53,7 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   support_click: "Kliknięcia wsparcia (Buy Me a Coffee)",
   contact_click: "Kliknięcia w kontakt (jifo.dev/#kontakt)",
   about_view: "Wejścia na stronę o projekcie (/o-projekcie)",
+  custom_party_add: "Dodane własne partie",
+  merger_create: "Utworzone wspólne listy",
 };
 

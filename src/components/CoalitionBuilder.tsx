@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { PARTIES, PARTY_MAP } from "@/data/parties";
+import { resultParties } from "@/data/parties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PartyLogo } from "@/components/PartyLogo";
@@ -54,7 +54,7 @@ export function CoalitionBuilder({
       },
     ]);
 
-  const available = PARTIES.filter((p) => p.id !== "inne");
+  const available = resultParties();
 
   return (
     <div className="space-y-4">

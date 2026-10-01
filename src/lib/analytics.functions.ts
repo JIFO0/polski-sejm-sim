@@ -110,7 +110,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
         let label = ym;
         try {
           const [y, m] = ym.split("-").map(Number);
-          const d = new Date(Date.UTC(y, m - 1, 15));
+          const d = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, 15));
           const monthName = new Intl.DateTimeFormat("pl-PL", { month: "long" }).format(d);
           label = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${y}`;
         } catch {
@@ -160,7 +160,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       } else if (r.event === "district_view" && meta) {
         districtViews.set(meta, (districtViews.get(meta) ?? 0) + 1);
       } else if (r.event === "coalition_test" && meta) {
-        const [coalitionName, maj] = meta.split(":");
+        const [coalitionName = meta, maj] = meta.split(":");
         const entry = coalitionTests.get(coalitionName) ?? { count: 0, majority: maj === "tak" || maj === "wiekszosc" };
         entry.count += 1;
         entry.majority = maj === "tak" || maj === "wiekszosc";

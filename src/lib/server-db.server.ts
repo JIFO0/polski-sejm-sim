@@ -11,7 +11,7 @@ const FOUR_GB_PAGES = 1048576;
 export function getDb(): DatabaseSync {
   if (dbInstance) return dbInstance;
 
-  const dataDir = process.env.DATA_DIR || path.resolve(process.cwd(), "data");
+  const dataDir = process.env["DATA_DIR"] || path.resolve(process.cwd(), "data");
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
