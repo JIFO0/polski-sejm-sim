@@ -331,7 +331,7 @@ function Index() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(15rem,0.8fr)]">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(21rem,0.95fr)]">
             <div
               className="panel-float leader-tint w-full p-5"
               style={{ "--leader-color": leader?.color ?? "var(--border)" } as CSSProperties}

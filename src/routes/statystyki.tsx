@@ -90,7 +90,7 @@ function StatsPage() {
             <BarChart3 className="mr-2 inline h-7 w-7 align-[-0.15em]" /> Statystyki platformy SejmSim
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Zbiorcze, anonimowe dane behawioralne z ostatnich 90 dni. System działa w 100% lokalnie na serwerze (baza SQLite), nie korzysta z zewnętrznych trackerów ani chmury Lovable, nie zapisuje ciasteczek, adresów IP ani żadnych danych osobowych.
+            Zbiorcze, anonimowe dane odwiedzin i zachowań plaformy bez cookies, adresów IP i danych osobowych
           </p>
         </header>
 

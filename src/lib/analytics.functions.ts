@@ -36,9 +36,8 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Nieprawidłowy login lub hasło." };
     }
 
-    const { getAnalyticsSince, countTotalActiveShares, getDbStats } = await import("./server-db.server");
-    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-    const rows = getAnalyticsSince(since, 50000);
+    const { getAllAnalytics, countTotalActiveShares, getDbStats } = await import("./server-db.server");
+    const rows = getAllAnalytics(500000);
 
     const countBy = (name: string) => rows.filter((r) => r.event === name).length;
 

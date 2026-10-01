@@ -75,30 +75,18 @@ export function runMaintenance(): void {
   try {
     const db = getDb();
     const nowIso = new Date().toISOString();
-    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
-    // 1. Delete expired or deactivated shared scenarios
+    // 1. Delete expired or deactivated shared scenarios (7-day validity)
     db.prepare("DELETE FROM shared_scenarios WHERE expires_at < ? OR active = 0").run(nowIso);
 
-    // 2. Delete analytics older than 90 days
-    db.prepare("DELETE FROM analytics_events WHERE created_at < ?").run(ninetyDaysAgo);
-
-    // 3. Keep at most 100,000 analytics events
-    db.prepare(`
-      DELETE FROM analytics_events 
-      WHERE id NOT IN (
-        SELECT id FROM analytics_events ORDER BY id DESC LIMIT 100000
-      )
-    `).run();
-
-    // 4. Emergency disk check: if file size > 3.5GB, aggressively prune and VACUUM
+    // 2. Emergency disk check: only if file size approaches 3.8GB, prune oldest events to guarantee < 4GB
     if (dbPathCached && fs.existsSync(dbPathCached)) {
       const stat = fs.statSync(dbPathCached);
-      if (stat.size > 3.5 * 1024 * 1024 * 1024) {
+      if (stat.size > 3.8 * 1024 * 1024 * 1024) {
         db.prepare(`
           DELETE FROM analytics_events 
           WHERE id NOT IN (
-            SELECT id FROM analytics_events ORDER BY id DESC LIMIT 30000
+            SELECT id FROM analytics_events ORDER BY id DESC LIMIT 100000
           )
         `).run();
         db.exec("VACUUM;");
@@ -273,6 +261,31 @@ export function getAnalyticsSince(sinceIso: string, limit = 50000): AnalyticsRow
     ORDER BY created_at DESC
     LIMIT ?
   `).all(sinceIso, limit) as { event: string; payload: string; created_at: string }[];
+
+  return rows.map((r) => {
+    let payload = {};
+    try {
+      payload = JSON.parse(r.payload);
+    } catch {
+      // ignore
+    }
+    return {
+      event: r.event,
+      payload,
+      created_at: r.created_at,
+    };
+  });
+}
+
+export function getAllAnalytics(limit = 1000000): AnalyticsRow[] {
+  maybeRunMaintenance();
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT event, payload, created_at
+    FROM analytics_events
+    ORDER BY created_at DESC
+    LIMIT ?
+  `).all(limit) as { event: string; payload: string; created_at: string }[];
 
   return rows.map((r) => {
     let payload = {};
