@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OProjekcieRouteImport } from './routes/o-projekcie'
+import { Route as StatystykiRouteImport } from './routes/statystyki'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const OProjekcieRoute = OProjekcieRouteImport.update({
   path: '/o-projekcie',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StatystykiRoute = StatystykiRouteImport.update({
+  id: '/statystyki',
+  path: '/statystyki',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/statystyki': typeof StatystykiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/statystyki': typeof StatystykiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/statystyki': typeof StatystykiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/o-projekcie'
+  fullPaths: '/' | '/o-projekcie' | '/statystyki'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/o-projekcie'
-  id: '__root__' | '/' | '/o-projekcie'
+  to: '/' | '/o-projekcie' | '/statystyki'
+  id: '__root__' | '/' | '/o-projekcie' | '/statystyki'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OProjekcieRoute: typeof OProjekcieRoute
+  StatystykiRoute: typeof StatystykiRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OProjekcieRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/statystyki': {
+      id: '/statystyki'
+      path: '/statystyki'
+      fullPath: '/statystyki'
+      preLoaderRoute: typeof StatystykiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OProjekcieRoute: OProjekcieRoute,
+  StatystykiRoute: StatystykiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
