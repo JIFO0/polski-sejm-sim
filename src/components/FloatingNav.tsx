@@ -4,7 +4,6 @@ import { ArrowLeft, Info, UserRound } from "lucide-react";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { SupportButton } from "@/components/SupportButton";
 import { Button } from "@/components/ui/button";
-import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 
 export function FloatingNav({
   mode = "simulator",
@@ -33,7 +32,6 @@ export function FloatingNav({
       }`}
     >
       <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-surface/90 p-1.5 shadow-lg shadow-black/5 backdrop-blur-md">
-        <AccessibilityMenu compact />
         {mode === "about" ? (
           <Button
             variant="ghost"
