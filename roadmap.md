@@ -32,3 +32,8 @@
 - [x] Dodać globalne menu dostępności
 - [x] Uporządkować tutorial, parlament, historię i odstępy sekcji
 - [x] Zweryfikować całość na telefonie i komputerze
+
+- [x] Linki do scenariuszy na serwerze (7 dni, max 3 na IP)
+- [x] Nowy przycisk i rozszerzone opcje dostępności
+- [x] Rozszerzone statystyki, login JIFO, zarządzanie linkami
+- [x] Progi wyborcze jako osobna sekcja, nowy tekst wprowadzenia
