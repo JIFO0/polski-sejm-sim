@@ -2,6 +2,7 @@ import { trackEvent } from "@/lib/analytics.functions";
 import { DISTRICTS } from "@/data/districts";
 import { PARTIES } from "@/data/parties";
 import type { Scenario } from "@/lib/simulation";
+import type { AnalyticsEvent } from "@/lib/analytics-events";
 
 /** Krajowe poparcie (średnia ważona liczbą wyborców) zaokrąglone do 0.1 pkt. */
 export function nationalSharesOf(scenario: Scenario): Record<string, number> {
@@ -23,7 +24,8 @@ export function nationalSharesOf(scenario: Scenario): Record<string, number> {
 }
 
 type TrackInput = {
-  event: "page_view" | "turnout_set" | "scenario_save" | "scenario_download" | "scenario_share";
+  event: AnalyticsEvent;
+  meta?: string;
   shares?: Record<string, number>;
   turnout?: number;
 };
@@ -46,5 +48,5 @@ export function trackPageViewOncePerSession() {
     // Pamięć sesji zablokowana — i tak wysyłamy jedno zdarzenie na załadowanie strony.
   }
   pageViewSent = true;
-  track({ event: "page_view" });
+  track({ event: "page_view", meta: window.innerWidth < 768 ? "telefon" : window.innerWidth < 1100 ? "tablet" : "komputer" });
 }

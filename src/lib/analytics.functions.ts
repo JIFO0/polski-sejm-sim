@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { EVENTS } from "./analytics-events";
 
 const trackSchema = z.object({
-  event: z.enum(["page_view", "turnout_set", "scenario_save", "scenario_download", "scenario_share"]),
+  event: z.enum(EVENTS),
+  meta: z.string().max(40).optional(),
   shares: z.record(z.string(), z.number().min(0).max(100)).optional(),
   turnout: z.number().min(0).max(100).optional(),
 });
@@ -13,20 +15,20 @@ export const trackEvent = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("analytics_events").insert({
       event: data.event,
-      payload: { shares: data.shares ?? null, turnout: data.turnout ?? null },
+      payload: { shares: data.shares ?? null, turnout: data.turnout ?? null, meta: data.meta ?? null },
     });
     if (error) console.error("analytics insert", error);
     return { ok: !error };
   });
 
-const summarySchema = z.object({ key: z.string().min(1).max(200) });
+const summarySchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200) });
 
 export const getAnalyticsSummary = createServerFn({ method: "POST" })
   .inputValidator((data) => summarySchema.parse(data))
   .handler(async ({ data }) => {
-    const expected = process.env["ANALYTICS_KEY"];
-    if (!expected || data.key !== expected) {
-      return { ok: false as const, error: "Nieprawidłowy klucz dostępu." };
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key)) {
+      return { ok: false as const, error: "Nieprawidłowy login lub hasło." };
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -54,7 +56,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
 
     const shareSums = new Map<string, { sum: number; n: number }>();
     for (const r of events) {
-      if (r.event !== "scenario_save" && r.event !== "scenario_download") continue;
+      if (!["scenario_save", "scenario_download", "share_link_create"].includes(r.event)) continue;
       const shares = (r.payload as { shares?: Record<string, number> })?.shares;
       if (!shares) continue;
       for (const [party, value] of Object.entries(shares)) {
@@ -76,8 +78,37 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
     }
     const visitsByDay = [...byDay.entries()].map(([day, count]) => ({ day, count })).sort((a, b) => b.day.localeCompare(a.day));
 
+    const eventCounts = new Map<string, number>();
+    const metaCounts = new Map<string, number>();
+    const hours = Array.from({ length: 24 }, () => 0);
+    for (const r of events) {
+      eventCounts.set(r.event, (eventCounts.get(r.event) ?? 0) + 1);
+      const meta = (r.payload as { meta?: string | null })?.meta;
+      if (meta) {
+        const k = `${r.event}:${meta}`;
+        metaCounts.set(k, (metaCounts.get(k) ?? 0) + 1);
+      }
+      if (r.event === "page_view") hours[new Date(r.created_at).getUTCHours()]! += 1;
+    }
+    const turnoutBuckets = new Map<string, number>();
+    for (const t of turnoutValues) {
+      const b = `${Math.floor(t / 5) * 5}-${Math.floor(t / 5) * 5 + 5}%`;
+      turnoutBuckets.set(b, (turnoutBuckets.get(b) ?? 0) + 1);
+    }
+    const nowIso = new Date().toISOString();
+    const { count: activeShares } = await supabaseAdmin
+      .from("shared_scenarios")
+      .select("id", { count: "exact", head: true })
+      .eq("active", true)
+      .gt("expires_at", nowIso);
+
     return {
       ok: true as const,
+      eventCounts: [...eventCounts.entries()].map(([event, count]) => ({ event, count })).sort((a, b) => b.count - a.count),
+      metaCounts: [...metaCounts.entries()].map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count).slice(0, 60),
+      pageViewsByHourUtc: hours,
+      turnoutBuckets: [...turnoutBuckets.entries()].map(([bucket, count]) => ({ bucket, count })).sort((a, b) => a.bucket.localeCompare(b.bucket, undefined, { numeric: true })),
+      activeShares: activeShares ?? 0,
       totalEvents: events.length,
       pageViews: countBy("page_view"),
       scenarioSaves: countBy("scenario_save"),

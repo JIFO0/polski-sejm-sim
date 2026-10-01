@@ -5,6 +5,8 @@ import { ArrowLeft, BarChart3, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getAnalyticsSummary } from "@/lib/analytics.functions";
+import { deactivateShare, listShares } from "@/lib/shares.functions";
+import { EVENT_LABELS } from "@/lib/analytics-events";
 import { PARTIES } from "@/data/parties";
 
 const TITLE = "Statystyki SejmSim 2027";
@@ -25,13 +27,18 @@ export const Route = createFileRoute("/statystyki")({
   component: StatsPage,
 });
 
+type ShareRow = { id: string; name: string; active: boolean; views: number; created_at: string; expires_at: string };
 type Summary = Extract<Awaited<ReturnType<typeof getAnalyticsSummary>>, { ok: true }>;
 
 const PARTY_NAMES = Object.fromEntries(PARTIES.map((p) => [p.id, p.name]));
 const PARTY_COLORS = Object.fromEntries(PARTIES.map((p) => [p.id, p.color]));
 
 function StatsPage() {
+  const [login, setLogin] = useState("JIFO");
   const [key, setKey] = useState("");
+  const [shares, setShares] = useState<ShareRow[]>([]);
+  const fetchShares = useServerFn(listShares);
+  const deactivate = useServerFn(deactivateShare);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -41,7 +48,9 @@ function StatsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchSummary({ data: { key: key.trim() } });
+      const creds = { login: login.trim(), key: key.trim() };
+      const [res, sh] = await Promise.all([fetchSummary({ data: creds }), fetchShares({ data: creds })]);
+      if (sh.ok) setShares(sh.shares);
       if (!res.ok) {
         setError(res.error);
         setSummary(null);
@@ -76,7 +85,7 @@ function StatsPage() {
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
             Zbiorcze, anonimowe dane z ostatnich 90 dni. Strona nie zapisuje ciasteczek, adresów IP
-            ani żadnych identyfikatorów odwiedzających — tylko same zdarzenia i wartości.
+            ani żadnych identyfikatorów odwiedzających, tylko same zdarzenia i wartości.
           </p>
         </header>
 
@@ -88,16 +97,20 @@ function StatsPage() {
               void load();
             }}
           >
+            <label htmlFor="stats-login" className="text-sm font-semibold text-foreground">
+              Login
+            </label>
+            <Input id="stats-login" value={login} onChange={(e) => setLogin(e.target.value)} autoComplete="username" />
             <label htmlFor="stats-key" className="text-sm font-semibold text-foreground">
-              Klucz dostępu
+              Hasło
             </label>
             <Input
               id="stats-key"
               type="password"
               value={key}
               onChange={(e) => setKey(e.target.value)}
-              placeholder="Wpisz klucz dostępu"
-              autoComplete="off"
+              placeholder="Wpisz hasło"
+              autoComplete="current-password"
             />
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button type="submit" disabled={loading || !key.trim()} className="min-h-11">
@@ -112,7 +125,7 @@ function StatsPage() {
                 { label: "Wejścia na stronę", value: summary.pageViews },
                 { label: "Zapisane scenariusze", value: summary.scenarioSaves },
                 { label: "Pobrane scenariusze", value: summary.scenarioDownloads },
-                { label: "Udostępnione linki", value: summary.scenarioShares },
+                { label: "Aktywne linki", value: summary.activeShares },
                 { label: "Zmiany frekwencji", value: summary.turnoutSets },
               ].map((card) => (
                 <div key={card.label} className="panel p-4">
@@ -134,7 +147,7 @@ function StatsPage() {
             <section className="panel p-5">
               <h2 className="font-display text-lg font-bold text-ink">Średnie poparcie w tworzonych scenariuszach</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Na podstawie zapisywanych i pobieranych scenariuszy.
+                Na podstawie zapisywanych, pobieranych i udostępnianych scenariuszy.
               </p>
               <div className="mt-4 flex flex-col gap-2">
                 {summary.avgShares.length === 0 ? (
@@ -180,6 +193,117 @@ function StatsPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink">Udostępnione linki</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Linki wygasają po 7 dniach. Jeden adres może mieć 3 aktywne naraz.</p>
+              <div className="mt-3 max-h-96 overflow-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground">
+                      <th className="py-1 font-medium">Nazwa</th>
+                      <th className="py-1 font-medium">Utworzony</th>
+                      <th className="py-1 font-medium">Wygasa</th>
+                      <th className="py-1 text-right font-medium">Otwarcia</th>
+                      <th className="py-1 text-right font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shares.length === 0 ? (
+                      <tr><td colSpan={5} className="py-3 text-muted-foreground">Brak linków.</td></tr>
+                    ) : shares.map((sh) => {
+                      const live = sh.active && new Date(sh.expires_at).getTime() > Date.now();
+                      return (
+                        <tr key={sh.id} className="border-t border-border/60">
+                          <td className="py-1.5">
+                            <a href={`/?s=${sh.id}`} target="_blank" rel="noreferrer" className="font-medium text-ink underline-offset-2 hover:underline">{sh.name}</a>
+                          </td>
+                          <td className="num py-1.5 text-xs">{new Date(sh.created_at).toLocaleString("pl-PL")}</td>
+                          <td className="num py-1.5 text-xs">{new Date(sh.expires_at).toLocaleString("pl-PL")}</td>
+                          <td className="num py-1.5 text-right">{sh.views}</td>
+                          <td className="py-1.5 text-right">
+                            {live ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="min-h-9 text-xs"
+                                onClick={async () => {
+                                  const r = await deactivate({ data: { login: login.trim(), key: key.trim(), id: sh.id } });
+                                  if (r.ok) setShares((all) => all.map((x) => (x.id === sh.id ? { ...x, active: false } : x)));
+                                }}
+                              >
+                                Dezaktywuj
+                              </Button>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">{sh.active ? "wygasł" : "wyłączony"}</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink">Wszystkie zdarzenia</h2>
+              <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
+                {summary.eventCounts.map(({ event, count }) => (
+                  <div key={event} className="flex justify-between border-b border-border/50 py-1 text-sm">
+                    <span>{EVENT_LABELS[event as keyof typeof EVENT_LABELS] ?? event}</span>
+                    <span className="num font-semibold text-ink">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink">Rozkład ustawianej frekwencji</h2>
+              <div className="mt-3 flex flex-col gap-1.5">
+                {summary.turnoutBuckets.length === 0 ? <p className="text-sm text-muted-foreground">Brak danych.</p> : summary.turnoutBuckets.map(({ bucket, count }) => {
+                  const max = Math.max(...summary.turnoutBuckets.map((b) => b.count));
+                  return (
+                    <div key={bucket} className="flex items-center gap-3 text-sm">
+                      <span className="num w-20 shrink-0">{bucket}</span>
+                      <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${(count / max) * 100}%` }} /></div>
+                      <span className="num w-10 text-right font-semibold">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink">Wejścia wg godziny (czas polski)</h2>
+              <div className="mt-4 flex h-32 items-end gap-0.5">
+                {Array.from({ length: 24 }, (_, h) => {
+                  const v = summary.pageViewsByHourUtc[(h + 22) % 24] ?? 0;
+                  const max = Math.max(1, ...summary.pageViewsByHourUtc);
+                  return (
+                    <div key={h} className="flex flex-1 flex-col items-center gap-1" title={`${h}:00 — ${v}`}>
+                      <div className="w-full rounded-t bg-primary/80" style={{ height: `${(v / max) * 100}%` }} />
+                      <span className="num text-[9px] text-muted-foreground">{h}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink">Szczegóły (urządzenia, progi, dostępność)</h2>
+              <div className="mt-3 grid max-h-80 gap-1.5 overflow-y-auto sm:grid-cols-2">
+                {summary.metaCounts.map(({ key: k, count }) => {
+                  const [ev, ...rest] = k.split(":");
+                  return (
+                    <div key={k} className="flex justify-between gap-2 border-b border-border/50 py-1 text-sm">
+                      <span className="truncate"><span className="text-muted-foreground">{EVENT_LABELS[ev as keyof typeof EVENT_LABELS] ?? ev}:</span> {rest.join(":")}</span>
+                      <span className="num font-semibold text-ink">{count}</span>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 

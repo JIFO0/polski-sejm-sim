@@ -362,9 +362,9 @@ function Index() {
       <main className="relative z-10 mx-auto max-w-[1400px] space-y-14 px-5 py-12">
         <section className="border-l-4 border-primary bg-surface/80 px-5 py-4 backdrop-blur-sm" aria-labelledby="tutorial-title">
           <p className="eyebrow">Jak stworzyć scenariusz</p>
-          <h2 id="tutorial-title" className="mt-1 font-display text-lg font-bold text-ink">Od poparcia do większości parlamentarnej</h2>
+          <h2 id="tutorial-title" className="mt-1 font-display text-lg font-bold text-ink">Samodzielne tworzenie scenariusza</h2>
           <p className="mt-2 max-w-5xl text-sm leading-relaxed text-muted-foreground">
-            Ustaw poparcie dla każdej partii, a opcjonalnie także frekwencję i jej wpływ na rozkład głosów.
+            Aby stworzyć scenariusz składu Sejmu 2027 należy ustawić poparcie dla każdej partii, a opcjonalnie także frekwencję i jej wpływ na rozkład głosów.
             Następnie połącz partie w koalicje, aby sprawdzić, które bloki mogą utworzyć rząd i osiągnąć większość 231 mandatów.
           </p>
         </section>
@@ -462,7 +462,10 @@ function Index() {
                 <label className="mt-4 flex min-h-12 cursor-pointer items-start gap-3 rounded-md border border-border bg-surface/70 p-3">
                   <Checkbox
                     checked={scenario.independentSupport ?? false}
-                    onCheckedChange={(checked) => setScenario((current) => ({ ...current, independentSupport: checked === true }))}
+                    onCheckedChange={(checked) => {
+                      track({ event: "independent_mode", meta: checked === true ? "wlaczony" : "wylaczony" });
+                      setScenario((current) => ({ ...current, independentSupport: checked === true }));
+                    }}
                     className="mt-0.5 h-5 w-5"
                   />
                   <span>
@@ -539,7 +542,7 @@ function Index() {
         </CollapsibleSection>
 
         {/* USTAWIENIA MODELU */}
-        <CollapsibleSection title="Frekwencja i ustawienia modelu">
+        <CollapsibleSection title="Frekwencja">
         <section className="space-y-6">
           <div className="panel p-5 md:p-6">
             <h2 className="font-display text-xl font-bold text-ink">Frekwencja</h2>
@@ -592,7 +595,11 @@ function Index() {
               <TurnoutGroups settings={scenario.parties} onMove={setTurnoutSide} embedded />
             </div>
           </div>
+        </section>
+        </CollapsibleSection>
 
+        <CollapsibleSection title="Progi wyborcze">
+        <section>
           <div className="panel p-5">
             <h2 className="font-display text-xl font-bold text-ink">Partie i progi</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -612,15 +619,16 @@ function Index() {
                       {([5, 8, 0] as const).map((t) => (
                         <button
                           key={t}
-                          onClick={() =>
+                          onClick={() => {
+                            track({ event: "threshold_change", meta: `${p.id}:${t}` });
                             setScenario((sc) => ({
                               ...sc,
                               parties: {
                                 ...sc.parties,
                                 [p.id]: { ...(sc.parties[p.id] ?? DEFAULT_SETTINGS), threshold: t },
                               },
-                            }))
-                          }
+                            }));
+                          }}
                           className={`num rounded-md px-2 py-1 text-xs font-bold transition-colors ${
                             s.threshold === t
                               ? "bg-ink text-background"
@@ -633,12 +641,14 @@ function Index() {
                       <Switch
                         className="ml-2"
                         checked={s.enabled}
-                        onCheckedChange={(v) =>
+                        aria-label={`${p.short} startuje w wyborach`}
+                        onCheckedChange={(v) => {
+                          track({ event: "party_toggle", meta: `${p.id}:${v ? "on" : "off"}` });
                           setScenario((sc) => ({
                             ...sc,
                             parties: { ...sc.parties, [p.id]: { ...(sc.parties[p.id] ?? DEFAULT_SETTINGS), enabled: v } },
-                          }))
-                        }
+                          }));
+                        }}
                       />
                     </div>
                   </div>
