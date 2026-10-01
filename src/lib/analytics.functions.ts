@@ -56,7 +56,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
 
     const shareSums = new Map<string, { sum: number; n: number }>();
     for (const r of events) {
-      if (r.event !== "scenario_save" && r.event !== "scenario_download") continue;
+      if (!["scenario_save", "scenario_download", "share_link_create"].includes(r.event)) continue;
       const shares = (r.payload as { shares?: Record<string, number> })?.shares;
       if (!shares) continue;
       for (const [party, value] of Object.entries(shares)) {
