@@ -45,6 +45,7 @@ const TITLE = "Statystyki SejmSim 2027";
 const DESCRIPTION = "Anonimowe, zbiorcze statystyki korzystania z symulatora SejmSim 2027.";
 
 export const Route = createFileRoute("/statystyki")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: TITLE },

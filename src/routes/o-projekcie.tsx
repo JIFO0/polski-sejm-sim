@@ -18,6 +18,7 @@ const KEYWORDS =
   "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator mandatów, o projekcie sejmsim, iwo laskowski, jifo, symulator wyborczy, metoda d'hondta";
 
 export const Route = createFileRoute("/o-projekcie")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: TITLE },

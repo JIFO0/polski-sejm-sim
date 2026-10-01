@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OProjekcieRouteImport } from './routes/o-projekcie'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StatystykiRouteImport } from './routes/statystyki'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const OProjekcieRoute = OProjekcieRouteImport.update({
   path: '/o-projekcie',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatystykiRoute = StatystykiRouteImport.update({
   id: '/statystyki',
   path: '/statystyki',
@@ -32,30 +38,34 @@ const StatystykiRoute = StatystykiRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/o-projekcie' | '/statystyki'
+  fullPaths: '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/o-projekcie' | '/statystyki'
-  id: '__root__' | '/' | '/o-projekcie' | '/statystyki'
+  to: '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki'
+  id: '__root__' | '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OProjekcieRoute: typeof OProjekcieRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatystykiRoute: typeof StatystykiRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OProjekcieRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/statystyki': {
       id: '/statystyki'
       path: '/statystyki'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OProjekcieRoute: OProjekcieRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatystykiRoute: StatystykiRoute,
 }
 export const routeTree = rootRouteImport
