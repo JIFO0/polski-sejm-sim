@@ -249,25 +249,50 @@ function Index() {
 
   const setGlobalElectorate = useCallback((totalTarget: number) => {
     const baseTotal = DISTRICTS.reduce((acc, d) => acc + d.electorate, 0);
-    const ratio = totalTarget / (baseTotal > 0 ? baseTotal : 1);
+    const target = Math.round(totalTarget);
+    if (target <= 0 || baseTotal <= 0) return;
+
+    // Metoda największych reszt (Hamilton / Hare-Niemeyer), aby suma okręgów była co do 1 wyborcy równa target
+    const items = DISTRICTS.map((d) => {
+      const raw = (d.electorate * target) / baseTotal;
+      const floor = Math.floor(raw);
+      return { id: d.id, floor, rem: raw - floor };
+    });
+    const currentSum = items.reduce((sum, item) => sum + item.floor, 0);
+    const needed = target - currentSum;
+    const sorted = [...items].sort((a, b) => b.rem - a.rem || a.id - b.id);
+    const bonusIds = new Set(sorted.slice(0, needed).map((item) => item.id));
+
     setScenario((s) => {
       const districts = { ...s.districts };
-      for (const d of DISTRICTS) {
-        const cur = districts[d.id] ?? blankState(d.id);
-        districts[d.id] = { ...cur, electorate: Math.round(d.electorate * ratio) };
+      for (const item of items) {
+        const cur = districts[item.id] ?? blankState(item.id);
+        const assigned = item.floor + (bonusIds.has(item.id) ? 1 : 0);
+        districts[item.id] = { ...cur, electorate: assigned };
       }
       return { ...s, districts };
     });
-    toast.success(`Zaktualizowano liczbę uprawnionych w kraju: ${Math.round(totalTarget).toLocaleString("pl-PL")}`);
+    setNationalElectorateInput(String(target));
+    toast.success(`Zaktualizowano liczbę uprawnionych w kraju: ${target.toLocaleString("pl-PL")}`);
   }, []);
 
   const applyNationalElectorate = useCallback(() => {
-    const val = parseInt(nationalElectorateInput, 10);
-    if (!isNaN(val) && val >= 1_000_000 && val <= 50_000_000) {
-      setGlobalElectorate(val);
-    } else {
-      toast.error("Wprowadź prawidłową liczbę wyborców (od 1 mln do 50 mln).");
+    const clean = nationalElectorateInput.trim().replace(/\s+/g, "").replace(",", ".");
+    const num = parseFloat(clean);
+    if (isNaN(num)) {
+      toast.error("Wprowadź prawidłową liczbę wyborców (np. 28.5 mln lub 28500000).");
+      return;
     }
+    let val: number;
+    if (num > 0 && num <= 60) {
+      val = Math.round(num * 1_000_000);
+    } else if (num >= 1_000_000 && num <= 60_000_000) {
+      val = Math.round(num);
+    } else {
+      toast.error("Wprowadź prawidłową liczbę wyborców (od 1 mln do 60 mln).");
+      return;
+    }
+    setGlobalElectorate(val);
   }, [nationalElectorateInput, setGlobalElectorate]);
 
   const resetGlobalElectorate = useCallback(() => {
@@ -281,7 +306,7 @@ function Index() {
       }
       return { ...s, districts };
     });
-    toast.info("Przywrócono domyślną liczbę uprawnionych wyborców (29 276 800)");
+    toast.info(`Przywrócono domyślną liczbę uprawnionych wyborców (${baseTotal.toLocaleString("pl-PL")})`);
   }, []);
 
   const save = () => {
@@ -788,7 +813,7 @@ function Index() {
                       Kwalifikowani wyborcy i szacunek liczby głosów
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Liczba uprawnionych do głosowania w Polsce (baza PKW: 29 276 800). Wpływa bezpośrednio na szacowaną liczbę głosów w kraju i w 41 okręgach.
+                      Liczba uprawnionych do głosowania w Polsce (baza PKW: 29 302 000). Wpływa bezpośrednio na szacowaną liczbę głosów w kraju i w 41 okręgach.
                     </p>
                   </div>
                 </div>
@@ -814,14 +839,12 @@ function Index() {
                   </div>
                   <div className="mt-2.5 flex items-center gap-2">
                     <Input
-                      type="number"
-                      min={1000000}
-                      max={45000000}
-                      step={100000}
+                      type="text"
+                      inputMode="decimal"
                       value={nationalElectorateInput}
                       onChange={(e) => setNationalElectorateInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && applyNationalElectorate()}
-                      placeholder="np. 29276800"
+                      placeholder="np. 28500000 lub 28.5"
                       className="h-8 text-xs font-mono"
                       aria-label="Własna liczba uprawnionych w kraju"
                     />
@@ -838,7 +861,7 @@ function Index() {
                       variant="ghost"
                       className="h-8 px-2 text-xs text-muted-foreground hover:text-ink shrink-0"
                       onClick={resetGlobalElectorate}
-                      title="Przywróć domyślne 29 276 800"
+                      title="Przywróć domyślne 29 302 000"
                     >
                       Reset
                     </Button>

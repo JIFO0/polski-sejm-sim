@@ -86,7 +86,7 @@ export function ParticleField({ className }: { className?: string }) {
             to: -1,
             t: 1,
             partyColor: index % RGB.length,
-            colorHold: 0,
+            colorHold: 60 + Math.random() * 300,
           });
           index += 1;
         }
@@ -118,7 +118,7 @@ export function ParticleField({ className }: { className?: string }) {
       pointer.y = -9999;
     };
 
-    const radius = 150;
+    const radius = 185;
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
@@ -132,38 +132,40 @@ export function ParticleField({ className }: { className?: string }) {
             const d = Math.sqrt(d2) || 1;
             const force = (1 - d / radius) ** 2;
             near = force;
-            p.vx += (dx / d) * force * 0.28;
-            p.vy += (dy / d) * force * 0.28;
-            if (force > 0.12) {
+            p.vx += (dx / d) * force * 0.72;
+            p.vy += (dy / d) * force * 0.72;
+            if (force > 0.06) {
               if (p.to !== p.partyColor) {
                 p.from = p.to;
                 p.to = p.partyColor;
                 p.t = 0;
               }
-              p.colorHold = 28;
+              p.colorHold = 45;
             }
           }
         }
 
         const homeDx = p.originX - p.x;
         const homeDy = p.originY - p.y;
-        p.vx += homeDx * 0.085;
-        p.vy += homeDy * 0.085;
-        p.vx *= 0.78;
-        p.vy *= 0.78;
+        p.vx += homeDx * 0.035;
+        p.vy += homeDy * 0.035;
+        p.vx *= 0.88;
+        p.vy *= 0.88;
         p.x += p.vx;
         p.y += p.vy;
 
-        if (p.t < 1) p.t = Math.min(1, p.t + 0.08);
-        if (p.colorHold > 0) p.colorHold -= 1;
-        if (p.colorHold <= 0 && p.to !== -1 && p.t >= 1) {
+        if (p.t < 1) p.t = Math.min(1, p.t + 0.04);
+        if (p.colorHold > 0) {
+          p.colorHold -= 1;
+        } else if (p.t >= 1) {
           p.from = p.to;
-          p.to = -1;
+          p.to = p.to === -1 ? p.partyColor : -1;
           p.t = 0;
+          p.colorHold = p.to === -1 ? 160 + Math.random() * 450 : 60 + Math.random() * 120;
         }
 
         const colored = p.to !== -1 || p.from !== -1;
-        const alpha = (colored ? 0.72 : 0.38) + near * 0.2;
+        const alpha = (colored ? 0.65 : 0.35) + near * 0.25;
         paintDot(p.x, p.y, p.from, p.to, p.t, alpha);
       }
       raf = requestAnimationFrame(draw);
