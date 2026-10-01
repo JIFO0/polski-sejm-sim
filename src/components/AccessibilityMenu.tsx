@@ -64,13 +64,17 @@ export function AccessibilityMenu({ compact = false }: { compact?: boolean }) {
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant={compact ? "ghost" : "outline"}
+          variant="default"
           size={compact ? "icon" : "sm"}
-          className={compact ? "min-h-11 min-w-11 rounded-full" : "min-h-11"}
+          className={
+            compact
+              ? "min-h-11 min-w-11 rounded-full bg-blue-600 text-white shadow-md hover:bg-blue-700"
+              : "min-h-11 bg-blue-600 font-semibold text-white shadow-md hover:bg-blue-700"
+          }
           aria-label="Ustawienia dostępności"
           title="Ustawienia dostępności"
         >
-          <Accessibility className="h-4 w-4" />
+          <Accessibility className="h-5 w-5" />
           {!compact ? <span>Dostępność</span> : null}
         </Button>
       </PopoverTrigger>
