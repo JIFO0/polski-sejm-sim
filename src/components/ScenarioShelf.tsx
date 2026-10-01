@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
+import { nationalSharesOf, track } from "@/lib/analytics";
 
 const STORAGE_KEY = "sejmometr.saved-scenarios.v1";
 

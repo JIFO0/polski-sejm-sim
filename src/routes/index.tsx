@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ import {
   type DistrictState,
   type Scenario,
 } from "@/lib/simulation";
+import { nationalSharesOf, track, trackPageViewOncePerSession } from "@/lib/analytics";
 import { ParticleField } from "@/components/ParticleField";
 import { PolandMap, type MapMode } from "@/components/PolandMap";
 import { Hemicycle } from "@/components/Hemicycle";
