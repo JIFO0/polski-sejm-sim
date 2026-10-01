@@ -8,7 +8,8 @@ import { FloatingNav } from "@/components/FloatingNav";
 import { SupportButton } from "@/components/SupportButton";
 
 import { DISTRICTS } from "@/data/districts";
-import { PARTIES, PARTY_MAP, type Party } from "@/data/parties";
+import { MERGED_INTO, PARTIES, PARTY_MAP, resultParties, supportParties, syncCustomEntities, type Party } from "@/data/parties";
+import { CustomPartiesPanel } from "@/components/CustomPartiesPanel";
 import {
   BASE_TURNOUT,
   MAJORITY,
@@ -82,6 +83,12 @@ function Index() {
     trackPageViewOncePerSession();
   }, []);
 
+  const [logoVersion, setLogoVersion] = useState(0);
+  const registryVersion = useMemo(() => {
+    syncCustomEntities(scenario.customParties, scenario.mergers);
+    return `${logoVersion}:${(scenario.customParties ?? []).length}:${JSON.stringify(scenario.mergers ?? [])}:${JSON.stringify(scenario.customParties ?? [])}`;
+  }, [scenario.customParties, scenario.mergers, logoVersion]);
+
   const result = useMemo(() => simulate(scenario), [scenario]);
   const resultById = useMemo(
     () => Object.fromEntries(result.districts.map((d) => [d.id, d])),
@@ -90,17 +97,20 @@ function Index() {
 
   const ranked = useMemo(
     () =>
-      PARTIES.filter((p) => p.id !== "inne").sort(
+      resultParties().sort(
         (a, b) => (result.seatsByParty[b.id] ?? 0) - (result.seatsByParty[a.id] ?? 0) ||
           (result.nationalShares[b.id] ?? 0) - (result.nationalShares[a.id] ?? 0),
       ),
-    [result],
+    [result, registryVersion],
   );
 
-  const displayedParties = useMemo(
-    () => displayOrder.map((id) => PARTY_MAP[id]).filter(isParty),
-    [displayOrder],
-  );
+  const displayedParties = useMemo(() => {
+    const allowed = supportParties();
+    const allowedIds = new Set(allowed.map((p) => p.id));
+    const ordered = displayOrder.filter((id) => allowedIds.has(id)).map((id) => PARTY_MAP[id]).filter(isParty);
+    const seen = new Set(ordered.map((p) => p.id));
+    return [...ordered, ...allowed.filter((p) => !seen.has(p.id))];
+  }, [displayOrder, registryVersion]);
 
   const commitPartyOrder = useCallback(() => {
     setDisplayOrder(ranked.map((party) => party.id));
@@ -164,7 +174,7 @@ function Index() {
         const targetHere = Math.min(100, Math.max(0, currentParty + delta));
         const available = Math.max(0, 100 - otherTotal);
         const snapped = Math.abs(targetHere - available) <= 0.35 ? available : targetHere;
-        const shares = s.independentSupport
+        const shares: Record<string, number> = s.independentSupport
           ? { ...st.shares, [pid]: Math.min(snapped, available) }
           : Object.fromEntries(
               Object.entries(st.shares).map(([id, share]) => [
@@ -172,6 +182,7 @@ function Index() {
                 id === pid ? targetHere : otherTotal > 0 ? share * ((100 - targetHere) / otherTotal) : share,
               ]),
             );
+        if (!(pid in shares)) shares[pid] = targetHere;
         districts[d.id] = {
           turnout: st.turnout,
           shares,
@@ -420,7 +431,7 @@ function Index() {
 
             {mode === "party" ? (
               <div className="mb-3 flex flex-wrap gap-1.5">
-                {PARTIES.filter((p) => p.id !== "inne").map((p) => (
+                {resultParties().map((p) => (
                   <button
                     key={p.id}
                     onClick={() => {
@@ -521,8 +532,9 @@ function Index() {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold">{p.short}</p>
                             <p className="truncate text-[11px] text-muted-foreground">
-                              próg {settings.threshold}%
-                              {inSejm ? "" : ", poniżej progu"}
+                              {MERGED_INTO[p.id]
+                                ? `w liście ${PARTY_MAP[MERGED_INTO[p.id]!]?.short ?? ""}`
+                                : `próg ${settings.threshold}%${inSejm ? "" : ", poniżej progu"}`}
                             </p>
                           </div>
                           <ShareInput
@@ -552,6 +564,14 @@ function Index() {
             )}
           </div>
         </section>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Własne partie i wspólne listy">
+          <CustomPartiesPanel
+            scenario={scenario}
+            setScenario={setScenario}
+            onLogoChange={() => setLogoVersion((v) => v + 1)}
+          />
         </CollapsibleSection>
 
         {/* KOALICJE */}
@@ -632,7 +652,7 @@ function Index() {
               Komitet partyjny 5%, koalicyjny 8%, mniejszość narodowa bez progu.
             </p>
             <div className="mt-4 space-y-2">
-              {PARTIES.filter((p) => p.id !== "inne").map((p) => {
+              {resultParties().map((p) => {
                 const s = scenario.parties[p.id] ?? DEFAULT_SETTINGS;
                 return (
                   <div

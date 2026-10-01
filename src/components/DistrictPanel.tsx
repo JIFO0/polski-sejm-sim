@@ -1,6 +1,6 @@
 import { RotateCcw, X } from "lucide-react";
 import { DISTRICTS } from "@/data/districts";
-import { PARTIES, PARTY_MAP } from "@/data/parties";
+import { MERGED_INTO, PARTIES, PARTY_MAP, MERGER_IDS } from "@/data/parties";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { PartyLogo } from "@/components/PartyLogo";
@@ -99,7 +99,7 @@ export function DistrictPanel({
             <span className="num text-xs font-semibold text-muted-foreground">Nieprzypisane {unassigned.toFixed(1)}%</span>
           </div>
 
-          {PARTIES.map((p) => {
+          {PARTIES.filter((p) => !MERGER_IDS.has(p.id)).map((p) => {
             const base = district.base[p.id] ?? 0;
             const value = state.shares[p.id] ?? 0;
             const eff = result?.shares[p.id] ?? value;
@@ -124,6 +124,7 @@ export function DistrictPanel({
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
                   baza {base.toFixed(1)}%, po frekwencji {eff.toFixed(1)}%
+                  {MERGED_INTO[p.id] ? `, w liście ${PARTY_MAP[MERGED_INTO[p.id]!]?.short ?? ""}` : ""}
                 </p>
               </div>
             );
