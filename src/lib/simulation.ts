@@ -30,6 +30,8 @@ export interface Scenario {
   createdAt: string;
   /** Siła wpływu frekwencji na profil elektoratu: 0 = wyłączony, 1 = pełny. */
   turnoutEffect: number;
+  /** Gdy aktywne, zmiana jednej partii korzysta z puli nieprzypisanej zamiast skalować pozostałe. */
+  independentSupport?: boolean;
   districts: Record<number, DistrictState>;
   parties: Record<string, PartySettings>;
   coalitions: Coalition[];
@@ -53,6 +55,7 @@ export function defaultScenario(): Scenario {
     name: "Sondaż ewybory.eu: punkt wyjścia",
     createdAt: new Date().toISOString(),
     turnoutEffect: 1,
+    independentSupport: false,
     districts,
     parties,
     coalitions: [
@@ -67,12 +70,13 @@ export function defaultScenario(): Scenario {
   };
 }
 
-/** Udziały w okręgu po uwzględnieniu frekwencji, znormalizowane do 100. */
+/** Udziały w okręgu po uwzględnieniu frekwencji. */
 export function effectiveShares(
   district: District,
   state: DistrictState,
   turnoutEffect: number,
   parties: Record<string, PartySettings>,
+  independentSupport = false,
 ): Record<string, number> {
   const delta = (state.turnout - BASE_TURNOUT) / BASE_TURNOUT;
   const raw: Record<string, number> = {};
@@ -85,7 +89,7 @@ export function effectiveShares(
     raw[id] = v;
     sum += v;
   }
-  if (sum <= 0) return raw;
+  if (sum <= 0 || (independentSupport && sum <= 100)) return raw;
   for (const id of Object.keys(raw)) raw[id] = ((raw[id] ?? 0) / sum) * 100;
   return raw;
 }
@@ -146,7 +150,13 @@ export function simulate(scenario: Scenario): SimulationResult {
       shares: { ...d.base },
       turnout: BASE_TURNOUT,
     };
-    const shares = effectiveShares(d, state, scenario.turnoutEffect, scenario.parties);
+    const shares = effectiveShares(
+      d,
+      state,
+      scenario.turnoutEffect,
+      scenario.parties,
+      scenario.independentSupport ?? false,
+    );
     const valid = (d.electorate * state.turnout) / 100;
     const votes: Record<string, number> = {};
     for (const [id, pct] of Object.entries(shares)) {

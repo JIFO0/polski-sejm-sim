@@ -6,6 +6,7 @@ import { FloatingNav } from "@/components/FloatingNav";
 import { ParticleField } from "@/components/ParticleField";
 import { SupportButton } from "@/components/SupportButton";
 import { Button } from "@/components/ui/button";
+import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 
 const TITLE = "O projekcie i twórcy | SejmSim 2027 (sejmsim.pl) — Iwo Laskowski";
 const DESCRIPTION =
@@ -67,6 +68,7 @@ function AboutProject() {
           </Button>
 
           <div className="flex items-center gap-2">
+            <AccessibilityMenu />
             <FeedbackDialog />
             <Button variant="outline" size="sm" asChild>
               <a href="https://jifo.dev/#kontakt" target="_blank" rel="noreferrer">

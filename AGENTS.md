@@ -13,3 +13,4 @@
 - Turnout influence is represented by three sensitivity states: lower, neutral, and higher, so touch controls and drag-and-drop share one model.
 - Project background and author information live on the dedicated `/o-projekcie` route so the simulator remains task-focused and search engines can index the content independently.
 - Historical election results are read-only PKW reference data, never loadable simulator presets, so user-created scenarios remain distinct.
+- Scenario support values are stored as raw percentages; independent-support mode preserves an unassigned pool, while standard mode scales other parties to 100%.

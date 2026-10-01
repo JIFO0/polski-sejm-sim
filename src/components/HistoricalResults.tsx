@@ -10,7 +10,7 @@ export function HistoricalResults() {
         <div>
           <p className="eyebrow">Punkt odniesienia</p>
           <h2 id="historical-results-title" className="mt-1 font-display text-2xl font-bold text-ink">
-            Wyniki wyborów 2023 i 2019
+            Wyniki wyborów 2023, 2019, 2015 i 2011
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
             Oficjalne wyniki wyborów do Sejmu. To porównanie historyczne, nie gotowe scenariusze symulacji.

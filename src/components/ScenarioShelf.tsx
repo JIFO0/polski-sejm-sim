@@ -7,6 +7,10 @@ import { defaultScenario, type Scenario } from "@/lib/simulation";
 
 const STORAGE_KEY = "sejmometr.saved-scenarios.v1";
 
+function createId() {
+  return globalThis.crypto?.randomUUID?.() ?? `scenario-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 interface SavedScenario {
   id: string;
   name: string;
@@ -81,20 +85,26 @@ export function ScenarioShelf({
   }, [onLoad]);
 
   const persist = (next: SavedScenario[]) => {
-    setSaved(next);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      setSaved(next);
+      return true;
+    } catch {
+      toast.error("Przeglądarka zablokowała zapis. Sprawdź ustawienia prywatności lub pobierz plik.");
+      return false;
+    }
   };
 
   const saveLocal = () => {
     const title = name.trim() || `Scenariusz ${saved.length + 1}`;
-    const newId = crypto.randomUUID();
+    const newId = createId();
     const entry: SavedScenario = {
       id: newId,
       name: title,
       savedAt: new Date().toISOString(),
       scenario: { ...scenario, name: title, createdAt: new Date().toISOString() },
     };
-    persist([entry, ...saved].slice(0, 10));
+    if (!persist([entry, ...saved].slice(0, 10))) return;
     setActiveScenarioId(newId);
     setName("");
     toast.success(`Scenariusz "${title}" zapisany!`);
@@ -134,14 +144,14 @@ export function ScenarioShelf({
       const parsed = JSON.parse(await file.text()) as Scenario;
       if (parsed?.version !== 1 || !parsed.districts) throw new Error("zły format");
       const title = parsed.name || file.name.replace(/\.json$/i, "");
-      const newId = crypto.randomUUID();
+    const newId = createId();
       const entry: SavedScenario = {
         id: newId,
         name: title,
         savedAt: new Date().toISOString(),
         scenario: parsed,
       };
-      persist([entry, ...saved].slice(0, 10));
+      if (!persist([entry, ...saved].slice(0, 10))) return;
       onLoad(parsed);
       setActiveScenarioId(newId);
       toast.success(`Wczytano i dodano do biblioteki: ${title}`);
@@ -152,18 +162,20 @@ export function ScenarioShelf({
 
   return (
     <aside className="panel-float flex h-full min-h-[24rem] flex-col p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="eyebrow">Biblioteka scenariuszy</p>
           <h2 className="mt-0.5 font-display text-lg font-bold text-ink">Scenariusze Sejmu</h2>
         </div>
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => fileInputRef.current?.click()}
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition-colors"
+          className="min-h-11 gap-1 text-[11px]"
           title="Wczytaj plik scenariusza JSON z dysku"
         >
           <Upload className="h-3 w-3" /> Wczytaj plik
-        </button>
+        </Button>
         <input
           ref={fileInputRef}
           type="file"
@@ -179,7 +191,7 @@ export function ScenarioShelf({
       </div>
 
       {/* Formularz szybkiego zapisu */}
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 max-[430px]:grid-cols-[minmax(0,1fr)_auto]">
         <Input
           value={name}
           onChange={(event) => setName(event.target.value)}
@@ -187,11 +199,11 @@ export function ScenarioShelf({
           placeholder="Nazwa nowego wariantu..."
           maxLength={48}
           aria-label="Nazwa nowego scenariusza"
-          className="h-9 text-xs"
+          className="h-11 text-xs max-[430px]:col-span-2"
         />
         <Button
           size="sm"
-          className="h-9 px-3 gap-1 shrink-0 font-medium"
+          className="h-11 gap-1 px-3 font-medium"
           onClick={saveLocal}
           title="Zapisz obecny stan w przeglądarce"
         >
@@ -200,7 +212,7 @@ export function ScenarioShelf({
         <Button
           variant="outline"
           size="icon"
-          className="h-9 w-9 shrink-0"
+          className="h-11 w-11 shrink-0"
           onClick={() => void share()}
           title="Skopiuj link do obecnego scenariusza"
           aria-label="Skopiuj link"
@@ -244,11 +256,11 @@ export function ScenarioShelf({
                       {new Date(item.savedAt).toLocaleDateString("pl-PL")}
                     </span>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                     <Button
                       size="sm"
                       variant={isActive ? "secondary" : "default"}
-                      className="h-7 gap-1 px-2.5 text-[11px] font-semibold"
+                      className="min-h-11 gap-1 px-2.5 text-[11px] font-semibold"
                       onClick={() => handleLoad(item.scenario, item.name, item.id)}
                     >
                       <Play className="h-3 w-3 fill-current" /> Wczytaj
@@ -256,7 +268,7 @@ export function ScenarioShelf({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-ink"
+                      className="min-h-11 min-w-11 text-muted-foreground hover:text-ink"
                       onClick={() => downloadJson(item.scenario, item.name)}
                       aria-label={`Pobierz plik ${item.name}`}
                     >
@@ -265,7 +277,7 @@ export function ScenarioShelf({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      className="min-h-11 min-w-11 text-muted-foreground hover:text-destructive"
                       onClick={() => persist(saved.filter((entry) => entry.id !== item.id))}
                       aria-label={`Usuń ${item.name}`}
                     >
@@ -281,14 +293,16 @@ export function ScenarioShelf({
 
       <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
         <span>{saved.length}/10 wariantów w pamięci</span>
-        <button
+        <Button
+          variant="link"
+          size="sm"
           onClick={() => {
             handleLoad(defaultScenario(), "Sondaż bazowy (Reset)", "reset");
           }}
-          className="hover:text-primary transition-colors font-medium underline-offset-2 hover:underline"
+          className="h-auto min-h-11 px-1 text-right text-[11px]"
         >
           Przywróć stan wyjściowy
-        </button>
+        </Button>
       </div>
     </aside>
   );
