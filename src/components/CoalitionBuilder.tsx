@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { PartyLogo } from "@/components/PartyLogo";
 import { MAJORITY, type Coalition } from "@/lib/simulation";
 import { track } from "@/lib/analytics";
+import { useLanguage, t } from "@/lib/i18n";
 
 export function CoalitionBuilder({
   coalitions,
@@ -55,18 +56,19 @@ export function CoalitionBuilder({
     ]);
 
   const available = resultParties();
+  const lang = useLanguage();
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-2xl font-bold text-ink">Kto z kim?</h2>
+          <h2 className="font-display text-2xl font-bold text-ink">{t("coalitions", lang)}</h2>
           <p className="text-sm text-muted-foreground">
-            Złóż dowolne grupy partii i sprawdź, czy mają 231 mandatów.
+            {t("coalitions_desc", lang)}
           </p>
         </div>
         <Button onClick={add} variant="outline" size="sm">
-          <Plus className="mr-1.5 h-4 w-4" /> Dodaj grupę
+          <Plus className="mr-1.5 h-4 w-4" /> {lang === "en" ? "Add group" : "Dodaj grupę"}
         </Button>
       </div>
 
@@ -75,6 +77,7 @@ export function CoalitionBuilder({
           const seats = c.members.reduce((s, m) => s + (seatsByParty[m] ?? 0), 0);
           const pct = Math.min(100, (seats / 460) * 100);
           const majority = seats >= MAJORITY;
+          const constitutional = seats >= 307;
           return (
             <div
               key={c.id}
@@ -111,15 +114,21 @@ export function CoalitionBuilder({
                 <span className="num text-4xl font-bold leading-none" style={{ color: c.color }}>
                   {seats}
                 </span>
-                <span className="mb-1 text-xs text-muted-foreground">/ 460 mandatów</span>
+                <span className="mb-1 text-xs text-muted-foreground">{lang === "en" ? "/ 460 seats" : "/ 460 mandatów"}</span>
                 <span
                   className={`mb-1 ml-auto rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                    majority
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-muted text-muted-foreground"
+                    constitutional
+                      ? "border border-purple-300/80 bg-purple-100 text-purple-900 shadow-xs dark:border-purple-800 dark:bg-purple-950/80 dark:text-purple-200"
+                      : majority
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300"
+                        : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  {majority ? `większość +${seats - MAJORITY + 1}` : `brakuje ${MAJORITY - seats}`}
+                  {constitutional
+                    ? (lang === "en" ? `Constitutional majority (307+) • +${seats - 307}` : `Większość konstytucyjna (307+) • +${seats - 307}`)
+                    : majority
+                      ? (lang === "en" ? `majority +${seats - MAJORITY + 1}` : `większość +${seats - MAJORITY + 1}`)
+                      : (lang === "en" ? `needs ${MAJORITY - seats}` : `brakuje ${MAJORITY - seats}`)}
                 </span>
               </div>
 
@@ -131,6 +140,12 @@ export function CoalitionBuilder({
                 <div
                   className="absolute top-0 h-full w-px bg-ink/50"
                   style={{ left: `${(MAJORITY / 460) * 100}%` }}
+                  title="Zwykła większość (231)"
+                />
+                <div
+                  className="absolute top-0 h-full w-px bg-purple-500/80"
+                  style={{ left: `${(307 / 460) * 100}%` }}
+                  title="Większość konstytucyjna (307)"
                 />
               </div>
 

@@ -12,7 +12,7 @@ export function ShareInput({
   max?: number;
 }) {
   return (
-    <div className="relative ml-auto w-[5.4rem] shrink-0">
+    <div className="relative ml-auto w-[6.75rem] shrink-0">
       <Input
         type="number"
         inputMode="decimal"
@@ -25,9 +25,9 @@ export function ShareInput({
           if (Number.isFinite(next)) onChange(Math.min(max, Math.max(0, next)));
         }}
         aria-label={label}
-        className="num h-10 pr-7 text-right font-bold"
+        className="num h-10 pr-6 text-right font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
-      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+      <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground">%</span>
     </div>
   );
 }

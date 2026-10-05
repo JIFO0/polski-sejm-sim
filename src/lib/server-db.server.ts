@@ -67,7 +67,11 @@ export function getDb(): DatabaseSync {
   if (!shareCols.some((col) => col.name === "content_hash")) {
     db.exec("ALTER TABLE shared_scenarios ADD COLUMN content_hash TEXT");
   }
+  if (!shareCols.some((col) => col.name === "featured")) {
+    db.exec("ALTER TABLE shared_scenarios ADD COLUMN featured INTEGER NOT NULL DEFAULT 0");
+  }
   db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_shared_scenarios_featured ON shared_scenarios(featured, active);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_share_active_hash
     ON shared_scenarios(ip_hash, content_hash)
     WHERE active = 1;
@@ -86,8 +90,8 @@ export function runMaintenance(): void {
     const db = getDb();
     const nowIso = new Date().toISOString();
 
-    // Wygasłe linki znikają same. Wyłączone zostają, dopóki właściciel ich nie usunie.
-    db.prepare("DELETE FROM shared_scenarios WHERE active = 1 AND expires_at < ? AND expires_at < '9999-01-01'").run(nowIso);
+    // Wygasłe linki znikają same. Wyłączone i wyróżnione zostają, dopóki właściciel ich nie usunie.
+    db.prepare("DELETE FROM shared_scenarios WHERE active = 1 AND (featured IS NULL OR featured = 0) AND expires_at < ? AND expires_at < '9999-01-01'").run(nowIso);
 
     // 2. Emergency disk check: only if file size approaches 3.8GB, prune oldest events to guarantee < 4GB
     if (dbPathCached && fs.existsSync(dbPathCached)) {
@@ -122,6 +126,7 @@ export interface SharedScenarioRow {
   scenario: Record<string, unknown>;
   ip_hash: string;
   active: boolean;
+  featured?: boolean;
   views: number;
   created_at: string;
   expires_at: string;
@@ -190,7 +195,7 @@ export function getSharedScenarioById(id: string): SharedScenarioRow | null {
   maybeRunMaintenance();
   const db = getDb();
   const row = db.prepare(`
-    SELECT id, name, scenario, ip_hash, active, views, created_at, expires_at
+    SELECT id, name, scenario, ip_hash, active, featured, views, created_at, expires_at
     FROM shared_scenarios
     WHERE id = ?
   `).get(id) as {
@@ -199,6 +204,7 @@ export function getSharedScenarioById(id: string): SharedScenarioRow | null {
     scenario: string;
     ip_hash: string;
     active: number;
+    featured: number;
     views: number;
     created_at: string;
     expires_at: string;
@@ -208,6 +214,7 @@ export function getSharedScenarioById(id: string): SharedScenarioRow | null {
   return {
     ...row,
     active: Boolean(row.active),
+    featured: Boolean(row.featured),
     scenario: JSON.parse(row.scenario),
   };
 }
@@ -221,7 +228,7 @@ export function listSharedScenariosForOwner(limit = 200): SharedScenarioRow[] {
   maybeRunMaintenance();
   const db = getDb();
   const rows = db.prepare(`
-    SELECT id, name, active, views, created_at, expires_at
+    SELECT id, name, active, featured, views, created_at, expires_at
     FROM shared_scenarios
     ORDER BY created_at DESC
     LIMIT ?
@@ -229,6 +236,7 @@ export function listSharedScenariosForOwner(limit = 200): SharedScenarioRow[] {
     id: string;
     name: string;
     active: number;
+    featured: number;
     views: number;
     created_at: string;
     expires_at: string;
@@ -240,6 +248,7 @@ export function listSharedScenariosForOwner(limit = 200): SharedScenarioRow[] {
     scenario: {},
     ip_hash: "",
     active: Boolean(r.active),
+    featured: Boolean(r.featured),
     views: r.views,
     created_at: r.created_at,
     expires_at: r.expires_at,
@@ -273,15 +282,17 @@ export function getShareLibraryStats(nowIso: string) {
          COALESCE(SUM(CASE WHEN active = 1 AND expires_at > ? THEN 1 ELSE 0 END), 0) as active,
          COALESCE(SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END), 0) as inactive,
          COALESCE(SUM(CASE WHEN expires_at >= '9999' THEN 1 ELSE 0 END), 0) as permanent,
+         COALESCE(SUM(CASE WHEN featured = 1 THEN 1 ELSE 0 END), 0) as featured,
          COALESCE(SUM(views), 0) as views
        FROM shared_scenarios`,
     )
-    .get(nowIso) as { total: number; active: number; inactive: number; permanent: number; views: number };
+    .get(nowIso) as { total: number; active: number; inactive: number; permanent: number; featured: number; views: number };
   return {
     total: Number(row?.total ?? 0),
     active: Number(row?.active ?? 0),
     inactive: Number(row?.inactive ?? 0),
     permanent: Number(row?.permanent ?? 0),
+    featured: Number(row?.featured ?? 0),
     views: Number(row?.views ?? 0),
   };
 }
@@ -446,6 +457,53 @@ export function togglePermanentShareById(id: string): { permanent: boolean; expi
     : "9999-12-31T23:59:59.999Z";
   db.prepare("UPDATE shared_scenarios SET expires_at = ?, active = 1 WHERE id = ?").run(newExpiresAt, id);
   return { permanent: !isPermanent, expiresAt: newExpiresAt };
+}
+
+export function toggleFeaturedShareById(id: string): { featured: boolean } {
+  const db = getDb();
+  const row = db.prepare("SELECT featured FROM shared_scenarios WHERE id = ?").get(id) as { featured?: number } | undefined;
+  if (!row) return { featured: false };
+  const nextFeatured = row.featured ? 0 : 1;
+  if (nextFeatured === 1) {
+    db.prepare("UPDATE shared_scenarios SET featured = 1, active = 1, expires_at = '9999-12-31T23:59:59.999Z' WHERE id = ?").run(id);
+  } else {
+    db.prepare("UPDATE shared_scenarios SET featured = 0 WHERE id = ?").run(id);
+  }
+  return { featured: nextFeatured === 1 };
+}
+
+export function listFeaturedScenarios(): Array<{
+  id: string;
+  name: string;
+  scenario: Record<string, unknown>;
+  views: number;
+  created_at: string;
+}> {
+  maybeRunMaintenance();
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT id, name, scenario, views, created_at
+    FROM shared_scenarios
+    WHERE featured = 1 AND active = 1
+    ORDER BY created_at DESC
+    LIMIT 50
+  `).all() as { id: string; name: string; scenario: string; views: number; created_at: string }[];
+
+  return rows.map((r) => {
+    let parsed: Record<string, unknown> = {};
+    try {
+      parsed = JSON.parse(r.scenario);
+    } catch {
+      parsed = {};
+    }
+    return {
+      id: r.id,
+      name: r.name,
+      scenario: parsed,
+      views: r.views,
+      created_at: r.created_at,
+    };
+  });
 }
 
 export function getDbStats() {

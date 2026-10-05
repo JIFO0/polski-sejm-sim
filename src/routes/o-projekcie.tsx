@@ -9,6 +9,7 @@ import { SupportButton } from "@/components/SupportButton";
 import { Button } from "@/components/ui/button";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { track, trackPageViewOncePerSession } from "@/lib/analytics";
 
 const TITLE = "O projekcie i twórcy | SejmSim 2027 (sejmsim.pl) | Iwo Laskowski";
@@ -80,6 +81,7 @@ function AboutProject() {
           </Button>
 
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <ThemeToggle />
             <FeedbackDialog />
             <Button variant="outline" size="sm" asChild>

@@ -155,3 +155,29 @@ export const togglePermanentShare = createServerFn({ method: "POST" })
       return { ok: false as const };
     }
   });
+
+export const toggleFeaturedShare = createServerFn({ method: "POST" })
+  .inputValidator((data) => ownerSchema.extend({ id: z.string().max(20) }).parse(data))
+  .handler(async ({ data }) => {
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
+    const { toggleFeaturedShareById } = await import("./server-db.server");
+    try {
+      const result = toggleFeaturedShareById(data.id);
+      return { ok: true as const, featured: result.featured };
+    } catch {
+      return { ok: false as const };
+    }
+  });
+
+export const getFeaturedScenarios = createServerFn({ method: "GET" }).handler(async () => {
+  const { listFeaturedScenarios } = await import("./server-db.server");
+  try {
+    const items = listFeaturedScenarios();
+    return { ok: true as const, items };
+  } catch (err) {
+    console.error("getFeaturedScenarios error:", err);
+    return { ok: false as const, items: [] };
+  }
+});
+

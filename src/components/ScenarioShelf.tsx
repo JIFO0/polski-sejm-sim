@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Download, FolderOpen, Link2, Loader2, Maximize2, Play, Plus, Trash2, Upload } from "lucide-react";
+import { Check, Copy, Download, FolderOpen, Link2, Loader2, Maximize2, Play, Plus, Sparkles, Trash2, Upload } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { createShare, getShare } from "@/lib/shares.functions";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
 import { isScenarioModified, nationalSharesOf, track } from "@/lib/analytics";
 import { PARTIES, PARTY_MAP } from "@/data/parties";
+import { CommunityScenariosDialog } from "@/components/CommunityScenariosDialog";
 import {
   Dialog,
   DialogContent,
@@ -108,6 +109,7 @@ export function ScenarioShelf({
   const [sharingId, setSharingId] = useState<string | null>(null);
   const shareLock = useRef(false);
   const [expandedOpen, setExpandedOpen] = useState(false);
+  const [communityOpen, setCommunityOpen] = useState(false);
   const createShareFn = useServerFn(createShare);
   const getShareFn = useServerFn(getShare);
 
@@ -293,6 +295,15 @@ export function ScenarioShelf({
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setCommunityOpen(true)}
+              className="min-h-9 gap-1 text-[11px] font-semibold text-ink"
+              title="Zobacz scenariusze stworzone przez społeczność"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Społeczność
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setExpandedOpen(true)}
               className="min-h-9 gap-1 text-[11px] font-semibold"
               title="Otwórz pełny widok biblioteki"
@@ -363,6 +374,16 @@ export function ScenarioShelf({
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Dostosuj poparcie i kliknij <strong>Zapisz</strong>, aby zachować wariant.
               </p>
+              <div className="mt-3.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCommunityOpen(true)}
+                  className="gap-1.5 text-xs font-semibold border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Poznaj scenariusze społeczności
+                </Button>
+              </div>
             </div>
           ) : (
             saved.map((item) => {
@@ -488,12 +509,27 @@ export function ScenarioShelf({
       <Dialog open={expandedOpen} onOpenChange={setExpandedOpen}>
         <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-6">
           <DialogHeader>
-            <DialogTitle className="font-display text-2xl font-bold text-ink">
-              Biblioteka zapisanych scenariuszy
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              Wszystkie zachowane warianty sejmowe z pełnymi nazwami, poparciem partii i akcjami udostępniania (do 5 linków na IP).
-            </DialogDescription>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <DialogTitle className="font-display text-2xl font-bold text-ink">
+                  Biblioteka zapisanych scenariuszy
+                </DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  Wszystkie zachowane warianty sejmowe z pełnymi nazwami, poparciem partii i akcjami udostępniania (do 5 linków na IP).
+                </DialogDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setExpandedOpen(false);
+                  setCommunityOpen(true);
+                }}
+                className="gap-1.5 text-xs font-semibold shrink-0"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Scenariusze społeczności
+              </Button>
+            </div>
           </DialogHeader>
 
           <div className="mt-4 flex-1 overflow-y-auto pr-2">
@@ -504,6 +540,19 @@ export function ScenarioShelf({
                 <p className="mt-1 text-sm text-muted-foreground">
                   Zapisz obecny stan w symulatorze, aby pojawił się tutaj.
                 </p>
+                <div className="mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setExpandedOpen(false);
+                      setCommunityOpen(true);
+                    }}
+                    className="gap-1.5 text-xs font-semibold border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Poznaj scenariusze społeczności
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
@@ -621,6 +670,12 @@ export function ScenarioShelf({
           </div>
         </DialogContent>
       </Dialog>
+
+      <CommunityScenariosDialog
+        open={communityOpen}
+        onOpenChange={setCommunityOpen}
+        onLoad={onLoad}
+      />
     </>
   );
 }

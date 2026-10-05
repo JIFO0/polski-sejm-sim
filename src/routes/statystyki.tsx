@@ -19,6 +19,7 @@ import {
   Pin,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Users,
 } from "lucide-react";
@@ -35,7 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { getAnalyticsSummary, clearAllAnalyticsData, testFeedbackWebhook } from "@/lib/analytics.functions";
-import { deactivateShare, deleteShare, listShares, togglePermanentShare } from "@/lib/shares.functions";
+import { deactivateShare, deleteShare, listShares, togglePermanentShare, toggleFeaturedShare } from "@/lib/shares.functions";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { EVENT_LABELS } from "@/lib/analytics-events";
 import { PARTIES } from "@/data/parties";
@@ -60,7 +61,7 @@ export const Route = createFileRoute("/statystyki")({
   component: StatsPage,
 });
 
-type ShareRow = { id: string; name: string; active: boolean; views: number; created_at: string; expires_at: string };
+type ShareRow = { id: string; name: string; active: boolean; featured?: boolean; views: number; created_at: string; expires_at: string };
 type Summary = Extract<Awaited<ReturnType<typeof getAnalyticsSummary>>, { ok: true }>;
 
 const PARTY_NAMES = Object.fromEntries(PARTIES.map((p) => [p.id, p.name]));
@@ -90,6 +91,7 @@ function StatsPage() {
   const deactivate = useServerFn(deactivateShare);
   const removeShare = useServerFn(deleteShare);
   const togglePermanent = useServerFn(togglePermanentShare);
+  const toggleFeatured = useServerFn(toggleFeaturedShare);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -746,7 +748,7 @@ function StatsPage() {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Linki wygasają po 7 dniach. Każdy adres IP może mieć do 5 aktywnych linków naraz. Ten sam scenariusz z jednego IP nie tworzy drugiego linku.
-                Dezaktywacja wyłącza link, usunięcie kasuje go z bazy. W bibliotece: {summary.shareLibrary.total} linków, {summary.shareLibrary.views} otwarć, {summary.shareLibrary.permanent} bezterminowych, {summary.shareLibrary.inactive} wyłączonych.
+                Dezaktywacja wyłącza link, usunięcie kasuje go z bazy. W bibliotece: {summary.shareLibrary.total} linków, {summary.shareLibrary.views} otwarć, {summary.shareLibrary.permanent} bezterminowych, {shares.filter((s) => s.featured).length} wyróżnionych w społeczności.
               </p>
               <div className="mt-3 max-h-96 overflow-auto">
                 <table className="w-full text-sm">
@@ -768,9 +770,14 @@ function StatsPage() {
                       return (
                         <tr key={sh.id} className="border-t border-border/60">
                           <td className="py-1.5">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <a href={`/?s=${sh.id}`} target="_blank" rel="noreferrer" className="font-medium text-ink underline-offset-2 hover:underline">{sh.name}</a>
-                              {isPermanent && (
+                              {sh.featured && (
+                                <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                                  <Sparkles className="h-2.5 w-2.5" /> Społeczność
+                                </span>
+                              )}
+                              {isPermanent && !sh.featured && (
                                 <span className="inline-flex items-center gap-0.5 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
                                   <Pin className="h-2.5 w-2.5" /> Permanentny
                                 </span>
@@ -787,24 +794,71 @@ function StatsPage() {
                           </td>
                           <td className="num py-1.5 text-right font-bold text-ink">{sh.views}</td>
                           <td className="py-1.5 text-right">
-                            {live ? (
-                              <Button
-                                size="sm"
-                                variant={isPermanent ? "secondary" : "outline"}
-                                className="min-h-9 gap-1 text-xs"
-                                title={isPermanent ? "Cofnij permanentność (wróć do 7 dni)" : "Ustaw jako permanentny (nie wygaśnie)"}
-                                onClick={async () => {
-                                  const r = await togglePermanent({ data: { login: login.trim(), key: key.trim(), id: sh.id } });
-                                  if (r.ok) {
-                                    setShares((all) => all.map((x) => x.id === sh.id ? { ...x, expires_at: r.expiresAt, active: true } : x));
-                                    toast.success(r.permanent ? "Link ustawiony jako permanentny." : "Link wróci do standardowego wygasania (7 dni).");
-                                  }
-                                }}
-                              >
-                                <Pin className="h-3 w-3" />
-                                {isPermanent ? "Cofnij stały" : "Permanentny"}
-                              </Button>
-                            ) : null}
+                            <div className="flex items-center justify-end gap-1">
+                              {live ? (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant={sh.featured ? "secondary" : "outline"}
+                                    className={`min-h-9 gap-1 text-xs ${
+                                      sh.featured
+                                        ? "border-amber-500/40 bg-amber-500/10 font-semibold text-amber-700 dark:text-amber-400"
+                                        : ""
+                                    }`}
+                                    title={
+                                      sh.featured
+                                        ? "Usuń z wyróżnionych scenariuszy społeczności"
+                                        : "Wyróżnij ten scenariusz w menu społeczności dla odwiedzających"
+                                    }
+                                    onClick={async () => {
+                                      const r = await toggleFeatured({
+                                        data: { login: login.trim(), key: key.trim(), id: sh.id },
+                                      });
+                                      if (r.ok) {
+                                        setShares((all) =>
+                                          all.map((x) =>
+                                            x.id === sh.id
+                                              ? {
+                                                  ...x,
+                                                  featured: r.featured,
+                                                  active: true,
+                                                  expires_at: r.featured
+                                                    ? "9999-12-31T23:59:59.999Z"
+                                                    : x.expires_at,
+                                                }
+                                              : x,
+                                          ),
+                                        );
+                                        toast.success(
+                                          r.featured
+                                            ? "Scenariusz dodany do wyróżnionych w menu społeczności!"
+                                            : "Scenariusz usunięty ze społeczności.",
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    <Sparkles className="h-3 w-3" />
+                                    {sh.featured ? "Wyróżniony" : "Wyróżnij"}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant={isPermanent ? "secondary" : "outline"}
+                                    className="min-h-9 gap-1 text-xs"
+                                    title={isPermanent ? "Cofnij permanentność (wróć do 7 dni)" : "Ustaw jako permanentny (nie wygaśnie)"}
+                                    onClick={async () => {
+                                      const r = await togglePermanent({ data: { login: login.trim(), key: key.trim(), id: sh.id } });
+                                      if (r.ok) {
+                                        setShares((all) => all.map((x) => x.id === sh.id ? { ...x, expires_at: r.expiresAt, active: true } : x));
+                                        toast.success(r.permanent ? "Link ustawiony jako permanentny." : "Link wróci do standardowego wygasania (7 dni).");
+                                      }
+                                    }}
+                                  >
+                                    <Pin className="h-3 w-3" />
+                                    {isPermanent ? "Stały" : "7 dni"}
+                                  </Button>
+                                </>
+                              ) : null}
+                            </div>
                           </td>
                           <td className="py-1.5 text-right pl-1">
                             <div className="flex justify-end gap-1">

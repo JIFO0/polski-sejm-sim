@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Download, ExternalLink, Info, RotateCcw, Upload, UserRound, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { toast } from "sonner";
 
 import { LogoMark } from "@/components/Logos";
@@ -402,6 +403,7 @@ function Index() {
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
             <nav className="flex flex-wrap items-center justify-end gap-2" aria-label="Nawigacja główna">
+            <LanguageToggle />
             <ThemeToggle />
             <Button variant="ghost" size="sm" asChild>
               <Link to="/o-projekcie">
@@ -746,62 +748,14 @@ function Index() {
         </section>
         </CollapsibleSection>
 
-        {/* FREKWENCJA - centralnie pod symulacją w okręgach */}
-        <CollapsibleSection title="Frekwencja">
+        {/* FREKWENCJA I GŁOSY - centralnie pod symulacją w okręgach */}
+        <CollapsibleSection title="Frekwencja i głosy">
         <section className="space-y-6">
           <div className="panel p-5 md:p-6">
-            <h2 className="font-display text-xl font-bold text-ink">Frekwencja</h2>
+            <h2 className="font-display text-xl font-bold text-ink">Frekwencja i głosy</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ustaw jedną frekwencję dla całego kraju albo dopieszczaj okręg po okręgu na mapie.
+              Ustaw pulę uprawnionych wyborców oraz frekwencję dla całego kraju lub dopieszczaj okręg po okręgu na mapie.
             </p>
-
-            <div className="mt-5 grid gap-6 md:grid-cols-2">
-            <div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm font-semibold">Frekwencja we wszystkich okręgach</span>
-                <span className="num text-lg font-bold text-primary">
-                  {result.nationalTurnout.toFixed(1)}%
-                </span>
-              </div>
-              <Slider
-                className="mt-3"
-                aria-label="Frekwencja we wszystkich okręgach"
-                min={30}
-                max={90}
-                step={0.5}
-                value={[result.nationalTurnout]}
-                onValueChange={([v = 0]) => setGlobalTurnout(v)}
-              />
-              <p className="mt-2 text-xs text-muted-foreground">
-                {turnoutChangesSeats(scenario)
-                  ? "Frekwencja zmienia szacowaną liczbę głosów i, przez profil elektoratu, podział mandatów."
-                  : "Wszystkie partie są w grupie „Frekwencja nie wpływa”, więc mandaty zostają takie same. Zmienia się tylko szacowana liczba głosów."}
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm font-semibold">Siła profilu elektoratu</span>
-                <span className="num text-sm font-bold">
-                  {Math.round(scenario.turnoutEffect * 100)}%
-                </span>
-              </div>
-              <Slider
-                className="mt-3"
-                aria-label="Siła profilu elektoratu"
-                min={0}
-                max={2}
-                step={0.05}
-                value={[scenario.turnoutEffect]}
-                onValueChange={([v = 0]) => setScenario((s) => ({ ...s, turnoutEffect: v }))}
-              />
-              <p className="mt-2 text-xs text-muted-foreground">
-                0% = frekwencja zmienia tylko wagę okręgu. Wyżej = przy wysokiej frekwencji rosną
-                partie o młodszym i bardziej miejskim elektoracie, a maleją te o elektoracie
-                najbardziej zdyscyplinowanym.
-              </p>
-            </div>
-            </div>
 
             {/* Kwalifikowani wyborcy i szacunek liczby głosów */}
             <div className="mt-6 rounded-xl border border-border/80 bg-surface-strong/40 p-4">
@@ -877,7 +831,7 @@ function Index() {
                     <span className="text-xs text-muted-foreground">baza {BASE_TURNOUT}%</span>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Zmieniaj suwakiem ogólnym lub w poszczególnych 41 okręgach na mapie.
+                    Zmieniaj suwakiem ogólnym poniżej lub w poszczególnych 41 okręgach na mapie.
                   </p>
                 </div>
 
@@ -894,6 +848,54 @@ function Index() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div>
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-semibold">Frekwencja we wszystkich okręgach</span>
+                <span className="num text-lg font-bold text-primary">
+                  {result.nationalTurnout.toFixed(1)}%
+                </span>
+              </div>
+              <Slider
+                className="mt-3"
+                aria-label="Frekwencja we wszystkich okręgach"
+                min={30}
+                max={90}
+                step={0.5}
+                value={[result.nationalTurnout]}
+                onValueChange={([v = 0]) => setGlobalTurnout(v)}
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {turnoutChangesSeats(scenario)
+                  ? "Frekwencja zmienia szacowaną liczbę głosów i, przez profil elektoratu, podział mandatów."
+                  : "Wszystkie partie są w grupie „Frekwencja nie wpływa”, więc mandaty zostają takie same. Zmienia się tylko szacowana liczba głosów."}
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-semibold">Siła profilu elektoratu</span>
+                <span className="num text-sm font-bold">
+                  {Math.round(scenario.turnoutEffect * 100)}%
+                </span>
+              </div>
+              <Slider
+                className="mt-3"
+                aria-label="Siła profilu elektoratu"
+                min={0}
+                max={2}
+                step={0.05}
+                value={[scenario.turnoutEffect]}
+                onValueChange={([v = 0]) => setScenario((s) => ({ ...s, turnoutEffect: v }))}
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                0% = frekwencja zmienia tylko wagę okręgu. Wyżej = przy wysokiej frekwencji rosną
+                partie o młodszym i bardziej miejskim elektoracie, a maleją te o elektoracie
+                najbardziej zdyscyplinowanym.
+              </p>
+            </div>
             </div>
 
             <div className="mt-6">
