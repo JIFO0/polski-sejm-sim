@@ -21,6 +21,7 @@ const KEYWORDS =
 export const Route = createFileRoute("/o-projekcie")({
   staticData: { sitemap: true },
   head: () => ({
+    links: [{ rel: "canonical", href: "https://sejmsim.pl/o-projekcie" }],
     meta: [
       { title: TITLE },
       { name: "description", content: DESCRIPTION },
@@ -28,7 +29,10 @@ export const Route = createFileRoute("/o-projekcie")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://sejmsim.pl/o-projekcie" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: TITLE },
+      { name: "twitter:description", content: DESCRIPTION },
     ],
   }),
   component: AboutProject,

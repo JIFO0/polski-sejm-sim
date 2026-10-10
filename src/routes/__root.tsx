@@ -116,6 +116,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "shortcut icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+      { rel: "manifest", href: "/site.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -124,11 +125,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const SCHEMA_ORG = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "SejmSim 2027",
+  alternateName: ["SejmSim", "sejmsim.pl"],
+  url: "https://sejmsim.pl/",
+  applicationCategory: "UtilityApplication",
+  operatingSystem: "All",
+  description:
+    "Kalkulator Sejmu, kalkulator siedzeń i symulator wyborczy do Sejmu 2027. Interaktywna mapa 41 okręgów wyborczych, metoda D'Hondta, symulacja koalicji i frekwencji.",
+  author: {
+    "@type": "Person",
+    name: "Iwo Laskowski",
+    url: "https://jifo.dev",
+  },
+  image: "https://sejmsim.pl/og-image.png",
+});
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="pl">
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: SCHEMA_ORG }} />
         <HeadContent />
       </head>
       <body>

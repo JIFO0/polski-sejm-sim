@@ -61,6 +61,7 @@ const isParty = (party: Party | undefined): party is Party => Boolean(party);
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
   head: () => ({
+    links: [{ rel: "canonical", href: "https://sejmsim.pl/" }],
     meta: [
       { title: TITLE },
       { name: "description", content: DESC },
@@ -68,7 +69,10 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://sejmsim.pl/" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: TITLE },
+      { name: "twitter:description", content: DESC },
     ],
   }),
   component: Index,

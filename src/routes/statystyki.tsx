@@ -48,6 +48,7 @@ const DESCRIPTION = "Anonimowe, zbiorcze statystyki korzystania z symulatora Sej
 export const Route = createFileRoute("/statystyki")({
   staticData: { sitemap: false },
   head: () => ({
+    links: [{ rel: "canonical", href: "https://sejmsim.pl/statystyki" }],
     meta: [
       { title: TITLE },
       { name: "description", content: DESCRIPTION },
@@ -55,6 +56,7 @@ export const Route = createFileRoute("/statystyki")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://sejmsim.pl/statystyki" },
       { name: "twitter:card", content: "summary" },
     ],
   }),

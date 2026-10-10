@@ -47,6 +47,31 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+      const forwardedProto = request.headers.get("x-forwarded-proto");
+      const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || url.host;
+
+      const proto = forwardedProto || url.protocol.replace(":", "");
+      const isLocal =
+        host.includes("localhost") ||
+        host.includes("127.0.0.1") ||
+        url.hostname === "localhost" ||
+        url.hostname === "127.0.0.1";
+
+      const isHttp = proto === "http";
+      const isWww = host.startsWith("www.");
+
+      if (!isLocal && (isHttp || isWww)) {
+        const cleanHost = host.replace(/^www\./, "");
+        const target = `https://${cleanHost}${url.pathname}${url.search}`;
+        return new Response(null, {
+          status: 301,
+          headers: {
+            Location: target,
+          },
+        });
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
