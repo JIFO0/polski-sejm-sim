@@ -60,11 +60,9 @@ import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { ShareInput } from "@/components/ShareInput";
 
 const TITLE =
-  "SejmSim 2027 (sejmsim.pl) | Kalkulator Sejmu, kalkulator siedzeń i symulator wyborczy";
+  "SejmSim 2027 – Kalkulator mandatów Sejmu i symulator większości D'Hondta";
 const DESC =
-  "Kalkulator Sejmu i symulator mandatów D'Hondta. SejmSim sam liczy średnią z opublikowanych sondaży partyjnych i nie jest sondażem ani prognozą wyborów 2027.";
-const KEYWORDS =
-  "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator mandatów sejm, symulator wyborów do sejmu, sejm 2027, metoda d'hondta, sondaże partyjne, średnia sondażowa, sejmsim";
+  "Kalkulator mandatów Sejmu i symulator ordynacji D'Hondta w 41 okręgach. Sprawdź większość 231 mandatów, twórz koalicje i analizuj średnią sondażową.";
 
 const blankState = (id: number): DistrictState => {
   const base = DISTRICTS.find((d) => d.id === id);
@@ -81,7 +79,6 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: TITLE },
       { name: "description", content: DESC },
-      { name: "keywords", content: KEYWORDS },
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
@@ -451,6 +448,9 @@ function Index() {
           >
             <LanguageToggle />
             <ThemeToggle />
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/metoda-dhondta">{tr("Metoda D'Hondta")}</Link>
+            </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/zrodla">{tr("Źródła")}</Link>
             </Button>
@@ -1092,11 +1092,32 @@ function Index() {
             {tr("SejmSim jest niekomercyjnym serwisem obywatelskim. Średnią sondażową liczy sam z badań wpisanych w zbiorze, z podaniem źródła. Mandaty liczone są metodą D'Hondta osobno w każdym z 41 okręgów, z progami od głosów w skali kraju. Liczba uprawnionych w okręgu jest przybliżana proporcjonalnie do liczby mandatów. To symulacja scenariuszy, nie sondaż i nie prognoza. W ciszy wyborczej nie publikujemy nowych wyników.")} </p>
           <p className="mt-2">
             {tr("Logotypy partii pochodzą z Wikimedia Commons i należą do ich właścicieli.")}</p>
-          <Link
-            to="/zrodla"
-            className="mt-4 inline-flex items-center font-semibold text-primary hover:underline"
-          >
-            {tr("Źródła i metodologia")}</Link>
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-medium">
+            <Link
+              to="/metoda-dhondta"
+              className="inline-flex items-center text-primary hover:underline"
+            >
+              {tr("Kalkulator i metoda D'Hondta")}
+            </Link>
+            <span className="text-border" aria-hidden="true">
+              •
+            </span>
+            <Link
+              to="/zrodla"
+              className="inline-flex items-center text-primary hover:underline"
+            >
+              {tr("Źródła i metodologia")}
+            </Link>
+            <span className="text-border" aria-hidden="true">
+              •
+            </span>
+            <Link
+              to="/o-projekcie"
+              className="inline-flex items-center text-primary hover:underline"
+            >
+              {tr("O projekcie")}
+            </Link>
+          </div>
         </footer>
       </main>
     </div>

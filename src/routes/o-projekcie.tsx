@@ -25,9 +25,7 @@ import { track, trackPageViewOncePerSession } from "@/lib/analytics";
 
 const TITLE = "O projekcie i twórcy | SejmSim 2027 (sejmsim.pl) | Iwo Laskowski";
 const DESCRIPTION =
-  "Poznaj historię kalkulatora Sejmu SejmSim (sejmsim.pl) oraz twórcę projektu Iwo Laskowskiego (@jifo). Dowiedz się, jak działa kalkulator siedzeń i symulator ordynacji wyborczej.";
-const KEYWORDS =
-  "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator mandatów, o projekcie sejmsim, iwo laskowski, jifo, symulator wyborczy, metoda d'hondta";
+  "Poznaj historię SejmSim (sejmsim.pl) oraz twórcę projektu Iwo Laskowskiego (@jifo). Dowiedz się, jak działa kalkulator mandatów Sejmu i symulator ordynacji wyborczej.";
 
 export const Route = createFileRoute("/o-projekcie")({
   staticData: { sitemap: true },
@@ -36,7 +34,6 @@ export const Route = createFileRoute("/o-projekcie")({
     meta: [
       { title: TITLE },
       { name: "description", content: DESCRIPTION },
-      { name: "keywords", content: KEYWORDS },
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },

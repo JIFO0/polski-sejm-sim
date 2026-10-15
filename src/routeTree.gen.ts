@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MetodaDhondtaRouteImport } from './routes/metoda-dhondta'
 import { Route as OProjekcieRouteImport } from './routes/o-projekcie'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StatystykiRouteImport } from './routes/statystyki'
@@ -18,6 +19,11 @@ import { Route as ZrodlaRouteImport } from './routes/zrodla'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetodaDhondtaRoute = MetodaDhondtaRouteImport.update({
+  id: '/metoda-dhondta',
+  path: '/metoda-dhondta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OProjekcieRoute = OProjekcieRouteImport.update({
@@ -43,6 +49,7 @@ const ZrodlaRoute = ZrodlaRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
@@ -65,12 +74,25 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki' | '/zrodla'
+  fullPaths:
+    | '/'
+    | '/metoda-dhondta'
+    | '/o-projekcie'
+    | '/sitemap.xml'
+    | '/statystyki'
+    | '/zrodla'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki' | '/zrodla'
+  to:
+    | '/'
+    | '/metoda-dhondta'
+    | '/o-projekcie'
+    | '/sitemap.xml'
+    | '/statystyki'
+    | '/zrodla'
   id:
     | '__root__'
     | '/'
+    | '/metoda-dhondta'
     | '/o-projekcie'
     | '/sitemap.xml'
     | '/statystyki'
@@ -79,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MetodaDhondtaRoute: typeof MetodaDhondtaRoute
   OProjekcieRoute: typeof OProjekcieRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatystykiRoute: typeof StatystykiRoute
@@ -92,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metoda-dhondta': {
+      id: '/metoda-dhondta'
+      path: '/metoda-dhondta'
+      fullPath: '/metoda-dhondta'
+      preLoaderRoute: typeof MetodaDhondtaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/o-projekcie': {
@@ -127,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MetodaDhondtaRoute: MetodaDhondtaRoute,
   OProjekcieRoute: OProjekcieRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatystykiRoute: StatystykiRoute,

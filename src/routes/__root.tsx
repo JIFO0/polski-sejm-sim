@@ -86,14 +86,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SejmSim 2027 (sejmsim.pl) | Kalkulator Sejmu i siedzeń" },
+      { title: "SejmSim 2027 – Kalkulator mandatów i symulator wyborczy Sejmu (sejmsim.pl)" },
       {
         name: "description",
-        content: "SejmSim 2027 (sejmsim.pl): kalkulator Sejmu, kalkulator siedzeń i mandatów, interaktywna mapa 41 okręgów oraz badanie większości koalicyjnej.",
-      },
-      {
-        name: "keywords",
-        content: "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator miejsc w sejmie, kalkulator mandatów, symulator wyborów, sejm 2027, ordynacja wyborcza, d'hondt, koalicje sejmowe, sejmsim",
+        content: "Sprawdź podział 460 mandatów w Sejmie metodą D'Hondta. Aktualna średnia sondażowa, symulacja koalicji większościowych (231 mandatów) i interaktywna mapa 41 okręgów wyborczych.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -129,12 +125,18 @@ const SCHEMA_ORG = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "SejmSim 2027",
-  alternateName: ["SejmSim", "sejmsim.pl"],
+  alternateName: [
+    "SejmSim",
+    "sejmsim.pl",
+    "Kalkulator mandatów Sejm",
+    "Symulator wyborczy Sejmu",
+    "Kalkulator D'Hondta",
+  ],
   url: "https://sejmsim.pl/",
   applicationCategory: "UtilityApplication",
   operatingSystem: "All",
   description:
-    "Kalkulator Sejmu, kalkulator siedzeń i symulator wyborczy do Sejmu 2027. Interaktywna mapa 41 okręgów wyborczych, metoda D'Hondta, symulacja koalicji i frekwencji.",
+    "Kalkulator mandatów Sejmu i symulator wyborczy do Sejmu RP 2027. Interaktywna mapa 41 okręgów wyborczych, metoda D'Hondta, symulacja koalicji i badanie większości 231 mandatów.",
   author: {
     "@type": "Person",
     name: "Iwo Laskowski",
