@@ -5,6 +5,9 @@ import { SOCIAL_IMAGE_HEIGHT, SOCIAL_IMAGE_WIDTH } from "./scenario-metadata";
 /** Local deterministic export: no uploads, screenshots or remote image requests. */
 export async function downloadSocialImage(scenario: Scenario, en = false) {
   await document.fonts.ready;
+  const logo = new Image();
+  logo.src = new URL("/logos/official-logo.svg", window.location.origin).href;
+  await logo.decode();
   const canvas = document.createElement("canvas");
   canvas.width = SOCIAL_IMAGE_WIDTH;
   canvas.height = SOCIAL_IMAGE_HEIGHT;
@@ -25,9 +28,9 @@ export async function downloadSocialImage(scenario: Scenario, en = false) {
   ctx.fillStyle = surface; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = primary; ctx.fillRect(0, 0, 1200, 7);
   text(en ? "COMMUNITY SCENARIO" : "SCENARIUSZ SPOŁECZNOŚCI", 48, 50, 13, primary, 800);
-  text("SejmSim.", 980, 52, 27, ink, 800, 175);
-  text(scenario.name || (en ? "My scenario" : "Mój scenariusz"), 48, 98, 29, ink, 800, 1090);
-  text(scenario.author ? `${en ? "Author" : "Autor"}: ${scenario.author}` : (en ? "Polish parliamentary election 2027" : "Wybory do Sejmu RP 2027"), 48, 128, 15, muted, 500, 1090);
+  ctx.drawImage(logo, 1088, 28, 64, 64);
+  text(scenario.name || (en ? "My scenario" : "Mój scenariusz"), 48, 98, 29, ink, 800, 1010);
+  text(scenario.author ? `${en ? "Author" : "Autor"}: ${scenario.author}` : (en ? "Polish parliamentary election 2027" : "Wybory do Sejmu RP 2027"), 48, 128, 15, muted, 500, 1010);
   const order = ["razem", "nl", "pl2050", "ko", "psl", "rp", "pis", "konf", "kkp"];
   const ids = [...order.filter((id) => (result.seatsByParty[id] ?? 0) > 0), ...ranked.map(([id]) => id).filter((id) => !order.includes(id))];
   const queue = ids.flatMap((id) => Array.from({ length: result.seatsByParty[id] ?? 0 }, () => id));
@@ -56,8 +59,14 @@ export async function downloadSocialImage(scenario: Scenario, en = false) {
     text(String(seats), x + 174, y + 1, Math.min(23, step * .6), ink, 800, 45);
   });
   ctx.fillStyle = token("--border"); ctx.fillRect(48, 560, 1104, 1);
-  text(en ? "Community scenario, not a poll or a SejmSim publication." : "Scenariusz społeczności, nie sondaż ani publikacja SejmSim.", 48, 593, 15, muted, 600, 895);
-  text("sejmsim.pl", 975, 596, 24, primary, 800, 180);
+  text(en ? "Community scenario, not a poll or a SejmSim publication." : "Scenariusz społeczności, nie sondaż ani publikacja SejmSim.", 48, 593, 15, muted, 600, 870);
+  ctx.font = `700 32px ${css.getPropertyValue("--font-display").trim() || '"Space Grotesk", sans-serif'}`;
+  const nameWidth = ctx.measureText("SejmSim").width;
+  const dotWidth = ctx.measureText(".").width;
+  const wordmarkX = 1152 - nameWidth - dotWidth;
+  ctx.fillStyle = ink; ctx.fillText("SejmSim", wordmarkX, 595);
+  ctx.fillStyle = primary; ctx.fillText(".", wordmarkX + nameWidth, 595);
+  text("sejmsim.pl", wordmarkX, 615, 12, muted, 600, 180);
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Image export failed")), "image/png"));
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = "sejmsim-scenariusz-1200x630.png"; a.click();
