@@ -129,22 +129,10 @@ function AboutProject() {
               <p>
                 {tr("Pomysł na SejmSim zrodził się z dyskusji z przyjacielem o kolejnych sondażach i prospektach na najbliższe wybory. Niestety nie było za bardzo narzędzia które w łatwy i wygodny sposób dawało możliwość na edycję wszystkich parametrów. Inna sprawa jest też taka, że w mediach widzimy zasadniczo głównie słupki z poparciem ogólnokrajowym, a niekoniecznie skupiamy się na poszczególnych konkretnych okręgach, które mają wbrew pozorom bardzo duże znaczenie.")}</p>
               <p>
-                O mandatach decydują <strong>{tr("41 okręgów wyborczych")}</strong>, lokalna frekwencja oraz
-                metoda D&apos;Hondta, która premiuje silniejsze ugrupowania, a mniejsze partie
-                zepchnąć pod próg. Różnica 1–2 punktów procentowych w odpowiednich regionach może
-                przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji. Celem tego
-                narzędzia jest to uświadomić.
-              </p>
+                {tr("O mandatach decydują")} <strong>{tr("41 okręgów wyborczych")}</strong>{tr(", lokalna frekwencja oraz metoda D'Hondta, która premiuje silniejsze ugrupowania, a mniejsze partie zepchnąć pod próg. Różnica 1–2 punktów procentowych w odpowiednich regionach może przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji. Celem tego narzędzia jest to uświadomić.")} </p>
               <p>
-                Jestem programistą, więc tego typu problem uznałem że jest w granicach moich
-                możliwości. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go w
-                publiczny, bezpłatny symulator na{" "}
-                <strong className="text-foreground">sejmsim.pl</strong>. Potrzebowałem troszkę
-                konsultacji z ludźmi mądrzejszymi ode mnie, ale przecież na tym polega nauka nowych
-                rzeczy. Ostatecznie jednak po prostu chcę, żeby cała Polska mogła analizować
-                poparcie, scenariusze i być świadomymi wyborcami zaangażowanymi w proces
-                demokratyczny.
-              </p>
+                {tr("Jestem programistą, więc tego typu problem uznałem że jest w granicach moich możliwości. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go w publiczny, bezpłatny symulator na")}{" "}
+                <strong className="text-foreground">sejmsim.pl</strong>{tr(". Potrzebowałem troszkę konsultacji z ludźmi mądrzejszymi ode mnie, ale przecież na tym polega nauka nowych rzeczy. Ostatecznie jednak po prostu chcę, żeby cała Polska mogła analizować poparcie, scenariusze i być świadomymi wyborcami zaangażowanymi w proces demokratyczny.")} </p>
             </div>
           </header>
 
@@ -176,10 +164,7 @@ function AboutProject() {
             <p className="eyebrow">{tr("Ważna uwaga")}</p>
             <h2 className="mt-1 font-display text-2xl font-bold text-ink">{tr("Symulator nie wróżka")}</h2>
             <p className="mx-auto mt-2.5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              SejmSim pokazuje matematyczne skutki przyjętych założeń w oparciu o algorytm
-              D&apos;Hondta i rozkład okręgowy. To narzędzie analityczne do sprawdzania scenariuszy
-              i nie jest prognozą ani oficjalnym badaniem opinii.
-            </p>
+              {tr("SejmSim pokazuje matematyczne skutki przyjętych założeń w oparciu o algorytm D'Hondta i rozkład okręgowy. To narzędzie analityczne do sprawdzania scenariuszy i nie jest prognozą ani oficjalnym badaniem opinii.")} </p>
           </section>
 
           {/* POŁĄCZONY, ELEGANCKI BOX TWÓRCY I WSPARCIA (Req 6 & Req 8) */}
@@ -234,11 +219,7 @@ function AboutProject() {
 
               <div className="mt-5 border-t border-border pt-5 space-y-3">
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Platforma <strong className="text-foreground">sejmsim.pl</strong> powstaje pro
-                  bono jako niezależne, darmowe, ogólnodostępne narzędzie obywatelskie bez reklam.
-                  Każda wpłata jest ogromnie doceniana i pomaga utrzymać serwery, dopracowywać
-                  algorytmy i dodawać nowe funkcje. Jeżeli masz jakieś pomysły, daj koniecznie znać!
-                </p>
+                  {tr("Platforma")} <strong className="text-foreground">sejmsim.pl</strong> {tr("powstaje pro bono jako niezależne, darmowe, ogólnodostępne narzędzie obywatelskie bez reklam. Każda wpłata jest ogromnie doceniana i pomaga utrzymać serwery, dopracowywać algorytmy i dodawać nowe funkcje. Jeżeli masz jakieś pomysły, daj koniecznie znać!")} </p>
                 <p className="font-display text-sm font-semibold text-ink">
                   {tr("Pomyślnych analiz życzy JIFO!")}</p>
 

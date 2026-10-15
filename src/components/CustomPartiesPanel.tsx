@@ -411,8 +411,7 @@ export function CustomPartiesPanel({
                   onValueChange={([v = 85]) => patchMerger(m.id, { retention: v })}
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  {tr("Pozostałe")}{100 - m.retention}% wyborców partii składowych przechodzi do innych komitetów.
-                </p>
+                  {tr("Pozostałe")}{100 - m.retention}{tr("% wyborców partii składowych przechodzi do innych komitetów.")} </p>
               </div>
             </div>
           ))}

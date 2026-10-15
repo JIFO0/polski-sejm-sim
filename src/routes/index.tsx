@@ -529,7 +529,7 @@ function Index() {
                   <h2 className="font-display text-lg font-bold text-ink">
                     {tr("Skład parlamentu w tym scenariuszu")}</h2>
                   <p className="num text-xs text-muted-foreground">
-                    frekwencja {result.nationalTurnout.toFixed(1)}%
+                    {tr("frekwencja")} {result.nationalTurnout.toFixed(1)}%
                   </p>
                 </div>
                 <Hemicycle seatsByParty={result.seatsByParty} highlight={highlight ?? undefined} />
@@ -570,8 +570,7 @@ function Index() {
                     </p>
                   </div>
                   <p className="num text-xs text-muted-foreground">
-                    większość: {MAJORITY} mandatów
-                  </p>
+                    {tr("większość:")} {MAJORITY} {tr("mandatów")} </p>
                 </div>
               </div>
               <ScenarioShelf scenario={scenario} onLoad={loadScenario} />
@@ -912,7 +911,7 @@ function Index() {
                       <span className="font-mono text-xl font-bold text-primary">
                         {result.nationalTurnout.toFixed(1)}%
                       </span>
-                      <span className="text-xs text-muted-foreground">baza {BASE_TURNOUT}%</span>
+                      <span className="text-xs text-muted-foreground">{tr("baza")} {BASE_TURNOUT}%</span>
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
                       {tr("Zmieniaj suwakiem ogólnym poniżej lub w poszczególnych 41 okręgach na mapie.")}</p>
@@ -1090,12 +1089,7 @@ function Index() {
 
         <footer className="border-t border-border bg-background/90 px-5 py-6 text-xs leading-relaxed text-muted-foreground">
           <p>
-            SejmSim jest niekomercyjnym serwisem obywatelskim. Średnią sondażową liczy sam z badań
-            wpisanych w zbiorze, z podaniem źródła. Mandaty liczone są metodą D&apos;Hondta osobno w
-            każdym z 41 okręgów, z progami od głosów w skali kraju. Liczba uprawnionych w okręgu
-            jest przybliżana proporcjonalnie do liczby mandatów. To symulacja scenariuszy, nie
-            sondaż i nie prognoza. W ciszy wyborczej nie publikujemy nowych wyników.
-          </p>
+            {tr("SejmSim jest niekomercyjnym serwisem obywatelskim. Średnią sondażową liczy sam z badań wpisanych w zbiorze, z podaniem źródła. Mandaty liczone są metodą D'Hondta osobno w każdym z 41 okręgów, z progami od głosów w skali kraju. Liczba uprawnionych w okręgu jest przybliżana proporcjonalnie do liczby mandatów. To symulacja scenariuszy, nie sondaż i nie prognoza. W ciszy wyborczej nie publikujemy nowych wyników.")} </p>
           <p className="mt-2">
             {tr("Logotypy partii pochodzą z Wikimedia Commons i należą do ich właścicieli.")}</p>
           <Link

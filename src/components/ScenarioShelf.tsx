@@ -372,8 +372,7 @@ export function ScenarioShelf({
               <FolderOpen className="mx-auto h-7 w-7 text-muted-foreground/60" />
               <p className="mt-2 text-xs font-semibold text-ink">{tr("Brak zapisanych wariantów")}</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Dostosuj poparcie i kliknij <strong>{tr("Zapisz")}</strong>, aby zachować wariant.
-              </p>
+                {tr("Dostosuj poparcie i kliknij")} <strong>{tr("Zapisz")}</strong>{tr(", aby zachować wariant.")} </p>
               <div className="mt-3.5">
                 <Button
                   variant="outline"
@@ -488,7 +487,7 @@ export function ScenarioShelf({
 
         {/* Dolna belka z resetem */}
         <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-[11px] text-muted-foreground">
-          <span>{saved.length}/10 wariantów w pamięci</span>
+          <span>{saved.length}{tr("/10 wariantów w pamięci")}</span>
           <Button
             variant="link"
             size="sm"

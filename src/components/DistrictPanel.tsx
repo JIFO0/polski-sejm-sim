@@ -150,8 +150,7 @@ export function DistrictPanel({
             onValueChange={([v = 0]) => onChange({ ...state, turnout: v })}
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            Baza {BASE_TURNOUT}%. Wyższa frekwencja zwiększa liczbę głosów. Mandaty zmieniają się tylko wtedy, gdy któraś partia jest wrażliwa na frekwencję.
-          </p>
+            {tr("Baza")} {BASE_TURNOUT}{tr("%. Wyższa frekwencja zwiększa liczbę głosów. Mandaty zmieniają się tylko wtedy, gdy któraś partia jest wrażliwa na frekwencję.")} </p>
         </div>
 
         <div className="space-y-3">
@@ -190,8 +189,7 @@ export function DistrictPanel({
                   onValueChange={([v = 0]) => setShare(p.id, v)}
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  baza {base.toFixed(1)}%{effDiffers ? `, wpływ frekwencji → ${eff.toFixed(1)}%` : ""} • szac. <strong className="text-ink">{partyVotes.toLocaleString("pl-PL")}</strong> głosów
-                  {mergerDef ? ` • wspólna lista (${mergerDef.members.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ")})` : ""}
+                  {tr("baza")} {base.toFixed(1)}%{effDiffers ? `, wpływ frekwencji → ${eff.toFixed(1)}%` : ""} {tr("• szac.")} <strong className="text-ink">{partyVotes.toLocaleString("pl-PL")}</strong> {tr("głosów")} {mergerDef ? ` • wspólna lista (${mergerDef.members.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ")})` : ""}
                 </p>
               </div>
             );
