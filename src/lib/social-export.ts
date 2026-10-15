@@ -29,17 +29,17 @@ export async function downloadSocialImage(scenario: Scenario, en = false) {
   text(scenario.name || (en ? "My scenario" : "Mój scenariusz"), 48, 98, 29, ink, 800, 1090);
   text(scenario.author ? `${en ? "Author" : "Autor"}: ${scenario.author}` : (en ? "Polish parliamentary election 2027" : "Wybory do Sejmu RP 2027"), 48, 128, 15, muted, 500, 1090);
   const order = ["razem", "nl", "pl2050", "ko", "psl", "rp", "pis", "konf", "kkp"];
-  const ids = [...order.filter((id) => result.seatsByParty[id] > 0), ...ranked.map(([id]) => id).filter((id) => !order.includes(id))];
+  const ids = [...order.filter((id) => (result.seatsByParty[id] ?? 0) > 0), ...ranked.map(([id]) => id).filter((id) => !order.includes(id))];
   const queue = ids.flatMap((id) => Array.from({ length: result.seatsByParty[id] ?? 0 }, () => id));
   while (queue.length < 460) queue.push("_empty");
   const radii = Array.from({ length: 11 }, (_, i) => 20 + 28 * i / 10);
   const sum = radii.reduce((a, b) => a + b, 0);
   const counts = radii.map((r) => Math.floor(r / sum * queue.length));
   let remaining = queue.length - counts.reduce((a, b) => a + b, 0);
-  for (let i = 10; remaining > 0; i = (i + 10) % 11) { counts[i] += 1; remaining--; }
+  for (let i = 10; remaining > 0; i = (i + 10) % 11) { counts[i] = (counts[i] ?? 0) + 1; remaining--; }
   const positions = radii.flatMap((r, row) => Array.from({ length: counts[row] ?? 0 }, (_, i) => ({ r, angle: Math.PI - Math.PI * (i + .5) / (counts[row] ?? 1) }))).sort((a, b) => b.angle - a.angle || a.r - b.r);
   positions.forEach((pos, i) => {
-    ctx.fillStyle = map[queue[i]]?.color ?? token("--seat-empty");
+    ctx.fillStyle = map[queue[i] ?? "_empty"]?.color ?? token("--seat-empty");
     ctx.beginPath(); ctx.arc(355 + Math.cos(pos.angle) * pos.r * 6, 462 - Math.sin(pos.angle) * pos.r * 6, 6.4, 0, Math.PI * 2); ctx.fill();
   });
   text(`${en ? "Turnout" : "Frekwencja"}: ${result.nationalTurnout.toFixed(1)}%`, 70, 505, 17, muted);
