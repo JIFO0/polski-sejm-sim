@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { track } from "@/lib/analytics";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
 
 const KEY = "sejmsim.theme";
 const listeners = new Set<() => void>();
@@ -35,29 +37,31 @@ export function setDarkTheme(dark: boolean) {
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const dark = useDarkTheme();
+  const en = useLanguage() === "en";
 
   return (
-    <button
+    <Button
+      variant="ghost"
       type="button"
       role="switch"
       aria-checked={dark}
-      aria-label={dark ? "Włącz jasny motyw" : "Włącz ciemny motyw"}
-      title={dark ? "Jasny motyw" : "Ciemny motyw"}
+      aria-label={en ? (dark ? "Switch to light theme" : "Switch to dark theme") : (dark ? "Włącz jasny motyw" : "Włącz ciemny motyw")}
+      title={en ? (dark ? "Light theme" : "Dark theme") : (dark ? "Jasny motyw" : "Ciemny motyw")}
       onClick={() => {
         const next = !isDark();
         setDarkTheme(next);
         track({ event: "theme_toggle", meta: next ? "ciemny" : "jasny" });
       }}
-      className={`relative inline-flex h-9 w-[4.25rem] shrink-0 items-center rounded-full border border-border bg-surface p-1 shadow-sm transition-colors hover:bg-surface-strong ${className}`}
+      className={`relative grid h-9 w-[4.25rem] shrink-0 grid-cols-2 items-center justify-items-center gap-0 rounded-full border border-border bg-surface p-1 shadow-sm transition-colors hover:bg-surface-strong ${className}`}
     >
-      <Sun className={`relative z-10 h-3.5 w-3.5 flex-1 ${dark ? "text-muted-foreground" : "text-amber-500"}`} />
-      <Moon className={`relative z-10 h-3.5 w-3.5 flex-1 ${dark ? "text-sky-300" : "text-muted-foreground"}`} />
+      <Sun className={`relative z-10 h-3.5 w-3.5 ${dark ? "text-muted-foreground" : "text-chart-4"}`} />
+      <Moon className={`relative z-10 h-3.5 w-3.5 ${dark ? "text-chart-3" : "text-muted-foreground"}`} />
       <span
         aria-hidden
-        className={`absolute left-1 top-1 h-7 w-7 rounded-full border border-border bg-background shadow-sm transition-transform ${
-          dark ? "translate-x-8" : "translate-x-0"
+        className={`absolute top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-background shadow-sm transition-all ${
+          dark ? "left-[calc(75%-2px)]" : "left-[calc(25%+2px)]"
         }`}
       />
-    </button>
+    </Button>
   );
 }

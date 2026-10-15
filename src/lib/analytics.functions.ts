@@ -7,6 +7,7 @@ const trackSchema = z.object({
   meta: z.string().max(200).optional(),
   shares: z.record(z.string(), z.number()).optional(),
   turnout: z.number().optional(),
+  partyLabels: z.record(z.string().max(50), z.string().max(80)).optional(),
 });
 
 export const trackEvent = createServerFn({ method: "POST" })
@@ -34,6 +35,7 @@ export const trackEvent = createServerFn({ method: "POST" })
         shares: sanitizedShares,
         turnout: typeof data.turnout === "number" && !isNaN(data.turnout) ? Math.max(0, Math.min(100, data.turnout)) : null,
         meta: data.meta ? String(data.meta).slice(0, 200) : null,
+        partyLabels: data.partyLabels ?? {},
       });
       return { ok: true };
     } catch (err) {
@@ -96,6 +98,13 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       await import("./server-db.server");
     const totalEventsInDb = countAnalyticsEvents();
     const rows = getAllAnalytics(Math.max(totalEventsInDb, 1));
+    const partyLabels: Record<string, string> = {};
+    for (const row of [...rows].reverse()) {
+      const labels = (row.payload as { partyLabels?: Record<string, string> })?.partyLabels;
+      for (const [id, name] of Object.entries(labels ?? {})) {
+        if (typeof name === "string" && name.trim()) partyLabels[id] = name;
+      }
+    }
 
     const countBy = (name: string) => rows.filter((r) => r.event === name).length;
 
@@ -148,7 +157,8 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
         }
         monthMap.set(ym, { month: ym, label, count: 0, days: [] });
       }
-      const mObj = monthMap.get(ym)!;
+      const mObj = monthMap.get(ym);
+      if (!mObj) continue;
       mObj.count += count;
       mObj.days.push({ day, count });
     }
@@ -179,9 +189,12 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       }
 
       if (r.event === "page_view") {
-        hours[new Date(r.created_at).getUTCHours()]! += 1;
-        hoursPolish[getPolishHour(r.created_at)]! += 1;
-        weekdayVisits[getPolishWeekdayIndex(r.created_at)]! += 1;
+        const utcHour = new Date(r.created_at).getUTCHours();
+        const polishHour = getPolishHour(r.created_at);
+        const weekday = getPolishWeekdayIndex(r.created_at);
+        hours[utcHour] = (hours[utcHour] ?? 0) + 1;
+        hoursPolish[polishHour] = (hoursPolish[polishHour] ?? 0) + 1;
+        weekdayVisits[weekday] = (weekdayVisits[weekday] ?? 0) + 1;
         if (meta) {
           const parts = meta.split("|");
           const dev = parts[0] || "nieznane";
@@ -242,6 +255,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       turnoutSets: countBy("turnout_set"),
       avgTurnout,
       avgShares,
+      partyLabels,
       visitsByDay,
       visitsByMonth,
       // Enriched options

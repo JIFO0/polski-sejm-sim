@@ -40,6 +40,8 @@ import { deactivateShare, deleteShare, listShares, togglePermanentShare, toggleF
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { EVENT_LABELS } from "@/lib/analytics-events";
 import { PARTIES } from "@/data/parties";
+import { recentVisitDays, analyticsPartyName } from "@/lib/analytics-display";
+import { VisitBarChart } from "@/components/VisitBarChart";
 
 
 const TITLE = "Statystyki SejmSim 2027";
@@ -103,9 +105,7 @@ function StatsPage() {
   const testWebhookFn = useServerFn(testFeedbackWebhook);
   const [testingWebhook, setTestingWebhook] = useState(false);
 
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
-  const [hoveredHour, setHoveredHour] = useState<number | null>(null);
-  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>("week");
 
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [clearPassword, setClearPassword] = useState("");
@@ -141,10 +141,6 @@ function StatsPage() {
         setSummary(null);
       } else {
         setSummary(res);
-        if (res.visitsByMonth.length > 0 && selectedMonth === "all") {
-          // Domyślnie ustawiamy bieżący miesiąc
-          setSelectedMonth(res.visitsByMonth[0]?.month ?? "all");
-        }
       }
     } catch {
       setError("Nie udało się pobrać statystyk.");
@@ -187,7 +183,6 @@ function StatsPage() {
     return summary.pageViewsByHourPolish ?? summary.pageViewsByHourUtc ?? Array(24).fill(0);
   }, [summary]);
 
-  const maxHourly = useMemo(() => Math.max(1, ...hoursData), [hoursData]);
   const peakHour = useMemo(() => {
     let max = -1;
     let idx = 0;
@@ -207,9 +202,13 @@ function StatsPage() {
 
   const displayedDays = useMemo(() => {
     if (!summary) return [];
+    if (selectedMonth === "week") return recentVisitDays(summary.visitsByDay, 7);
+    if (selectedMonth === "month") return recentVisitDays(summary.visitsByDay, 30);
     if (activeMonthObj) return activeMonthObj.days;
     return summary.visitsByDay;
-  }, [activeMonthObj, summary]);
+  }, [activeMonthObj, summary, selectedMonth]);
+
+  const partyName = (id: string) => analyticsPartyName(id, summary?.partyLabels ?? {}, PARTY_NAMES);
 
   const maxDaily = useMemo(() => {
     if (!displayedDays.length) return 1;
@@ -379,60 +378,8 @@ function StatsPage() {
                 </div>
               </div>
 
-              {/* Interaktywny wykres słupkowy 24h z tłem kolumn */}
-              <div className="mt-6 flex h-48 items-end gap-1 sm:gap-1.5 pt-6 pb-2 border-b border-border/50">
-                {hoursData.map((count, h) => {
-                  const pct = Math.round((count / maxHourly) * 100);
-                  const isPeak = count === maxHourly && count > 0;
-                  const isHovered = hoveredHour === h;
-                  return (
-                    <div
-                      key={h}
-                      className="group relative flex flex-1 flex-col items-center h-full justify-end cursor-pointer"
-                      onMouseEnter={() => setHoveredHour(h)}
-                      onMouseLeave={() => setHoveredHour(null)}
-                    >
-                      {/* Etykieta tooltip nad słupkiem */}
-                      <div
-                        className={`absolute -top-7 z-20 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-bold shadow-md transition-all pointer-events-none ${
-                          isHovered
-                            ? "opacity-100 scale-100 bg-ink text-background"
-                            : "opacity-0 scale-95"
-                        }`}
-                      >
-                        {h}:00 — {count} {count === 1 ? "wejście" : "wejść"}
-                      </div>
+              <VisitBarChart label="Wejścia według godziny" data={hoursData.map((count, hour) => ({ key: String(hour), label: String(hour).padStart(2, "0"), count }))} />
 
-                      {/* Tło kolumny slotu godzinowego */}
-                      <div className="w-full flex-1 flex items-end rounded-t bg-muted/30 border-x border-t border-border/20 overflow-hidden relative">
-                        <div
-                          className={`w-full rounded-t transition-all duration-300 ${
-                            isPeak
-                              ? "bg-amber-500 hover:bg-amber-400 dark:bg-amber-400"
-                              : "bg-primary hover:bg-primary/80"
-                          } ${isHovered ? "ring-2 ring-foreground/20 brightness-110" : ""}`}
-                          style={{ height: count > 0 ? `${Math.max(8, pct)}%` : "0%" }}
-                        />
-                      </div>
-
-                      {/* Etykieta godziny na osi X */}
-                      <span
-                        className={`num mt-1.5 text-[9px] sm:text-[10px] transition-colors ${
-                          isHovered ? "font-bold text-primary" : "text-muted-foreground"
-                        }`}
-                      >
-                        {h % 3 === 0 ? `${h}h` : ""}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>00:00 (północ)</span>
-                <span>12:00 (południe)</span>
-                <span>23:00 (wieczór)</span>
-              </div>
             </section>
 
             {/* WEJŚCIA WG DNIA (BIEŻĄCY I POPRZEDNIE MIESIĄCE) */}
@@ -440,16 +387,17 @@ function StatsPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-primary" /> Wejścia według dnia (w tym i poprzednich miesiącach)
+                    <Calendar className="h-4 w-4 text-primary" /> Wejścia według dnia
                   </h2>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Przeglądaj dzienne natężenie ruchu z podziałem na miesiące kalendarzowe.
                   </p>
                 </div>
 
-                {/* Selektor miesięcy */}
+                {/* Wybór okresu */}
                 <div className="flex flex-wrap items-center gap-1.5">
-                  {summary.visitsByMonth.map((m, idx) => (
+                  {[{ id: "week", label: "Ostatnie 7 dni" }, { id: "month", label: "Ostatnie 30 dni" }].map((period) => <Button key={period.id} size="sm" variant={selectedMonth === period.id ? "default" : "outline"} onClick={() => setSelectedMonth(period.id)}>{period.label}</Button>)}
+                  {summary.visitsByMonth.map((m) => (
                     <Button
                       key={m.month}
                       variant={selectedMonth === m.month ? "default" : "outline"}
@@ -457,7 +405,7 @@ function StatsPage() {
                       className="text-xs h-8"
                       onClick={() => setSelectedMonth(m.month)}
                     >
-                      {m.label} {idx === 0 ? "(bieżący)" : ""} ({m.count})
+                      {m.label} ({m.count})
                     </Button>
                   ))}
                   <Button
@@ -474,56 +422,14 @@ function StatsPage() {
               {/* Informacja o wybranym okresie */}
               <div className="mt-4 flex items-center justify-between rounded-lg bg-surface/70 border border-border/70 px-3.5 py-2 text-xs">
                 <span className="text-muted-foreground">
-                  Okres: <strong className="text-foreground">{activeMonthObj ? activeMonthObj.label : "Wszystkie zarejestrowane dni"}</strong>
+                  Okres: <strong className="text-foreground">{selectedMonth === "week" ? "Ostatnie 7 dni" : selectedMonth === "month" ? "Ostatnie 30 dni" : activeMonthObj ? activeMonthObj.label : "Wszystkie zarejestrowane dni"}</strong>
                 </span>
                 <span className="font-semibold text-ink">
                   Łącznie wizyt w okresie: <span className="num text-primary font-bold text-sm">{displayedDays.reduce((acc, d) => acc + d.count, 0)}</span>
                 </span>
               </div>
 
-              {/* Wizualny wykres dzienny dla wybranego miesiąca */}
-              {displayedDays.length > 0 && (
-                <div className="mt-4 pt-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Wizualizacja natężenia dziennego
-                  </p>
-                  <div className="flex h-32 items-end gap-1 overflow-x-auto pb-2 border-b border-border/50">
-                    {[...displayedDays].reverse().map(({ day, count }) => {
-                      const pct = Math.round((count / maxDaily) * 100);
-                      const isHovered = hoveredDay === day;
-                      const dayNumber = day.slice(8);
-                      const weekday = getPolishWeekday(day);
-                      return (
-                        <div
-                          key={day}
-                          className="group relative flex flex-1 min-w-[20px] max-w-[40px] flex-col items-center h-full justify-end cursor-pointer"
-                          onMouseEnter={() => setHoveredDay(day)}
-                          onMouseLeave={() => setHoveredDay(null)}
-                        >
-                          <div
-                            className={`absolute -top-7 z-20 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] font-bold shadow-md transition-all pointer-events-none ${
-                              isHovered ? "opacity-100 scale-100 bg-ink text-background" : "opacity-0 scale-95"
-                            }`}
-                          >
-                            {day} ({weekday}): {count} {count === 1 ? "wejście" : "wejść"}
-                          </div>
-
-                          <div className="w-full flex-1 flex items-end rounded-t bg-muted/30 overflow-hidden relative">
-                            <div
-                              className="w-full rounded-t bg-primary transition-all duration-300 group-hover:bg-primary/80"
-                              style={{ height: count > 0 ? `${Math.max(8, pct)}%` : "0%" }}
-                            />
-                          </div>
-
-                          <span className={`num mt-1 text-[9px] ${isHovered ? "font-bold text-primary" : "text-muted-foreground"}`}>
-                            {dayNumber}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              <VisitBarChart label="Wejścia według dnia" data={[...displayedDays].reverse().map(({ day, count }) => ({ key: day, label: day.slice(8) + "." + day.slice(5, 7), count }))} />
 
               {/* Tabela szczegółowa dni */}
               <div className="mt-4 max-h-72 overflow-y-auto rounded-lg border border-border/60">
@@ -636,7 +542,7 @@ function StatsPage() {
                       const max = Math.max(1, ...summary.partyAdjustments.map((p) => p.count));
                       return (
                         <div key={party} className="flex items-center gap-3 text-xs">
-                          <span className="w-28 shrink-0 truncate font-medium text-foreground">{PARTY_NAMES[party] ?? party}</span>
+                          <span className="w-28 shrink-0 truncate font-medium text-foreground">{partyName(party)}</span>
                           <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
                             <div className="h-full rounded-full" style={{ width: `${(count / max) * 100}%`, backgroundColor: PARTY_COLORS[party] ?? "var(--primary)" }} />
                           </div>
@@ -702,7 +608,7 @@ function StatsPage() {
                   summary.avgShares.map(({ party, avg, count }) => (
                     <div key={party} className="flex items-center gap-3">
                       <span className="w-40 shrink-0 truncate text-sm text-foreground">
-                        {PARTY_NAMES[party] ?? party}
+                        {partyName(party)}
                       </span>
                       <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                         <div

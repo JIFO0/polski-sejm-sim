@@ -25,6 +25,8 @@ export function FloatingNav({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  if (!scrolled) return null;
+
   return (
     <aside
       aria-label="Szybka nawigacja"

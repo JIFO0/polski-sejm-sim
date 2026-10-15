@@ -26,6 +26,9 @@ export const EVENTS = [
   "custom_party_add",
   "merger_create",
   "theme_toggle",
+  "language_change",
+  "community_scenario_load",
+  "share_copy",
 ] as const;
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
@@ -57,5 +60,8 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   custom_party_add: "Dodane własne partie",
   merger_create: "Utworzone wspólne listy",
   theme_toggle: "Przełączenia motywu",
+  language_change: "Zmiany języka",
+  community_scenario_load: "Wczytane scenariusze społeczności",
+  share_copy: "Skopiowane linki społeczności",
 };
 

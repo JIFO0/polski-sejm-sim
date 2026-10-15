@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -24,11 +25,12 @@ const MAX_LOGO_BYTES = 500 * 1024;
 const newId = (prefix: string) => `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 function LogoPicker({ id, label, onDone }: { id: string; label: string; onDone: () => void }) {
+  const tr = useTranslation();
   const hasLogo = Boolean(PARTY_MAP[id]?.logo);
   return (
     <div className="flex items-center gap-1">
       <label className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium hover:bg-muted">
-        <ImagePlus className="h-4 w-4" /> {hasLogo ? "Zmień obrazek" : "Obrazek .jpg"}
+        <ImagePlus className="h-4 w-4" /> {hasLogo ? tr("Zmień obrazek") : tr("Obrazek .jpg")}
         <input
           type="file"
           accept="image/jpeg,.jpg,.jpeg"
@@ -80,6 +82,7 @@ function IdentityFields({
   item: CustomPartyDef;
   onPatch: (patch: Partial<CustomPartyDef>) => void;
 }) {
+  const tr = useTranslation();
   return (
     <div className="grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)_7rem]">
       <input
@@ -93,16 +96,16 @@ function IdentityFields({
         value={item.name}
         maxLength={40}
         onChange={(e) => onPatch({ name: e.target.value })}
-        aria-label="Pełna nazwa"
-        placeholder="Pełna nazwa"
+        aria-label={tr("Pełna nazwa")}
+        placeholder={tr("Pełna nazwa")}
         className="h-11"
       />
       <Input
         value={item.short}
         maxLength={10}
         onChange={(e) => onPatch({ short: e.target.value })}
-        aria-label="Skrót"
-        placeholder="Skrót"
+        aria-label={tr("Skrót")}
+        placeholder={tr("Skrót")}
         className="h-11"
       />
     </div>
@@ -118,6 +121,7 @@ export function CustomPartiesPanel({
   setScenario: Dispatch<SetStateAction<Scenario>>;
   onLogoChange: () => void;
 }) {
+  const tr = useTranslation();
   const custom = scenario.customParties ?? [];
   const mergers = scenario.mergers ?? [];
   const [draft, setDraft] = useState<string[]>([]);
@@ -306,18 +310,16 @@ export function CustomPartiesPanel({
       <section className="panel p-5" aria-labelledby="custom-parties-title">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 id="custom-parties-title" className="font-display text-xl font-bold text-ink">Własne partie</h2>
+            <h2 id="custom-parties-title" className="font-display text-xl font-bold text-ink">{tr("Własne partie")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Dodaj nowe ugrupowanie, a potem ustaw jego poparcie suwakiem w wyniku ogólnokrajowym lub w wybranym okręgu na mapie.
-            </p>
+              {tr("Dodaj nowe ugrupowanie, a potem ustaw jego poparcie suwakiem w wyniku ogólnokrajowym lub w wybranym okręgu na mapie.")}</p>
           </div>
           <Button onClick={addParty} variant="outline" className="min-h-11">
-            <Plus className="mr-1.5 h-4 w-4" /> Dodaj partię
-          </Button>
+            <Plus className="mr-1.5 h-4 w-4" /> {tr("Dodaj partię")}</Button>
         </div>
         <div className="mt-4 space-y-3">
           {custom.length === 0 ? (
-            <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">Nie dodano jeszcze własnych partii.</p>
+            <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">{tr("Nie dodano jeszcze własnych partii.")}</p>
           ) : null}
           {custom.map((c) => (
             <div key={c.id} className="space-y-2 rounded-lg border border-border/70 p-3">
@@ -342,13 +344,12 @@ export function CustomPartiesPanel({
       </section>
 
       <section className="panel p-5" aria-labelledby="mergers-title">
-        <h2 id="mergers-title" className="font-display text-xl font-bold text-ink">Wspólne listy</h2>
+        <h2 id="mergers-title" className="font-display text-xl font-bold text-ink">{tr("Wspólne listy")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Połącz partie w jeden komitet. Ich poparcie się sumuje, a suwak określa, jaka część wyborców zostaje przy wspólnej liście.
-        </p>
+          {tr("Połącz partie w jeden komitet. Ich poparcie się sumuje, a suwak określa, jaka część wyborców zostaje przy wspólnej liście.")}</p>
 
         <div className="mt-4 rounded-lg border border-dashed border-border p-3">
-          <p className="text-xs font-semibold text-muted-foreground">Wybierz partie do połączenia</p>
+          <p className="text-xs font-semibold text-muted-foreground">{tr("Wybierz partie do połączenia")}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {candidates.map((p) => {
               const on = draft.includes(p.id);
@@ -369,8 +370,7 @@ export function CustomPartiesPanel({
             })}
           </div>
           <Button onClick={createMerger} className="mt-3 min-h-11" disabled={draft.length < 2}>
-            <Plus className="mr-1.5 h-4 w-4" /> Utwórz wspólną listę
-          </Button>
+            <Plus className="mr-1.5 h-4 w-4" /> {tr("Utwórz wspólną listę")}</Button>
         </div>
 
         <div className="mt-4 space-y-3">
@@ -398,7 +398,7 @@ export function CustomPartiesPanel({
               <LogoPicker id={m.id} label={m.name} onDone={onLogoChange} />
               <div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-semibold">Zachowane poparcie</span>
+                  <span className="text-sm font-semibold">{tr("Zachowane poparcie")}</span>
                   <span className="num text-sm font-bold text-primary">{m.retention}%</span>
                 </div>
                 <Slider
@@ -411,8 +411,7 @@ export function CustomPartiesPanel({
                   onValueChange={([v = 85]) => patchMerger(m.id, { retention: v })}
                 />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  Pozostałe {100 - m.retention}% wyborców partii składowych przechodzi do innych komitetów.
-                </p>
+                  {tr("Pozostałe")}{100 - m.retention}{tr("% wyborców partii składowych przechodzi do innych komitetów.")} </p>
               </div>
             </div>
           ))}
@@ -420,8 +419,7 @@ export function CustomPartiesPanel({
       </section>
 
       <p className="text-xs text-muted-foreground lg:col-span-2">
-        Własne partie i listy zapisują się w bibliotece, w pobieranym pliku i w linkach. Obrazki zostają tylko w tej przeglądarce.
-      </p>
+        {tr("Własne partie i listy zapisują się w bibliotece, w pobieranym pliku i w linkach. Obrazki zostają tylko w tej przeglądarce.")}</p>
     </div>
   );
 }

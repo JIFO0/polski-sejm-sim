@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -72,6 +73,7 @@ const features = [
 ];
 
 function AboutProject() {
+  const tr = useTranslation();
   useEffect(() => {
     trackPageViewOncePerSession();
     track({ event: "about_view" });
@@ -90,8 +92,7 @@ function AboutProject() {
         >
           <Button variant="ghost" size="sm" asChild>
             <Link to="/">
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> Wróć do symulatora
-            </Link>
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> {tr("Wróć do symulatora")}</Link>
           </Button>
 
           <div className="flex items-center gap-2">
@@ -105,7 +106,7 @@ function AboutProject() {
                 rel="noreferrer"
                 onClick={() => track({ event: "contact_click" })}
               >
-                Kontakt <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                {tr("Kontakt")}<ExternalLink className="ml-1 h-3.5 w-3.5" />
               </a>
             </Button>
             <SupportButton size="sm" />
@@ -118,63 +119,40 @@ function AboutProject() {
         <article className="space-y-12">
           {/* GŁÓWNA HISTORIA / MOTYWACJA (naturalny, bezpośredni język) */}
           <header className="space-y-4">
-            <p className="eyebrow">Dlaczego powstał SejmSim</p>
+            <p className="eyebrow">{tr("Dlaczego powstał SejmSim")}</p>
             <h1 className="font-display text-3xl font-bold leading-tight text-ink sm:text-4xl md:text-5xl">
-              O półokręgu (sejmowym) decydują okręgi (wyborcze)
-            </h1>
+              {tr("O półokręgu (sejmowym) decydują okręgi (wyborcze)")}</h1>
             <div className="space-y-4 text-base leading-relaxed text-muted-foreground md:text-lg">
               <p>
-                Cześć, nazywam się <strong>Iwo Laskowski</strong>.
+                {tr("Cześć, nazywam się")}<strong>Iwo Laskowski</strong>.
               </p>
               <p>
-                Pomysł na SejmSim zrodził się z dyskusji z przyjacielem o kolejnych sondażach i
-                prospektach na najbliższe wybory. Niestety nie było za bardzo narzędzia które w
-                łatwy i wygodny sposób dawało możliwość na edycję wszystkich parametrów. Inna sprawa
-                jest też taka, że w mediach widzimy zasadniczo głównie słupki z poparciem
-                ogólnokrajowym, a niekoniecznie skupiamy się na poszczególnych konkretnych okręgach,
-                które mają wbrew pozorom bardzo duże znaczenie.
-              </p>
+                {tr("Pomysł na SejmSim zrodził się z dyskusji z przyjacielem o kolejnych sondażach i prospektach na najbliższe wybory. Niestety nie było za bardzo narzędzia które w łatwy i wygodny sposób dawało możliwość na edycję wszystkich parametrów. Inna sprawa jest też taka, że w mediach widzimy zasadniczo głównie słupki z poparciem ogólnokrajowym, a niekoniecznie skupiamy się na poszczególnych konkretnych okręgach, które mają wbrew pozorom bardzo duże znaczenie.")}</p>
               <p>
-                O mandatach decydują <strong>41 okręgów wyborczych</strong>, lokalna frekwencja oraz
-                metoda D&apos;Hondta, która premiuje silniejsze ugrupowania, a mniejsze partie
-                zepchnąć pod próg. Różnica 1–2 punktów procentowych w odpowiednich regionach może
-                przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji. Celem tego
-                narzędzia jest to uświadomić.
-              </p>
+                {tr("O mandatach decydują")} <strong>{tr("41 okręgów wyborczych")}</strong>{tr(", lokalna frekwencja oraz metoda D'Hondta, która premiuje silniejsze ugrupowania, a mniejsze partie zepchnąć pod próg. Różnica 1–2 punktów procentowych w odpowiednich regionach może przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji. Celem tego narzędzia jest to uświadomić.")} </p>
               <p>
-                Jestem programistą, więc tego typu problem uznałem że jest w granicach moich
-                możliwości. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go w
-                publiczny, bezpłatny symulator na{" "}
-                <strong className="text-foreground">sejmsim.pl</strong>. Potrzebowałem troszkę
-                konsultacji z ludźmi mądrzejszymi ode mnie, ale przecież na tym polega nauka nowych
-                rzeczy. Ostatecznie jednak po prostu chcę, żeby cała Polska mogła analizować
-                poparcie, scenariusze i być świadomymi wyborcami zaangażowanymi w proces
-                demokratyczny.
-              </p>
+                {tr("Jestem programistą, więc tego typu problem uznałem że jest w granicach moich możliwości. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go w publiczny, bezpłatny symulator na")}{" "}
+                <strong className="text-foreground">sejmsim.pl</strong>{tr(". Potrzebowałem troszkę konsultacji z ludźmi mądrzejszymi ode mnie, ale przecież na tym polega nauka nowych rzeczy. Ostatecznie jednak po prostu chcę, żeby cała Polska mogła analizować poparcie, scenariusze i być świadomymi wyborcami zaangażowanymi w proces demokratyczny.")} </p>
             </div>
           </header>
 
           {/* CO POTRAFI SEJMSIM */}
           <section aria-labelledby="funkcje-projektu" className="border-t border-border pt-10">
-            <p className="eyebrow">Możliwości narzędzia</p>
+            <p className="eyebrow">{tr("Możliwości narzędzia")}</p>
             <h2
               id="funkcje-projektu"
               className="mt-1 font-display text-2xl font-bold text-ink sm:text-3xl"
             >
-              Co można sprawdzić w SejmSim?
-            </h2>
+              {tr("Co można sprawdzić w SejmSim?")}</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-base">
-              Gdy w zbiorze są opublikowane sondaże, punktem wyjścia jest średnia liczona przez sam
-              SejmSim. Każdy parametr można potem zmienić. Opis danych, wag i ciszy wyborczej jest
-              na stronie źródeł.
-            </p>
+              {tr("Gdy w zbiorze są opublikowane sondaże, punktem wyjścia jest średnia liczona przez sam SejmSim. Każdy parametr można potem zmienić. Opis danych, wag i ciszy wyborczej jest na stronie źródeł.")}</p>
             <ul className="mt-6 grid gap-4 sm:grid-cols-2">
               {features.map(({ icon: Icon, title, text }) => (
                 <li key={title} className="panel p-5 transition-shadow hover:shadow-md">
                   <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                  <h3 className="mt-3 font-display text-base font-bold text-ink">{title}</h3>
+                  <h3 className="mt-3 font-display text-base font-bold text-ink">{tr(title)}</h3>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                    {text}
+                    {tr(text)}
                   </p>
                 </li>
               ))}
@@ -183,13 +161,10 @@ function AboutProject() {
 
           {/* SYMULATOR NIE WRÓŻKA (Req 7) */}
           <section className="rounded-2xl border border-border bg-surface/80 p-6 text-center backdrop-blur-sm sm:p-8">
-            <p className="eyebrow">Ważna uwaga</p>
-            <h2 className="mt-1 font-display text-2xl font-bold text-ink">Symulator nie wróżka</h2>
+            <p className="eyebrow">{tr("Ważna uwaga")}</p>
+            <h2 className="mt-1 font-display text-2xl font-bold text-ink">{tr("Symulator nie wróżka")}</h2>
             <p className="mx-auto mt-2.5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              SejmSim pokazuje matematyczne skutki przyjętych założeń w oparciu o algorytm
-              D&apos;Hondta i rozkład okręgowy. To narzędzie analityczne do sprawdzania scenariuszy
-              i nie jest prognozą ani oficjalnym badaniem opinii.
-            </p>
+              {tr("SejmSim pokazuje matematyczne skutki przyjętych założeń w oparciu o algorytm D'Hondta i rozkład okręgowy. To narzędzie analityczne do sprawdzania scenariuszy i nie jest prognozą ani oficjalnym badaniem opinii.")} </p>
           </section>
 
           {/* POŁĄCZONY, ELEGANCKI BOX TWÓRCY I WSPARCIA (Req 6 & Req 8) */}
@@ -220,7 +195,7 @@ function AboutProject() {
                         @jifo
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">Twórca SejmSim z Gdyni</p>
+                    <p className="text-xs text-muted-foreground">{tr("Twórca SejmSim z Gdyni")}</p>
                   </div>
                 </div>
 
@@ -237,31 +212,24 @@ function AboutProject() {
                       rel="noreferrer"
                       onClick={() => track({ event: "contact_click" })}
                     >
-                      <Mail className="mr-1.5 h-3.5 w-3.5" /> Kontakt z Iwo
-                    </a>
+                      <Mail className="mr-1.5 h-3.5 w-3.5" /> {tr("Kontakt z Iwo")}</a>
                   </Button>
                 </div>
               </div>
 
               <div className="mt-5 border-t border-border pt-5 space-y-3">
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Platforma <strong className="text-foreground">sejmsim.pl</strong> powstaje pro
-                  bono jako niezależne, darmowe, ogólnodostępne narzędzie obywatelskie bez reklam.
-                  Każda wpłata jest ogromnie doceniana i pomaga utrzymać serwery, dopracowywać
-                  algorytmy i dodawać nowe funkcje. Jeżeli masz jakieś pomysły, daj koniecznie znać!
-                </p>
+                  {tr("Platforma")} <strong className="text-foreground">sejmsim.pl</strong> {tr("powstaje pro bono jako niezależne, darmowe, ogólnodostępne narzędzie obywatelskie bez reklam. Każda wpłata jest ogromnie doceniana i pomaga utrzymać serwery, dopracowywać algorytmy i dodawać nowe funkcje. Jeżeli masz jakieś pomysły, daj koniecznie znać!")} </p>
                 <p className="font-display text-sm font-semibold text-ink">
-                  Pomyślnych analiz życzy JIFO!
-                </p>
+                  {tr("Pomyślnych analiz życzy JIFO!")}</p>
 
                 <div className="pt-2 flex flex-wrap items-center gap-3">
                   <Button asChild>
                     <Link to="/">
-                      <Play className="mr-1.5 h-4 w-4 fill-current" /> Uruchom SejmSim
-                    </Link>
+                      <Play className="mr-1.5 h-4 w-4 fill-current" /> {tr("Uruchom SejmSim")}</Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link to="/zrodla">Źródła i metodologia</Link>
+                    <Link to="/zrodla">{tr("Źródła i metodologia")}</Link>
                   </Button>
                   <SupportButton size="default" />
                 </div>

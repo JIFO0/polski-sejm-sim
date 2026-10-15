@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { track } from "@/lib/analytics";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -20,12 +21,21 @@ import {
 export function FeedbackDialog({
   iconOnly = false,
   className = "",
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }: {
   iconOnly?: boolean;
   className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }) {
+  const tr = useTranslation();
   const send = useServerFn(sendFeedback);
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = (value: boolean) => { setLocalOpen(value); onOpenChange?.(value); };
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [rating, setRating] = useState<number | null>(null);
@@ -74,35 +84,34 @@ export function FeedbackDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (v) track({ event: "feedback_open" }); setOpen(v); }}>
-      <DialogTrigger asChild>
+      {!hideTrigger && <DialogTrigger asChild>
         {iconOnly ? (
           <Button
             variant="ghost"
             size="icon"
             className={`h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all active:scale-95 ${className}`}
-            title="Dodaj opinię"
-            aria-label="Dodaj opinię"
+            title={tr("Dodaj opinię")}
+            aria-label={tr("Dodaj opinię")}
           >
             <MessageSquareText className="h-4 w-4" />
           </Button>
         ) : (
           <Button variant="outline" size="sm" className={className}>
-            <MessageSquareText className="mr-1.5 h-4 w-4" /> Dodaj opinię
-          </Button>
+            <MessageSquareText className="mr-1.5 h-4 w-4" /> {tr("Dodaj opinię")}</Button>
         )}
-      </DialogTrigger>
+      </DialogTrigger>}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Twoja opinia o SejmSim</DialogTitle>
-          <DialogDescription>Uwagi, błędy, pomysły na sejmsim.pl. Jedna opinia na 12 godzin.</DialogDescription>
+          <DialogTitle>{tr("Twoja opinia o SejmSim")}</DialogTitle>
+          <DialogDescription>{tr("Uwagi, błędy, pomysły na sejmsim.pl. Jedna opinia na 12 godzin.")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="feedback-name">Podpis <span className="font-normal text-muted-foreground">(opcjonalnie)</span></Label>
+            <Label htmlFor="feedback-name">{tr("Podpis")}<span className="font-normal text-muted-foreground">{tr("(opcjonalnie)")}</span></Label>
             <Input id="feedback-name" autoComplete="name" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="feedback-email">E-mail kontaktowy <span className="font-normal text-muted-foreground">(opcjonalnie)</span></Label>
+            <Label htmlFor="feedback-email">{tr("E-mail kontaktowy")}<span className="font-normal text-muted-foreground">{tr("(opcjonalnie)")}</span></Label>
             <Input
               id="feedback-email"
               type="email"
@@ -115,7 +124,7 @@ export function FeedbackDialog({
             />
           </div>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Jak oceniasz SejmSim (sejmsim.pl)?</legend>
+            <legend className="text-sm font-medium">{tr("Jak oceniasz SejmSim (sejmsim.pl)?")}</legend>
             <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-10" role="radiogroup" aria-label="Ocena narzędzia od 1 do 10">
               {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
                 <label key={value} className="cursor-pointer">
@@ -136,10 +145,10 @@ export function FeedbackDialog({
             </div>
           </fieldset>
           <div className="space-y-1.5">
-            <Label htmlFor="feedback-message">Opinia</Label>
+            <Label htmlFor="feedback-message">{tr("Opinia")}</Label>
           <Textarea
             id="feedback-message"
-            placeholder="Co warto poprawić lub dodać?"
+            placeholder={tr("Co warto poprawić lub dodać?")}
             rows={6}
             maxLength={1500}
             value={message}
@@ -150,7 +159,7 @@ export function FeedbackDialog({
           <div className="flex items-center justify-between">
             <span className="num text-xs text-muted-foreground">{message.length}/1500</span>
             <Button type="submit" disabled={busy}>
-              {busy ? "Wysyłanie..." : "Wyślij opinię"}
+              {busy ? tr("Wysyłanie...") : tr("Wyślij opinię")}
             </Button>
           </div>
         </form>

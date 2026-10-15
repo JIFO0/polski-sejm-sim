@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { useDarkTheme } from "@/components/ThemeToggle";
+import { FeedbackInvitation } from "@/components/FeedbackInvitation";
+import { useLanguage } from "@/lib/i18n";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -94,9 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator miejsc w sejmie, kalkulator mandatów, symulator wyborów, sejm 2027, ordynacja wyborcza, d'hondt, koalicje sejmowe, sejmsim",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "https://sejmsim.pl/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://sejmsim.pl/og-image.png" },
       { name: "twitter:site", content: "@jifo" },
     ],
     links: [
@@ -144,8 +144,9 @@ const SCHEMA_ORG = JSON.stringify({
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const lang = useLanguage();
   return (
-    <html lang="pl">
+    <html lang={lang}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: SCHEMA_ORG }} />
@@ -167,6 +168,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <FeedbackInvitation />
       <Toaster position="top-center" richColors theme={dark ? "dark" : "light"} />
     </QueryClientProvider>
   );

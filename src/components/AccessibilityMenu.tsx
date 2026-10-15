@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { PersonStanding, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ function applySettings(s: Settings) {
 }
 
 export function AccessibilityMenu(_props: { compact?: boolean }) {
+  const tr = useTranslation();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
 
   useEffect(() => {
@@ -80,8 +82,8 @@ export function AccessibilityMenu(_props: { compact?: boolean }) {
         <Button
           size="icon"
           className="h-12 w-12 shrink-0 rounded-full bg-blue-800 text-white shadow-lg hover:bg-blue-900 focus-visible:ring-4 focus-visible:ring-blue-300"
-          aria-label="Ustawienia dostępności"
-          title="Ustawienia dostępności"
+          aria-label={tr("Ustawienia dostępności")}
+          title={tr("Ustawienia dostępności")}
         >
           <PersonStanding className="!h-7 !w-7" strokeWidth={2.4} />
         </Button>
@@ -89,17 +91,16 @@ export function AccessibilityMenu(_props: { compact?: boolean }) {
       <PopoverContent align="end" className="max-h-[80vh] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="font-display text-base font-bold text-ink">Dostępność</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Ustawienia zapisują się na tym urządzeniu.</p>
+            <h2 className="font-display text-base font-bold text-ink">{tr("Dostępność")}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">{tr("Ustawienia zapisują się na tym urządzeniu.")}</p>
           </div>
           <Button variant="outline" size="sm" className="min-h-10 gap-1" onClick={() => save(DEFAULTS, "reset")}>
-            <RotateCcw className="h-3.5 w-3.5" /> Resetuj
-          </Button>
+            <RotateCcw className="h-3.5 w-3.5" /> {tr("Resetuj")}</Button>
         </div>
 
         <div className="mt-4 rounded-md border border-border p-3">
           <div className="flex items-center justify-between">
-            <span id="a11y-scale-label" className="text-sm font-semibold text-foreground">Rozmiar tekstu</span>
+            <span id="a11y-scale-label" className="text-sm font-semibold text-foreground">{tr("Rozmiar tekstu")}</span>
             <span className="num text-sm font-bold">{settings.textScale}%</span>
           </div>
           <div className="mt-3 flex items-center gap-2">
@@ -107,7 +108,7 @@ export function AccessibilityMenu(_props: { compact?: boolean }) {
               variant="outline"
               size="icon"
               className="h-10 w-10"
-              aria-label="Zmniejsz tekst"
+              aria-label={tr("Zmniejsz tekst")}
               onClick={() => save({ ...settings, textScale: Math.max(90, settings.textScale - 10) }, "tekst")}
             >
               A-
@@ -126,7 +127,7 @@ export function AccessibilityMenu(_props: { compact?: boolean }) {
               variant="outline"
               size="icon"
               className="h-10 w-10"
-              aria-label="Powiększ tekst"
+              aria-label={tr("Powiększ tekst")}
               onClick={() => save({ ...settings, textScale: Math.min(175, settings.textScale + 10) }, "tekst")}
             >
               A+
@@ -146,8 +147,8 @@ export function AccessibilityMenu(_props: { compact?: boolean }) {
                   className="h-5 w-5"
                 />
                 <span>
-                  <span className="block text-sm font-semibold text-foreground">{option.label}</span>
-                  <span className="block text-xs text-muted-foreground">{option.description}</span>
+                  <span className="block text-sm font-semibold text-foreground">{tr(option.label)}</span>
+                  <span className="block text-xs text-muted-foreground">{tr(option.description)}</span>
                 </span>
               </label>
             );

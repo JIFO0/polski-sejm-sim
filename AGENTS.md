@@ -16,3 +16,7 @@
 - Scenario support values are stored as raw percentages; independent-support mode preserves an unassigned pool, while standard mode scales other parties to 100%.
 - Anonimowe statystyki i udostępnianie linków: działają niezależnie od Lovable w lokalnym magazynie SQLite (`src/lib/server-db.server.ts`) z twardym limitem 4 GB i automatycznym czyszczeniem. Udostępnianie pozwala na maksymalnie 5 aktywnych linków na IP (ważność 7 dni). Statystyki są w 100% anonimowe (brak ciasteczek, brak IP, brak PII), zgodne z RODO bez konieczności zgód/banerów. Podgląd dla właściciela na `/statystyki` (login JIFO + klucz `ANALYTICS_KEY`).
 - Custom parties and joint lists live in the scenario (customParties, mergers) and are mirrored into the global party registry via syncCustomEntities, so existing components keep using PARTY_MAP; their images stay only in browser localStorage and never enter shared links.
+- Authored interface text uses the reactive useTranslation hook and a shared dictionary; scenario names and party identities remain user-authored data.
+- The shared root mounts the feedback invitation, with browser-local persistence and an in-memory fallback to avoid repeated prompts across pages.
+- Analytics events carry custom entity label snapshots; owner views resolve stored labels rather than depending on the current browser's party registry.
+- Visit charts use fixed plot and axis rows, and rolling calendar-day windows in Europe/Warsaw with explicit zero-visit days.

@@ -173,7 +173,7 @@ export const toggleFeaturedShare = createServerFn({ method: "POST" })
 export const getFeaturedScenarios = createServerFn({ method: "GET" }).handler(async () => {
   const { listFeaturedScenarios } = await import("./server-db.server");
   try {
-    const items = listFeaturedScenarios();
+    const items = listFeaturedScenarios().map(({ scenario, ...item }) => ({ ...item, scenarioJson: JSON.stringify(scenario) }));
     return { ok: true as const, items };
   } catch (err) {
     console.error("getFeaturedScenarios error:", err);

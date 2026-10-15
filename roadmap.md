@@ -1,5 +1,11 @@
 # Roadmap
 
+- [x] Naprawić rzeczywistą zmianę języka
+- [x] Przebudować sondaże, domyślnie zwinięte, aktualizacja 15 października 12:07
+- [x] Nazwy własnych partii w statystykach, poprawne godziny i wykres tygodnia/miesiąca
+- [x] Jednorazowe zaproszenie do opinii i wsparcia po 4 minutach
+- [x] Wycentrować przełącznik motywu i zweryfikować zmiany
+
 - [x] Dane okręgów, partii, mapa SVG
 - [x] Model D'Hondta z progami i frekwencją
 - [x] Mapa, hemicykl, panel okręgu, koalicje

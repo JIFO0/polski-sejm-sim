@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { Coffee } from "lucide-react";
 import type { AnchorHTMLAttributes } from "react";
 import { track } from "@/lib/analytics";
@@ -14,6 +15,7 @@ export function SupportButton({
   className = "",
   ...props
 }: SupportButtonProps) {
+  const tr = useTranslation();
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     track({ event: "support_click" });
     props.onClick?.(e);
@@ -26,7 +28,7 @@ export function SupportButton({
         target="_blank"
         rel="noreferrer"
         title="Wesprzyj projekt (Buy Me a Coffee)"
-        aria-label="Wesprzyj projekt"
+        aria-label={tr("Wesprzyj projekt")}
         onClick={handleClick}
         className={`group relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/35 bg-amber-500/10 text-amber-700 dark:text-amber-300 transition-all duration-200 hover:bg-amber-500/20 hover:border-amber-500/60 hover:scale-105 active:scale-95 shadow-xs ${className}`}
         {...props}
@@ -53,12 +55,13 @@ export function SupportButton({
       {...props}
     >
       <Coffee className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 transition-transform group-hover:rotate-6 shrink-0" />
-      <span>Wesprzyj projekt</span>
+      <span>{tr("Wesprzyj projekt")}</span>
     </a>
   );
 }
 
 export function SupportCard({ className = "" }: { className?: string }) {
+  const tr = useTranslation();
   return (
     <div
       className={`relative overflow-hidden rounded-2xl border border-amber-500/25 bg-surface/90 p-6 md:p-8 text-center shadow-xs backdrop-blur-xs ${className}`}
