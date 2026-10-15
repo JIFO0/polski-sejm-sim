@@ -37,6 +37,8 @@ export interface Scenario {
   version: 1;
   name: string;
   createdAt: string;
+  author?: string;
+  description?: string;
   /** Siła wpływu frekwencji na profil elektoratu: 0 = wyłączony, 1 = pełny. */
   turnoutEffect: number;
   /** Gdy aktywne, zmiana jednej partii korzysta z puli nieprzypisanej zamiast skalować pozostałe. */

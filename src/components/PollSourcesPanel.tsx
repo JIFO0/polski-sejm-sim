@@ -21,7 +21,8 @@ export function PollSourcesPanel() {
   const lang = useLanguage();
   const en = lang === "en";
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<string[]>(["ko", "pis", "konf"]);
+  const available = [...new Set(pollsVisibleAt(new Date()).flatMap((poll) => Object.keys(poll.results ?? {})))].filter((id) => id !== "inne");
+  const [selected, setSelected] = useState<string[]>(available);
   const [expanded, setExpanded] = useState<string | null>(null);
   const moment = new Date();
   const average = currentPollAverage(moment);
@@ -82,7 +83,7 @@ export function PollSourcesPanel() {
           </TabsContent>
           <TabsContent value="trend" className="mt-5">
             <div className="flex flex-wrap gap-2">
-              {entries.map(([id]) => <Button key={id} size="sm" variant={selected.includes(id) ? "secondary" : "outline"} aria-pressed={selected.includes(id)} onClick={() => toggle(id)} className="gap-2"><span className="h-2 w-2 rounded-full" style={{ background: color(id) }} />{label(id)}</Button>)}
+              {available.map((id) => <Button key={id} size="sm" variant={selected.includes(id) ? "secondary" : "outline"} aria-pressed={selected.includes(id)} onClick={() => toggle(id)} className="gap-2"><span className="h-2 w-2 rounded-full" style={{ background: color(id) }} />{label(id)}</Button>)}
             </div>
             {selected.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{en ? "Select a party" : "Wybierz partię"}</p> : <figure className="mt-4">
               <svg viewBox="0 0 640 246" className="h-auto max-h-80 w-full" role="img" aria-label={en ? "Support in successive polls" : "Poparcie w kolejnych sondażach"}>
@@ -100,7 +101,7 @@ export function PollSourcesPanel() {
                 {series.filter((_, index) => index === 0 || index === series.length - 1).map((poll) => <text key={poll.id} x={x(series.indexOf(poll))} y="235" textAnchor={series.indexOf(poll) === 0 ? "start" : "end"} className="fill-muted-foreground text-[11px]">{formatPolishDate(poll.publishedAt)}</text>)}
               </svg>
               <figcaption className="text-xs text-muted-foreground">{en ? "Individual polls ordered by publication date" : "Pojedyncze badania według daty publikacji"}</figcaption>
-              <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b border-border"><th className="py-2">{en ? "Poll / date" : "Badanie / data"}</th>{selected.map((id) => <th key={id} className="px-2">{label(id)}</th>)}</tr></thead><tbody>{series.map((poll) => <tr key={poll.id} className="border-b border-border/60"><th className="py-2 font-normal">{poll.institute} <span className="text-muted-foreground">{formatPolishDate(poll.publishedAt)}</span></th>{selected.map((id) => <td key={id} className="num px-2">{poll.results?.[id] != null ? pct(poll.results[id]) : "n/a"}</td>)}</tr>)}</tbody></table></div>
+              <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b border-border"><th scope="col" className="py-2">{en ? "Poll / date" : "Badanie / data"}</th>{selected.map((id) => <th scope="col" key={id} className="px-2">{label(id)}</th>)}<th scope="col" className="px-2">{en ? "Source" : "Źródło"}</th></tr></thead><tbody>{series.map((poll) => <tr key={poll.id} className="border-b border-border/60"><th scope="row" className="py-2 font-normal">{poll.institute} <span className="text-muted-foreground">{formatPolishDate(poll.publishedAt)}</span></th>{selected.map((id) => <td key={id} className="num px-2">{poll.results?.[id] != null ? pct(poll.results[id]) : "-"}</td>)}<td className="px-2">{poll.sourceUrl ? <a href={poll.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 whitespace-nowrap text-primary hover:underline" aria-label={`${en ? "Source" : "Źródło"}: ${poll.institute}, ${formatPolishDate(poll.publishedAt)}`}>{en ? "Publication" : "Publikacja"}<ExternalLink className="h-3 w-3" /></a> : "-"}</td></tr>)}</tbody></table></div>
             </figure>}
           </TabsContent>
           <TabsContent value="sources" className="mt-5">

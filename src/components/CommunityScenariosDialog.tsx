@@ -15,6 +15,8 @@ import {
 import { type Scenario } from "@/lib/simulation";
 import { nationalSharesOf, track } from "@/lib/analytics";
 import { PARTIES, PARTY_MAP } from "@/data/parties";
+import { ScenarioDetails } from "@/components/ScenarioDetails";
+import { SocialExportButton } from "@/components/SocialExportButton";
 
 interface FeaturedItem {
   id: string;
@@ -150,6 +152,7 @@ export function CommunityScenariosDialog({
                       </span>
                     </div>
 
+                    <ScenarioDetails scenario={item.scenario} />
                     {/* Poparcie głównych partii */}
                     <div className="mt-2.5 flex flex-wrap gap-1.5">
                       {topParties.map((p) => (
@@ -172,7 +175,7 @@ export function CommunityScenariosDialog({
                       onClick={() => handleSelect(item)}
                     >
                       <Play className="h-3 w-3 fill-current" /> {tr("Wczytaj")}</Button>
-                    <Button
+                    <div className="flex items-center gap-1.5"><SocialExportButton scenario={item.scenario} compact /><Button
                       size="icon"
                       variant="outline"
                       className="h-8 w-8 shrink-0"
@@ -180,7 +183,7 @@ export function CommunityScenariosDialog({
                       onClick={() => void copyShareLink(item.id, item.name)}
                     >
                       <Copy className="h-3.5 w-3.5" />
-                    </Button>
+                    </Button></div>
                   </div>
                 </div>
               );

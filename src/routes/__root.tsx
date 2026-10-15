@@ -17,7 +17,7 @@ import { useLanguage } from "@/lib/i18n";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
-const THEME_BOOT = `(function(){try{var t=localStorage.getItem("sejmsim.theme");var dark=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(dark)document.documentElement.classList.add("dark");document.documentElement.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;
+const THEME_BOOT = `(function(){try{var dark=localStorage.getItem("sejmsim.theme")==="dark";document.documentElement.classList.toggle("dark",dark);document.documentElement.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;
 
 function NotFoundComponent() {
   return (

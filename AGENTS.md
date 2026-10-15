@@ -20,3 +20,5 @@
 - The shared root mounts the feedback invitation, with browser-local persistence and an in-memory fallback to avoid repeated prompts across pages.
 - Analytics events carry custom entity label snapshots; owner views resolve stored labels rather than depending on the current browser's party registry.
 - Visit charts use fixed plot and axis rows, and rolling calendar-day windows in Europe/Warsaw with explicit zero-visit days.
+- Optional scenario metadata stays inside the versioned scenario payload so local saves, JSON and existing share links retain it without separate storage or analytics collection.
+- Social image downloads are deterministic browser-canvas renders of the simulation, using semantic theme tokens and scenario party identities; no remote rendering or image uploads are involved.
