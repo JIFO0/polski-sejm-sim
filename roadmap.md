@@ -1,20 +1,20 @@
 # Roadmap
 
-- [ ] Logo i podpis SejmSim na grafice do posta
-- [ ] Przywrócić jasny motyw także dla wcześniejszych ustawień
-- [ ] Czerwone ludziki we wszystkich wejściach do społeczności
-- [ ] Zaproszenie raz po minucie i weryfikacja
+- [x] Logo i podpis SejmSim na grafice do posta
+- [x] Przywrócić jasny motyw także dla wcześniejszych ustawień
+- [x] Czerwone ludziki we wszystkich wejściach do społeczności
+- [x] Zaproszenie raz po minucie i weryfikacja
 
 - [x] Jasny motyw i sondaże pod instrukcją
 - [x] Opcjonalny autor i opis zapisane i widoczne przy scenariuszach
 - [x] Grafika 1200×630 do posta z oznaczeniem scenariusza społeczności
 - [x] Trendy wszystkich partii, źródła i brakujące wartości
-- [x] Zachować gwiazdki społeczności i zweryfikować zmiany
+- [x] Zastąpić gwiazdki czerwonymi ludzikami i zweryfikować zmiany
 
 - [x] Naprawić rzeczywistą zmianę języka
 - [x] Przebudować sondaże, domyślnie zwinięte, aktualizacja 15 października 12:07
 - [x] Nazwy własnych partii w statystykach, poprawne godziny i wykres tygodnia/miesiąca
-- [x] Jednorazowe zaproszenie do opinii i wsparcia po 4 minutach
+- [x] Jednorazowe zaproszenie do opinii i wsparcia po 1 minucie
 - [x] Wycentrować przełącznik motywu i zweryfikować zmiany
 
 - [x] Dane okręgów, partii, mapa SVG
