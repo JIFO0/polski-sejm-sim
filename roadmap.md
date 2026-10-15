@@ -1,5 +1,11 @@
 # Roadmap
 
+- [ ] Jasny motyw i sondaże pod instrukcją
+- [ ] Opcjonalny autor i opis zapisane i widoczne przy scenariuszach
+- [ ] Grafika 1200×630 do posta z oznaczeniem scenariusza społeczności
+- [ ] Trendy wszystkich partii, źródła i brakujące wartości
+- [ ] Zachować gwiazdki społeczności i zweryfikować zmiany
+
 - [x] Naprawić rzeczywistą zmianę języka
 - [x] Przebudować sondaże, domyślnie zwinięte, aktualizacja 15 października 12:07
 - [x] Nazwy własnych partii w statystykach, poprawne godziny i wykres tygodnia/miesiąca

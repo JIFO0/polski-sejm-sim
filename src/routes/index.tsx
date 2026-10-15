@@ -573,14 +573,13 @@ function Index() {
                     {tr("większość:")} {MAJORITY} {tr("mandatów")} </p>
                 </div>
               </div>
-              <ScenarioShelf scenario={scenario} onLoad={loadScenario} />
+              <ScenarioShelf scenario={scenario} onLoad={loadScenario} onMetadataChange={(metadata) => setScenario((current) => ({ ...current, ...metadata }))} />
             </div>
           </div>
         </div>
       </header>
 
       <main className="relative z-10 mx-auto max-w-[1400px] space-y-14 px-5 py-12">
-        <PollSourcesPanel />
         <section
           className="border-l-4 border-primary bg-surface/80 px-5 py-4 backdrop-blur-sm"
           aria-labelledby="tutorial-title"
@@ -591,6 +590,7 @@ function Index() {
           <p className="mt-2 max-w-5xl text-sm leading-relaxed text-muted-foreground">
             {tr("Aby stworzyć scenariusz składu Sejmu 2027 należy ustawić poparcie dla każdej partii, a opcjonalnie także frekwencję i jej wpływ na rozkład głosów. Następnie połącz partie w koalicje, aby sprawdzić, które bloki mogą utworzyć rząd i osiągnąć większość 231 mandatów.")}</p>
         </section>
+        <PollSourcesPanel />
         <CollapsibleSection title={tr("Własne partie i wspólne listy")} defaultOpen={false}>
           <CustomPartiesPanel
             scenario={scenario}
