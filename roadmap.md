@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Wynik koalicji i informacja o braku większości na grafice do posta
+- [x] Wynik koalicji i informacja o braku większości na grafice do posta
 
 - [x] Logo i podpis SejmSim na grafice do posta
 - [x] Przywrócić jasny motyw także dla wcześniejszych ustawień
