@@ -1,1 +1,202 @@
-[]
+[
+  {
+    "id": "cbos-2026-10-05",
+    "institute": "CBOS",
+    "commissioner": null,
+    "fieldworkFrom": "2026-10-05",
+    "fieldworkTo": "2026-10-08",
+    "publishedAt": "2026-10-12",
+    "sampleSize": 1000,
+    "method": "mix",
+    "results": {
+      "ko": 28.6,
+      "pis": 18.2,
+      "konf": 12.8,
+      "kkp": 7.3,
+      "razem": 4.9,
+      "rp": 3.8,
+      "nl": 3.0,
+      "psl": 2.8,
+      "pl2050": 1.2
+    },
+    "sourceUrl": "https://www.cbos.pl/PL/publikacje/flashe_tekst.php?nr=35%2F2026"
+  },
+  {
+    "id": "pollster-se-2026-10-06",
+    "institute": "Instytut Badań Pollster",
+    "commissioner": "Super Express",
+    "fieldworkFrom": "2026-10-06",
+    "fieldworkTo": "2026-10-07",
+    "publishedAt": "2026-10-12",
+    "sampleSize": 1018,
+    "method": null,
+    "results": {
+      "ko": 33.48,
+      "pis": 22.55,
+      "konf": 13.29,
+      "nl": 7.8,
+      "kkp": 7.33,
+      "rp": 5.28,
+      "razem": 4.04,
+      "psl": 3.21,
+      "pl2050": 1.8
+    },
+    "sourceUrl": "https://wiadomosci.wp.pl/triumf-ko-i-koszmar-tuska-w-sondazu-sojusznicy-wyrzuceni-poza-sejm-7339123860445632a"
+  },
+  {
+    "id": "opinia24-2026-10-05",
+    "institute": "Opinia24",
+    "commissioner": null,
+    "fieldworkFrom": "2026-10-05",
+    "fieldworkTo": "2026-10-07",
+    "publishedAt": "2026-10-08",
+    "sampleSize": 1001,
+    "method": "mix",
+    "results": {
+      "ko": 33.1,
+      "pis": 17.3,
+      "konf": 13.8,
+      "kkp": 7.6,
+      "nl": 6.5,
+      "rp": 5.3,
+      "razem": 3.5,
+      "pl2050": 2.2,
+      "psl": 2.0,
+      "inne": 1.4
+    },
+    "sourceUrl": "https://tvn24.pl/polska/sondaz-partyjny-opinia24-pazdziernik-2026-st9276839"
+  },
+  {
+    "id": "united-surveys-wp-2026-10-02",
+    "institute": "United Surveys by IBRiS",
+    "commissioner": "Wirtualna Polska",
+    "fieldworkFrom": "2026-10-02",
+    "fieldworkTo": "2026-10-04",
+    "publishedAt": "2026-10-07",
+    "sampleSize": 1000,
+    "method": "mix",
+    "results": {
+      "ko": 30.6,
+      "pis": 18.0,
+      "konf": 14.1,
+      "kkp": 9.0,
+      "nl": 7.4,
+      "rp": 5.7,
+      "psl": 4.4,
+      "razem": 3.9,
+      "pl2050": 0.5
+    },
+    "sourceUrl": "https://wiadomosci.wp.pl/nowy-sondaz-partyjny-czerwona-kartka-dla-koalicji-prawica-ma-240-mandatow-7337133949839776a"
+  },
+  {
+    "id": "pollster-se-2026-09-21",
+    "institute": "Instytut Badań Pollster",
+    "commissioner": "Super Express",
+    "fieldworkFrom": "2026-09-21",
+    "fieldworkTo": "2026-09-22",
+    "publishedAt": "2026-09-23",
+    "sampleSize": 1029,
+    "method": null,
+    "results": {
+      "ko": 32.17,
+      "pis": 22.59,
+      "konf": 14.17,
+      "nl": 7.66,
+      "kkp": 7.28,
+      "rp": 5.2,
+      "razem": 4.97,
+      "psl": 3.59,
+      "pl2050": 1.54,
+      "inne": 0.61
+    },
+    "sourceUrl": "https://www.rp.pl/polityka/art45178321-sondaz-instytutu-badan-pollster-ko-daleko-przed-pis-mateusz-morawiecki-tuz-nad-progiem"
+  },
+  {
+    "id": "ibris-rz-2026-09-18",
+    "institute": "IBRiS",
+    "commissioner": "Rzeczpospolita",
+    "fieldworkFrom": "2026-09-18",
+    "fieldworkTo": "2026-09-19",
+    "publishedAt": "2026-09-23",
+    "sampleSize": 1070,
+    "method": null,
+    "results": {
+      "ko": 30.9,
+      "pis": 17.3,
+      "konf": 15.3,
+      "kkp": 10.0,
+      "nl": 7.7,
+      "rp": 6.4,
+      "psl": 4.4,
+      "razem": 3.1,
+      "pl2050": 0.2
+    },
+    "sourceUrl": "https://wiadomosci.radiozet.pl/polityka/pis-traci-poparcie-najnowszy-sondaz-nie-pozostawia-zludzen-mocno-podgryzane"
+  },
+  {
+    "id": "united-surveys-wp-2026-09-18",
+    "institute": "United Surveys by IBRiS",
+    "commissioner": "Wirtualna Polska",
+    "fieldworkFrom": "2026-09-18",
+    "fieldworkTo": "2026-09-20",
+    "publishedAt": "2026-09-22",
+    "sampleSize": 1000,
+    "method": "mix",
+    "results": {
+      "ko": 31.5,
+      "pis": 17.2,
+      "konf": 12.9,
+      "kkp": 10.9,
+      "nl": 8.8,
+      "rp": 5.3,
+      "psl": 3.8,
+      "razem": 3.2,
+      "pl2050": 0.5
+    },
+    "sourceUrl": "https://www.fronda.pl/a/sondaz-nowe-przetasowania-w-arytmetyce-sejmowej,260171.html"
+  },
+  {
+    "id": "cbos-2026-09-07",
+    "institute": "CBOS",
+    "commissioner": null,
+    "fieldworkFrom": "2026-09-07",
+    "fieldworkTo": "2026-09-09",
+    "publishedAt": "2026-09-11",
+    "sampleSize": 1000,
+    "method": "mix",
+    "results": {
+      "ko": 26.1,
+      "pis": 15.0,
+      "konf": 14.8,
+      "kkp": 7.8,
+      "razem": 6.1,
+      "nl": 5.9,
+      "rp": 3.7,
+      "psl": 2.5,
+      "pl2050": 0.8
+    },
+    "sourceUrl": "https://www.cbos.pl/PL/publikacje/flashe_tekst.php?nr=33%2F2026"
+  },
+  {
+    "id": "united-surveys-wp-2026-09-04",
+    "institute": "United Surveys by IBRiS",
+    "commissioner": "Wirtualna Polska",
+    "fieldworkFrom": "2026-09-04",
+    "fieldworkTo": "2026-09-06",
+    "publishedAt": "2026-09-10",
+    "sampleSize": 1000,
+    "method": "mix",
+    "results": {
+      "ko": 30.2,
+      "pis": 19.2,
+      "konf": 15.1,
+      "kkp": 6.8,
+      "nl": 6.6,
+      "rp": 6.0,
+      "razem": 4.0,
+      "psl": 3.7,
+      "pl2050": 0.5
+    },
+    "sourceUrl": "https://www.rp.pl/polityka/art45122591-najnowszy-sondaz-partyjny-ko-prowadzi-ale-opozycja-przejmuje-wiekszosc-w-sejmie"
+  }
+]

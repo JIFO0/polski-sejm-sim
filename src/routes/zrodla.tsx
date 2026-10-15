@@ -114,6 +114,17 @@ function SourcesPage() {
             ważoną średnią dat publikacji użytych badań.
           </p>
           <p>
+            Przy średniej pokazujemy przybliżony błąd 95% tak, jak przy losowaniu prostym. To
+            komunikat o niepewności statystycznej, a nie przedział podany przez ośrodek. Odpowiedzi
+            „nie wiem” nie wchodzą do wyników, bo nie są komitetem. Unia Centrum nie ma osobnej
+            pozycji w symulatorze, więc jej ułamka procenta nie dopisujemy do „innych”.
+          </p>
+          <p>
+            Próg 5% dotyczy komitetu partyjnego, a próg 8% koalicji wyborczej. W modelu SejmSim
+            Koalicja Obywatelska ma próg 8%. Oznaczenie pod wynikiem mówi tylko, że średnia jest
+            niższa od progu przyjętego w symulatorze.
+          </p>
+          <p>
             Gdy średnia istnieje, nakładamy ją na profil okręgowy: w każdym okręgu zachowujemy
             wzajemne proporcje partii, a po zsumowaniu głosów w kraju wychodzi ta średnia. Mandaty
             dalej liczymy osobno w 41 okręgach.

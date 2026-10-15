@@ -61,9 +61,9 @@ import { ShareInput } from "@/components/ShareInput";
 const TITLE =
   "SejmSim 2027 (sejmsim.pl) | Kalkulator Sejmu, kalkulator siedzeń i symulator wyborczy";
 const DESC =
-  "Kalkulator Sejmu i kalkulator siedzeń (mandatów): interaktywna mapa 41 okręgów, przelicznik D'Hondta, frekwencja i koalicje na sejmsim.pl. Twórz własne scenariusze wyborów do Sejmu 2027.";
+  "Kalkulator Sejmu i symulator mandatów D'Hondta. SejmSim sam liczy średnią z opublikowanych sondaży partyjnych i nie jest sondażem ani prognozą wyborów 2027.";
 const KEYWORDS =
-  "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator miejsc w sejmie, kalkulator mandatów sejm, symulator wyborów do sejmu, sejm 2027, metoda d'hondta, podział mandatów, koalicje sejmowe, sejmsim";
+  "kalkulator sejmu, kalkulator siedzeń sejmu, kalkulator mandatów sejm, symulator wyborów do sejmu, sejm 2027, metoda d'hondta, sondaże partyjne, średnia sondażowa, sejmsim";
 
 const blankState = (id: number): DistrictState => {
   const base = DISTRICTS.find((d) => d.id === id);

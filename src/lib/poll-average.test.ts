@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 
 import {
+  POLLS,
   computePollAverage,
+  parsePollDataset,
+  proportionMargin,
   scaleDistrictsToNational,
   type Poll,
   type SilencePeriod,
@@ -80,5 +83,25 @@ assert.equal(during.silence?.label, "Wybory testowe");
 
 const scaled = scaleDistrictsToNational(null);
 assert.equal(scaled[19]?.["ko"], 44);
+
+assert.equal(proportionMargin(50, 1000), 3.1);
+assert.equal(proportionMargin(50, null), null);
+
+const dataset = parsePollDataset(POLLS);
+assert.equal(dataset.length, POLLS.length);
+assert.ok(dataset.length >= 8);
+const cbos = dataset.find((item) => item.id === "cbos-2026-10-05");
+assert.equal(cbos?.results?.["ko"], 28.6);
+assert.equal(cbos?.sourceUrl?.includes("cbos.pl"), true);
+assert.throws(() => parsePollDataset([dataset[0], { ...dataset[0], id: dataset[0]?.id }]));
+assert.throws(() =>
+  parsePollDataset([
+    {
+      ...dataset[0],
+      id: "zly-klucz",
+      results: { nieznana: 1 },
+    },
+  ]),
+);
 
 console.log("poll-average.test.ts ok");

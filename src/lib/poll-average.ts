@@ -1,4 +1,7 @@
+import { z } from "zod";
+
 import { DISTRICTS } from "@/data/districts";
+import { PARTIES } from "@/data/parties";
 import electionSilenceJson from "@/data/election-silence.json";
 import pollsJson from "@/data/polls.json";
 
@@ -79,15 +82,64 @@ export interface PollAverage {
   /** Moment, względem którego liczono średnią. */
   referenceIso: string;
   results: Record<string, number>;
+  /**
+   * Przybliżony przedział 95% w punktach procentowych.
+   * Null, gdy któregoś sondażu użytego dla tej partii nie da się przeliczyć (brak próby).
+   */
+  margins: Record<string, number | null>;
   polls: Poll[];
   /** True, gdy okno 30 dni nie wystarczyło i dociągnięto starsze badania. */
   extendedBeyondWindow: boolean;
   silence: SilencePeriod | null;
 }
 
+const dayField = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+export const KNOWN_RESULT_KEYS = [
+  "ko",
+  "pis",
+  "konf",
+  "kkp",
+  "nl",
+  "razem",
+  "rp",
+  "psl",
+  "pl2050",
+  "inne",
+] as const;
+
+export const pollSchema = z.object({
+  id: z.string().min(1),
+  institute: z.string().min(1).nullable(),
+  commissioner: z.string().min(1).nullable(),
+  fieldworkFrom: dayField.nullable(),
+  fieldworkTo: dayField.nullable(),
+  publishedAt: dayField.nullable(),
+  sampleSize: z.number().int().positive().nullable(),
+  method: z.enum(["CATI", "CAWI", "mix"]).nullable(),
+  results: z.record(z.string(), z.number().min(0).max(100)).nullable(),
+  sourceUrl: z.string().url().nullable(),
+});
+
+/** Odrzuca zbiór, który nie trzyma schematu, ma zdublowane id albo nieznaną partię. */
+export function parsePollDataset(data: unknown): Poll[] {
+  const parsed = z.array(pollSchema).parse(data);
+  const ids = new Set<string>();
+  for (const poll of parsed) {
+    if (ids.has(poll.id)) throw new Error(`Powtórzone id sondażu: ${poll.id}`);
+    ids.add(poll.id);
+    for (const partyId of Object.keys(poll.results ?? {})) {
+      if (!KNOWN_RESULT_KEYS.includes(partyId as (typeof KNOWN_RESULT_KEYS)[number])) {
+        throw new Error(`Nieznana partia „${partyId}” w sondażu ${poll.id}`);
+      }
+    }
+  }
+  return parsed;
+}
+
 const MS_DAY = 86_400_000;
 
-export const POLLS: Poll[] = pollsJson as Poll[];
+export const POLLS: Poll[] = parsePollDataset(pollsJson);
 export const SILENCE_PERIODS: SilencePeriod[] = electionSilenceJson as SilencePeriod[];
 
 export function parseDay(value: string | null): Date | null {
@@ -185,19 +237,35 @@ export function computePollAverage(
 
   const partyWeight = new Map<string, number>();
   const partySum = new Map<string, number>();
+  const partyVariance = new Map<string, number>();
+  const partyMarginBlocked = new Set<string>();
   for (const poll of used) {
     const weight = weights.get(poll.id) ?? 0;
     for (const [partyId, value] of Object.entries(poll.results ?? {})) {
       if (typeof value !== "number" || !Number.isFinite(value)) continue;
       partyWeight.set(partyId, (partyWeight.get(partyId) ?? 0) + weight);
       partySum.set(partyId, (partySum.get(partyId) ?? 0) + value * weight);
+      const sample = poll.sampleSize;
+      if (sample == null || sample <= 0) {
+        partyMarginBlocked.add(partyId);
+        continue;
+      }
+      const variance = (value * (100 - value)) / sample;
+      partyVariance.set(partyId, (partyVariance.get(partyId) ?? 0) + weight * weight * variance);
     }
   }
 
   const results: Record<string, number> = {};
+  const margins: Record<string, number | null> = {};
   for (const [partyId, weight] of partyWeight) {
     if (weight <= 0) continue;
     results[partyId] = Math.round(((partySum.get(partyId) ?? 0) / weight) * 10) / 10;
+    if (partyMarginBlocked.has(partyId)) {
+      margins[partyId] = null;
+      continue;
+    }
+    const variance = partyVariance.get(partyId) ?? 0;
+    margins[partyId] = Math.round(((1.96 * Math.sqrt(variance)) / weight) * 10) / 10;
   }
 
   let dateWeight = 0;
@@ -216,6 +284,7 @@ export function computePollAverage(
     asOfDate,
     referenceIso: asOf.toISOString(),
     results,
+    margins,
     polls: used,
     extendedBeyondWindow,
     silence,
@@ -316,6 +385,18 @@ const MONTHS_PL = [
   "listopada",
   "grudnia",
 ];
+
+/** Przybliżony błąd 95% jednej proporcji przy losowaniu prostym, w punktach procentowych. */
+export function proportionMargin(percent: number, sampleSize: number | null): number | null {
+  if (sampleSize == null || sampleSize <= 0 || !Number.isFinite(percent)) return null;
+  const share = Math.min(100, Math.max(0, percent)) / 100;
+  const standardError = Math.sqrt((share * (1 - share)) / sampleSize) * 100;
+  return Math.round(1.96 * standardError * 10) / 10;
+}
+
+export function electoralThreshold(partyId: string): number | null {
+  return PARTIES.find((party) => party.id === partyId)?.threshold ?? null;
+}
 
 export function formatPolishDate(isoDay: string | null): string {
   const date = parseDay(isoDay);
