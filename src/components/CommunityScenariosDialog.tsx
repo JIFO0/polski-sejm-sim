@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Copy, Eye, Loader2, Play, Sparkles, Users } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -51,6 +52,7 @@ export function CommunityScenariosDialog({
   onOpenChange: (open: boolean) => void;
   onLoad: (scenario: Scenario) => void;
 }) {
+  const tr = useTranslation();
   const [items, setItems] = useState<FeaturedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const getFeatured = useServerFn(getFeaturedScenarios);
@@ -95,28 +97,23 @@ export function CommunityScenariosDialog({
           <div className="flex items-center gap-2 text-primary">
             <Sparkles className="h-5 w-5 text-amber-500" />
             <DialogTitle className="font-display text-xl font-bold text-ink">
-              Scenariusze społeczności
-            </DialogTitle>
+              {tr("Scenariusze społeczności")}</DialogTitle>
           </div>
           <DialogDescription className="text-sm text-muted-foreground">
-            Wyróżnione i sprawdzone warianty wyborcze stworzone przez użytkowników SejmSim.
-            Wybierz dowolny scenariusz, aby przetestować go na mapie.
-          </DialogDescription>
+            {tr("Wyróżnione i sprawdzone warianty wyborcze stworzone przez użytkowników SejmSim. Wybierz dowolny scenariusz, aby przetestować go na mapie.")}</DialogDescription>
         </DialogHeader>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-3 text-xs">Pobieranie wyróżnionych scenariuszy...</p>
+            <p className="mt-3 text-xs">{tr("Pobieranie wyróżnionych scenariuszy...")}</p>
           </div>
         ) : items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-8 text-center">
             <Users className="mx-auto h-8 w-8 text-muted-foreground/60" />
-            <p className="mt-2 text-sm font-semibold text-ink">Brak wyróżnionych scenariuszy</p>
+            <p className="mt-2 text-sm font-semibold text-ink">{tr("Brak wyróżnionych scenariuszy")}</p>
             <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
-              Scenariusze wybrane przez autora pojawią się tutaj wkrótce. Stwórz własny wariant,
-              udostępnij go i podziel się ze znajomymi!
-            </p>
+              {tr("Scenariusze wybrane przez autora pojawią się tutaj wkrótce. Stwórz własny wariant, udostępnij go i podziel się ze znajomymi!")}</p>
           </div>
         ) : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -140,7 +137,7 @@ export function CommunityScenariosDialog({
                       <h4 className="font-display text-sm font-bold text-ink leading-snug line-clamp-2">
                         {item.name}
                       </h4>
-                      <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-mono text-muted-foreground" title="Liczba wyświetleń">
+                      <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-mono text-muted-foreground" title={tr("Liczba wyświetleń")}>
                         <Eye className="h-3 w-3" />
                         {item.views}
                       </span>
@@ -167,13 +164,12 @@ export function CommunityScenariosDialog({
                       className="h-8 gap-1.5 px-3 text-xs font-semibold"
                       onClick={() => handleSelect(item)}
                     >
-                      <Play className="h-3 w-3 fill-current" /> Wczytaj
-                    </Button>
+                      <Play className="h-3 w-3 fill-current" /> {tr("Wczytaj")}</Button>
                     <Button
                       size="icon"
                       variant="outline"
                       className="h-8 w-8 shrink-0"
-                      title="Skopiuj link do tego scenariusza"
+                      title={tr("Skopiuj link do tego scenariusza")}
                       onClick={() => void copyShareLink(item.id, item.name)}
                     >
                       <Copy className="h-3.5 w-3.5" />

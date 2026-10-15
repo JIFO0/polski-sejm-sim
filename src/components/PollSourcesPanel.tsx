@@ -1,308 +1,124 @@
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
-
+import { Clock, ExternalLink, Search } from "lucide-react";
 import { PARTIES } from "@/data/parties";
-import {
-  POLLS,
-  activeSilence,
-  currentPollAverage,
-  electoralThreshold,
-  formatPolishDate,
-  pollsVisibleAt,
-  proportionMargin,
-  recentPolls,
-  type Poll,
-} from "@/lib/poll-average";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { activeSilence, currentPollAverage, electoralThreshold, formatPolishDate, pollsVisibleAt, type Poll } from "@/lib/poll-average";
+import { useLanguage } from "@/lib/i18n";
 
-const now = () => new Date();
+const label = (id: string) => PARTIES.find((party) => party.id === id)?.short ?? id;
+const color = (id: string) => PARTIES.find((party) => party.id === id)?.color ?? "var(--primary)";
+const pct = (value: number) => `${value.toFixed(1)}%`;
 
-function partyLabel(id: string): string {
-  return PARTIES.find((party) => party.id === id)?.short ?? id;
-}
-
-function resultLine(poll: Poll): string {
-  const entries = Object.entries(poll.results ?? {}).sort((a, b) => b[1] - a[1]);
-  if (entries.length === 0) return "brak wyników";
-  return entries.map(([id, value]) => `${partyLabel(id)} ${value.toFixed(1)}%`).join(" · ");
-}
-
-const TREND_PARTIES = ["ko", "pis", "konf"] as const;
-
-function PollTrend({ polls }: { polls: Poll[] }) {
-  const series = polls
-    .filter((poll) => poll.publishedAt && poll.results)
-    .slice()
-    .sort((a, b) => (a.publishedAt ?? "").localeCompare(b.publishedAt ?? ""));
-  if (series.length < 2) return null;
-
-  const width = 640;
-  const height = 200;
-  const pad = { left: 32, right: 12, top: 16, bottom: 28 };
-  const values = series.flatMap((poll) =>
-    TREND_PARTIES.map((id) => poll.results?.[id]).filter((value): value is number => value != null),
-  );
-  const max = Math.max(40, ...values);
-  const xAt = (index: number) =>
-    pad.left + (index * (width - pad.left - pad.right)) / Math.max(1, series.length - 1);
-  const yAt = (value: number) => pad.top + (1 - value / max) * (height - pad.top - pad.bottom);
-  const pathFor = (partyId: (typeof TREND_PARTIES)[number]) =>
-    series
-      .map((poll, index) => {
-        const value = poll.results?.[partyId];
-        if (value == null) return null;
-        return `${index === 0 ? "M" : "L"} ${xAt(index).toFixed(1)} ${yAt(value).toFixed(1)}`;
-      })
-      .filter(Boolean)
-      .join(" ");
-
-  return (
-    <figure className="mt-5">
-      <figcaption className="font-display text-base font-bold text-ink">
-        Trend trzech największych komitetów
-      </figcaption>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        role="img"
-        aria-labelledby="trend-opis"
-        className="mt-2 h-auto w-full"
-      >
-        <title id="trend-opis">
-          Wykres poparcia KO, PiS i Konfederacji w kolejnych sondażach zbioru SejmSim
-        </title>
-        {[0, 10, 20, 30, 40].map((tick) => (
-          <g key={tick}>
-            <line
-              x1={pad.left}
-              x2={width - pad.right}
-              y1={yAt(tick)}
-              y2={yAt(tick)}
-              stroke="currentColor"
-              className="text-border"
-            />
-            <text x={0} y={yAt(tick) + 4} className="fill-muted-foreground text-[11px]">
-              {tick}
-            </text>
-          </g>
-        ))}
-        {TREND_PARTIES.map((partyId) => (
-          <path
-            key={partyId}
-            d={pathFor(partyId)}
-            fill="none"
-            stroke={PARTIES.find((party) => party.id === partyId)?.color ?? "#334155"}
-            strokeWidth={2.5}
-          />
-        ))}
-      </svg>
-      <ul className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-        {TREND_PARTIES.map((partyId) => (
-          <li key={partyId} className="inline-flex items-center gap-1.5">
-            <span
-              className="h-2 w-4 rounded-sm"
-              style={{ background: PARTIES.find((party) => party.id === partyId)?.color }}
-            />
-            {partyLabel(partyId)}
-          </li>
-        ))}
-      </ul>
-      <table className="mt-3 w-full text-left text-xs">
-        <caption className="sr-only">
-          Poparcie KO, PiS i Konfederacji w sondażach użytych na wykresie
-        </caption>
-        <thead>
-          <tr className="border-b border-border text-muted-foreground">
-            <th scope="col" className="py-1 pr-2 font-semibold">
-              Publikacja
-            </th>
-            <th scope="col" className="py-1 pr-2 font-semibold">
-              Ośrodek
-            </th>
-            {TREND_PARTIES.map((partyId) => (
-              <th key={partyId} scope="col" className="py-1 pr-2 font-semibold">
-                {partyLabel(partyId)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {series.map((poll) => (
-            <tr key={poll.id} className="border-b border-border/70">
-              <th scope="row" className="py-1 pr-2 font-medium text-foreground">
-                {formatPolishDate(poll.publishedAt)}
-              </th>
-              <td className="py-1 pr-2">{poll.institute ?? "niepodany"}</td>
-              {TREND_PARTIES.map((partyId) => (
-                <td key={partyId} className="py-1 pr-2">
-                  {poll.results?.[partyId] != null
-                    ? `${poll.results[partyId].toFixed(1)}%`
-                    : "brak"}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </figure>
-  );
-}
-
-function fieldwork(poll: Poll): string {
-  if (poll.fieldworkFrom && poll.fieldworkTo) {
-    return `${formatPolishDate(poll.fieldworkFrom)} – ${formatPolishDate(poll.fieldworkTo)}`;
-  }
-  if (poll.fieldworkFrom || poll.fieldworkTo)
-    return formatPolishDate(poll.fieldworkFrom ?? poll.fieldworkTo);
-  return "daty badania niepodane";
+function fieldwork(poll: Poll) {
+  return [poll.fieldworkFrom, poll.fieldworkTo].filter(Boolean).map(formatPolishDate).join(" / ");
 }
 
 export function PollSourcesPanel() {
-  const moment = now();
-  const silence = activeSilence(moment);
+  const lang = useLanguage();
+  const en = lang === "en";
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<string[]>(["ko", "pis", "konf"]);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const moment = new Date();
   const average = currentPollAverage(moment);
-  const latest = recentPolls(moment);
-  const trendPolls = pollsVisibleAt(moment).filter(
-    (poll) => poll.results != null && Object.keys(poll.results).length > 0,
-  );
+  const silence = activeSilence(moment);
+  const polls = pollsVisibleAt(moment).filter((poll) => poll.results && Object.keys(poll.results).length > 0);
+  const filtered = polls.filter((poll) => `${poll.institute ?? ""} ${poll.commissioner ?? ""}`.toLowerCase().includes(search.toLowerCase()));
+  const series = useMemo(() => [...polls].sort((a, b) => (a.publishedAt ?? "").localeCompare(b.publishedAt ?? "")), [polls]);
+  const entries = Object.entries(average?.results ?? {}).filter(([id]) => id !== "inne").sort((a, b) => b[1] - a[1]);
+  const toggle = (id: string) => setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
+  const max = Math.max(40, ...series.flatMap((poll) => selected.map((id) => poll.results?.[id] ?? 0)));
+  const x = (index: number) => 36 + index * 588 / Math.max(1, series.length - 1);
+  const y = (value: number) => 16 + (1 - value / max) * 192;
 
   return (
-    <section className="panel p-5 md:p-6" aria-labelledby="sondaze-sejm-sim">
-      <p className="eyebrow">Sondaże</p>
-      <h2 id="sondaze-sejm-sim" className="mt-1 font-display text-2xl font-bold text-ink">
-        Średnia liczona przez SejmSim
-      </h2>
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        Serwis sam liczy średnią z publicznie opublikowanych sondaży zebranych w{" "}
-        <code className="text-foreground">src/data/polls.json</code>. To nie jest sondaż SejmSim ani
-        prognoza wyniku wyborów. Symulacja mandatów pokazuje skutki przyjętych założeń.
-      </p>
-
-      {silence ? (
-        <p className="mt-4 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-foreground">
-          Trwa cisza wyborcza ({silence.label}, do {new Date(silence.until).toLocaleString("pl-PL")}
-          ). W tym czasie nie publikujemy nowych wyników sondaży ani nie aktualizujemy średniej.
-        </p>
-      ) : null}
-
-      {average ? (
-        <div className="mt-5">
-          <p className="text-sm text-muted-foreground">
-            Data średniej:{" "}
-            <span className="font-semibold text-foreground">
-              {formatPolishDate(average.asOfDate)}
-            </span>
-            {average.extendedBeyondWindow
-              ? ". W ostatnich 30 dniach było za mało badań, więc średnia sięga też starszych sondaży."
-              : ". Średnia z sondaży opublikowanych w ostatnich 30 dniach (albo z co najmniej czterech najnowszych)."}
-          </p>
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {Object.entries(average.results)
-              .sort((a, b) => b[1] - a[1])
-              .map(([id, value]) => {
-                const threshold = electoralThreshold(id);
-                const below = threshold != null && value < threshold;
-                const margin = average.margins[id];
-                return (
-                  <li
-                    key={id}
-                    className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-ink"
-                  >
-                    {partyLabel(id)} {value.toFixed(1)}%
-                    {margin != null ? ` ±${margin.toFixed(1)}` : ""}
-                    {below
-                      ? ` (poniżej progu ${threshold}%${threshold === 8 ? " dla koalicji" : ""})`
-                      : ""}
-                  </li>
-                );
-              })}
-          </ul>
-          <p className="mt-2 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-            Znak ± to przybliżony błąd statystyczny 95% przy założeniu losowania prostego i
-            niezależnych sondaży. Nie uwzględnia sposobu ważenia próby przez ośrodek ani osób
-            niezdecydowanych. Gdy próby brakuje, przedziału nie pokazujemy.
-          </p>
-          <PollTrend polls={trendPolls} />
-          <h3 className="mt-5 font-display text-base font-bold text-ink">
-            Sondaże użyte do średniej
-          </h3>
-          <ul className="mt-2 divide-y divide-border text-sm">
-            {average.polls.map((poll) => (
-              <li key={poll.id} className="py-2">
-                <p className="font-semibold text-foreground">
-                  {poll.institute ?? "Ośrodek niepodany"}
-                </p>
-                <p className="text-muted-foreground">
-                  publikacja {formatPolishDate(poll.publishedAt)} · badanie {fieldwork(poll)} ·
-                  próba {poll.sampleSize ?? "niepodana"}
-                  {poll.method ? ` · ${poll.method}` : ""}
-                </p>
-                {poll.sourceUrl ? (
-                  <a
-                    href={poll.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center text-primary hover:underline"
-                  >
-                    Źródło <ExternalLink className="ml-1 h-3.5 w-3.5" />
-                  </a>
-                ) : (
-                  <p className="text-muted-foreground">Link do źródła niepodany</p>
-                )}
-              </li>
-            ))}
-          </ul>
+    <CollapsibleSection title={en ? "Opinion polls" : "Sondaże"} defaultOpen={false}>
+      <section className="border-x border-b border-border bg-surface/80 px-4 py-5 backdrop-blur-sm md:px-6" aria-labelledby="polls-heading">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">SejmSim</p>
+            <h2 id="polls-heading" className="mt-1 font-display text-xl font-bold text-ink">{en ? "Polling overview" : "Przegląd sondaży"}</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{en ? "Weighted average of published polls. An analytical starting point, not an election forecast." : "Ważona średnia opublikowanych badań. Punkt wyjścia do analiz, nie prognoza wyborów."}</p>
+          </div>
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>{en ? "Last polling update" : "Ostatnia aktualizacja sondaży"}<time dateTime="2026-10-15T12:07:00+02:00" className="mt-1 block font-semibold text-ink">{en ? "15 October 2026, 12:07 (Warsaw)" : "15 października 2026, 12:07"}</time></div>
+          </div>
         </div>
-      ) : (
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          W zbiorze nie ma jeszcze ani jednego kompletnego sondażu (ośrodek może być pusty, ale
-          potrzebne są data publikacji i wyniki). Symulator startuje więc z profilu okręgowego, a
-          nie ze średniej sondażowej. Wcześniejsza wersja wskazywała średnią ewybory.eu z 30
-          września 2026 — tych liczb nie przepisujemy jako własnego badania, bo w repozytorium nie
-          było pojedynczych sondaży z próbą i datami.
-        </p>
-      )}
-
-      <h3 className="mt-5 font-display text-base font-bold text-ink">Ostatnie sondaże</h3>
-      {latest.length === 0 ? (
-        <p className="mt-2 text-sm text-muted-foreground">
-          Brak sondaży z wynikami{POLLS.length > 0 ? " widocznych poza ciszą wyborczą" : ""}.
-        </p>
-      ) : (
-        <ul className="mt-2 space-y-3">
-          {latest.map((poll) => (
-            <li key={poll.id} className="rounded-lg border border-border px-3 py-2 text-sm">
-              <p className="font-semibold text-foreground">
-                {poll.institute ?? "Ośrodek niepodany"} · {formatPolishDate(poll.publishedAt)}
-              </p>
-              <p className="text-muted-foreground">
-                {fieldwork(poll)} · próba {poll.sampleSize ?? "niepodana"}
-                {poll.commissioner ? ` · zleceniodawca: ${poll.commissioner}` : ""}
-              </p>
-              <p className="mt-1 text-foreground">
-                {resultLine(poll)}
-                {poll.sampleSize != null && poll.results
-                  ? ` Przybliżony błąd dla wyniku 50% przy tej próbie: ±${proportionMargin(50, poll.sampleSize)?.toFixed(1) ?? "—"} pkt.`
-                  : ""}
-              </p>
-              {poll.sourceUrl ? (
-                <a
-                  href={poll.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 inline-flex items-center text-primary hover:underline"
-                >
-                  Źródło <ExternalLink className="ml-1 h-3.5 w-3.5" />
-                </a>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <p className="mt-4 text-sm">
-        <Link to="/zrodla" className="font-semibold text-primary hover:underline">
-          Źródła i metodologia
-        </Link>
-      </p>
-    </section>
+        {silence && <p className="mt-4 border-l-2 border-primary bg-primary/10 p-3 text-sm">{en ? "Polling updates are paused during the election silence period." : "Trwa cisza wyborcza. Aktualizacje sondaży są wstrzymane."}</p>}
+        <Tabs defaultValue="average" className="mt-6">
+          <TabsList className="h-auto max-w-full flex-wrap">
+            <TabsTrigger value="average">{en ? "Average" : "Średnia"}</TabsTrigger>
+            <TabsTrigger value="trend">{en ? "Trends" : "Trendy"}</TabsTrigger>
+            <TabsTrigger value="sources">{en ? "Polls & sources" : "Badania i źródła"} ({polls.length})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="average" className="mt-5">
+            {average ? <>
+              <div className="mb-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
+                <span>{en ? "Polls included" : "Uwzględnione badania"}: <strong className="text-ink">{average.polls.length}</strong></span>
+                <span>{en ? "Average reference date" : "Data średniej"}: <strong className="text-ink">{formatPolishDate(average.asOfDate)}</strong></span>
+                <span>{en ? "Window: 30 days" : "Okno: 30 dni"}{average.extendedBeyondWindow ? (en ? " (extended)" : " (rozszerzone)") : ""}</span>
+              </div>
+              <div className="grid gap-x-10 md:grid-cols-2">
+                {entries.map(([id, value]) => {
+                  const threshold = electoralThreshold(id);
+                  const margin = average.margins[id];
+                  return <div key={id} className="border-b border-border/70 py-3">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="flex items-center gap-2 font-semibold text-ink"><span className="h-2.5 w-2.5 rounded-full" style={{ background: color(id) }} />{label(id)}</span>
+                      <span className="num font-bold text-ink">{pct(value)} {margin != null && <span className="font-normal text-xs text-muted-foreground">±{margin.toFixed(1)}</span>}</span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full" style={{ width: `${value}%`, background: color(id) }} /></div>
+                    {threshold != null && value < threshold && <p className="mt-1.5 text-[11px] text-muted-foreground">{en ? "Below electoral threshold" : "Poniżej progu wyborczego"} {threshold}%</p>}
+                  </div>;
+                })}
+              </div>
+              <p className="mt-4 max-w-3xl text-xs leading-relaxed text-muted-foreground">{en ? "± is an approximate 95% statistical margin, assuming independent simple random samples. It does not cover weighting or undecided voters. A missing sample size means no margin is shown." : "± to przybliżony błąd statystyczny 95% dla niezależnych prób losowych. Nie uwzględnia ważenia ani niezdecydowanych. Bez liczebności próby nie pokazujemy przedziału."}</p>
+            </> : <p className="text-sm text-muted-foreground">{en ? "No complete polls are available." : "Brak kompletnych sondaży w zbiorze."}</p>}
+          </TabsContent>
+          <TabsContent value="trend" className="mt-5">
+            <div className="flex flex-wrap gap-2">
+              {entries.map(([id]) => <Button key={id} size="sm" variant={selected.includes(id) ? "secondary" : "outline"} aria-pressed={selected.includes(id)} onClick={() => toggle(id)} className="gap-2"><span className="h-2 w-2 rounded-full" style={{ background: color(id) }} />{label(id)}</Button>)}
+            </div>
+            {selected.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">{en ? "Select a party" : "Wybierz partię"}</p> : <figure className="mt-4">
+              <svg viewBox="0 0 640 246" className="h-auto max-h-80 w-full" role="img" aria-label={en ? "Support in successive polls" : "Poparcie w kolejnych sondażach"}>
+                {[0, 10, 20, 30, 40].map((tick) => <g key={tick}><line x1="36" x2="624" y1={y(tick)} y2={y(tick)} stroke="currentColor" className="text-border" /><text x="0" y={y(tick) + 4} className="fill-muted-foreground text-[11px]">{tick}%</text></g>)}
+                {selected.map((id) => {
+                  let started = false;
+                  const path = series.map((poll, index) => {
+                    const value = poll.results?.[id];
+                    if (value == null) { started = false; return ""; }
+                    const command = started ? "L" : "M"; started = true;
+                    return `${command}${x(index)},${y(value)}`;
+                  }).join(" ");
+                  return <g key={id}><path d={path} fill="none" stroke={color(id)} strokeWidth="2.5" />{series.map((poll, index) => poll.results?.[id] != null ? <circle key={poll.id} cx={x(index)} cy={y(poll.results[id])} r="4" fill={color(id)}><title>{label(id)} {pct(poll.results[id])}, {poll.institute}, {formatPolishDate(poll.publishedAt)}</title></circle> : null)}</g>;
+                })}
+                {series.filter((_, index) => index === 0 || index === series.length - 1).map((poll) => <text key={poll.id} x={x(series.indexOf(poll))} y="235" textAnchor={series.indexOf(poll) === 0 ? "start" : "end"} className="fill-muted-foreground text-[11px]">{formatPolishDate(poll.publishedAt)}</text>)}
+              </svg>
+              <figcaption className="text-xs text-muted-foreground">{en ? "Individual polls ordered by publication date" : "Pojedyncze badania według daty publikacji"}</figcaption>
+              <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b border-border"><th className="py-2">{en ? "Poll / date" : "Badanie / data"}</th>{selected.map((id) => <th key={id} className="px-2">{label(id)}</th>)}</tr></thead><tbody>{series.map((poll) => <tr key={poll.id} className="border-b border-border/60"><th className="py-2 font-normal">{poll.institute} <span className="text-muted-foreground">{formatPolishDate(poll.publishedAt)}</span></th>{selected.map((id) => <td key={id} className="num px-2">{poll.results?.[id] != null ? pct(poll.results[id]) : "n/a"}</td>)}</tr>)}</tbody></table></div>
+            </figure>}
+          </TabsContent>
+          <TabsContent value="sources" className="mt-5">
+            <div className="relative max-w-sm"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} className="pl-9" aria-label={en ? "Find a poll" : "Szukaj badania"} placeholder={en ? "Institute or commissioner" : "Ośrodek lub zleceniodawca"} /></div>
+            <div className="mt-4 divide-y divide-border">
+              {filtered.map((poll) => <article key={poll.id} className="py-3">
+                <Button variant="ghost" className="h-auto w-full justify-between gap-3 whitespace-normal px-0 text-left" onClick={() => setExpanded(expanded === poll.id ? null : poll.id)} aria-expanded={expanded === poll.id}>
+                  <span><span className="block font-semibold text-ink">{poll.institute ?? (en ? "Unknown institute" : "Ośrodek niepodany")}</span><span className="mt-1 block text-xs font-normal text-muted-foreground">{formatPolishDate(poll.publishedAt)} / n = {poll.sampleSize ?? "n/a"}{poll.commissioner ? ` / ${poll.commissioner}` : ""}</span></span>
+                  <span className="text-xs text-primary">{expanded === poll.id ? (en ? "Hide" : "Zwiń") : (en ? "Results" : "Wyniki")}</span>
+                </Button>
+                {expanded === poll.id && <div className="pt-3"><p className="text-xs text-muted-foreground">{en ? "Fieldwork" : "Termin badania"}: {fieldwork(poll) || "n/a"}{poll.method ? ` / ${poll.method}` : ""}</p><div className="mt-2 flex flex-wrap gap-3">{Object.entries(poll.results ?? {}).sort((a, b) => b[1] - a[1]).map(([id, value]) => <span key={id} className="inline-flex items-center gap-1.5 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: color(id) }} />{label(id)} <strong className="num">{pct(value)}</strong></span>)}</div>{poll.sourceUrl && <Button asChild variant="link" className="mt-2 h-auto px-0"><a href={poll.sourceUrl} target="_blank" rel="noreferrer">{en ? "Source publication" : "Publikacja źródłowa"}<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></Button>}</div>}
+              </article>)}
+              {filtered.length === 0 && <p className="py-6 text-sm text-muted-foreground">{en ? "No matching polls" : "Brak pasujących badań"}</p>}
+            </div>
+          </TabsContent>
+        </Tabs>
+        <div className="mt-5 border-t border-border pt-3"><Button asChild variant="link" className="h-auto px-0 text-xs"><Link to="/zrodla">{en ? "Sources and methodology" : "Źródła i metodologia"}<ExternalLink className="ml-1 h-3 w-3" /></Link></Button></div>
+      </section>
+    </CollapsibleSection>
   );
 }

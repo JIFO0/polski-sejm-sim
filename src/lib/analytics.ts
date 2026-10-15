@@ -35,11 +35,13 @@ type TrackInput = {
   meta?: string;
   shares?: Record<string, number>;
   turnout?: number;
+  partyLabels?: Record<string, string>;
 };
 
 /** Anonimowe, zbiorcze zdarzenie statystyczne. Bez ciasteczek, bez IP, bez identyfikatorów. */
 export function track(input: TrackInput) {
-  void trackEvent({ data: input }).catch(() => {
+  const partyLabels = { ...Object.fromEntries(PARTIES.filter((party) => /^(cp|ml)/.test(party.id)).map((party) => [party.id, party.name])), ...input.partyLabels };
+  void trackEvent({ data: { ...input, partyLabels } }).catch(() => {
     // Statystyki nigdy nie mogą przerywać korzystania ze strony.
   });
 }

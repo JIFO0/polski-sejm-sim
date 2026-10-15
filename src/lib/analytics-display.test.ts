@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import { recentVisitDays, analyticsPartyName } from "./analytics-display";
+const now = new Date("2026-10-15T10:13:00Z");
+const rows = [{ day: "2026-10-15", count: 12 }, { day: "2026-10-10", count: 3 }];
+const week = recentVisitDays(rows, 7, now);
+assert.equal(week.length, 7);
+assert.deepEqual(week[0], { day: "2026-10-15", count: 12 });
+assert.deepEqual(week[6], { day: "2026-10-09", count: 0 });
+const month = recentVisitDays(rows, 30, now);
+assert.equal(month.length, 30);
+assert.equal(month[29]?.day, "2026-09-16");
+assert.equal(analyticsPartyName("cpabc123", { cpabc123: "Partia Obywatelska" }, {}), "Partia Obywatelska");
+assert.equal(analyticsPartyName("cpold", {}, {}).includes("cpold"), false);
+console.log("Visit periods and custom party names passed");

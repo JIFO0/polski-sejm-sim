@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { useMemo, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { DISTRICTS, MAP_VIEWBOX } from "@/data/districts";
@@ -15,6 +16,7 @@ function mix(hex: string, amount: number) {
 }
 
 export function HistoricalDistrictResults() {
+  const tr = useTranslation();
   const [year, setYear] = useState<HistoricalDistrictYear>(2023);
   const [mode, setMode] = useState<"winner" | "committee">("winner");
   const [committeeId, setCommitteeId] = useState("pis");
@@ -56,10 +58,10 @@ export function HistoricalDistrictResults() {
     <div className="panel p-4 md:p-6">
       <div className="flex flex-wrap items-start gap-3">
         <div className="mr-auto">
-          <h3 className="font-display text-xl font-bold text-ink">Mapa wyników w okręgach</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Zobacz zwycięzcę albo poparcie wybranego komitetu w każdym okręgu.</p>
+          <h3 className="font-display text-xl font-bold text-ink">{tr("Mapa wyników w okręgach")}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{tr("Zobacz zwycięzcę albo poparcie wybranego komitetu w każdym okręgu.")}</p>
         </div>
-        <div className="flex rounded-lg border border-border p-0.5" aria-label="Rok wyborów">
+        <div className="flex rounded-lg border border-border p-0.5" aria-label={tr("Rok wyborów")}>
           {HISTORICAL_DISTRICT_ELECTIONS.map((item) => (
             <button key={item.year} onClick={() => chooseYear(item.year)} className={`min-h-11 rounded-md px-3 text-xs font-semibold ${year === item.year ? "bg-ink text-background" : "text-muted-foreground"}`}>
               {item.year}
@@ -70,8 +72,8 @@ export function HistoricalDistrictResults() {
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <div className="flex rounded-lg border border-border p-0.5">
-          <button onClick={() => setMode("winner")} className={`min-h-11 rounded-md px-3 text-xs font-semibold ${mode === "winner" ? "bg-ink text-background" : "text-muted-foreground"}`}>Zwycięzca</button>
-          <button onClick={() => setMode("committee")} className={`min-h-11 rounded-md px-3 text-xs font-semibold ${mode === "committee" ? "bg-ink text-background" : "text-muted-foreground"}`}>Jeden komitet</button>
+          <button onClick={() => setMode("winner")} className={`min-h-11 rounded-md px-3 text-xs font-semibold ${mode === "winner" ? "bg-ink text-background" : "text-muted-foreground"}`}>{tr("Zwycięzca")}</button>
+          <button onClick={() => setMode("committee")} className={`min-h-11 rounded-md px-3 text-xs font-semibold ${mode === "committee" ? "bg-ink text-background" : "text-muted-foreground"}`}>{tr("Jeden komitet")}</button>
         </div>
         {mode === "committee" ? election.committees.map((item) => (
           <button key={item.id} onClick={() => setCommitteeId(item.id)} className="min-h-11 rounded-full border px-3 text-xs font-semibold" style={committee.id === item.id ? { background: item.color, borderColor: item.color, color: "white" } : undefined} title={item.name}>
@@ -104,7 +106,7 @@ export function HistoricalDistrictResults() {
         ) : null}
       </div>
       <div className="mt-3 flex justify-end">
-        <Button variant="ghost" size="sm" asChild><a href={election.sourceUrl} target="_blank" rel="noreferrer">Źródło: PKW/KBW <ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></Button>
+        <Button variant="ghost" size="sm" asChild><a href={election.sourceUrl} target="_blank" rel="noreferrer">{tr("Źródło: PKW/KBW")}<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></Button>
       </div>
     </div>
   );

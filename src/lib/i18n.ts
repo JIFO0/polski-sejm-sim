@@ -1,10 +1,12 @@
-import { useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { track } from "@/lib/analytics";
+import { UI_TRANSLATIONS } from "./ui-translations";
 
 export type Language = "pl" | "en";
 
 const STORAGE_KEY = "sejmsim.lang";
 const listeners = new Set<() => void>();
+let currentLanguage: Language | undefined;
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
@@ -13,6 +15,7 @@ function subscribe(listener: () => void) {
 
 function getStoredLang(): Language {
   if (typeof window === "undefined") return "pl";
+  if (currentLanguage) return currentLanguage;
   try {
     const val = localStorage.getItem(STORAGE_KEY);
     // Domyślny zawsze "pl", tylko jawnie wybrany "en" przełącza na angielski
@@ -31,6 +34,8 @@ export function useLanguage(): Language {
 }
 
 export function setLanguage(lang: Language) {
+  currentLanguage = lang;
+  document.documentElement.lang = lang;
   try {
     localStorage.setItem(STORAGE_KEY, lang);
     document.documentElement.lang = lang;
@@ -92,4 +97,10 @@ const translations: Record<Language, Record<string, string>> = {
 
 export function t(key: string, lang: Language = "pl"): string {
   return translations[lang]?.[key] ?? translations.pl[key] ?? key;
+}
+
+/** Translate authored interface strings; user-created names remain unchanged. */
+export function useTranslation() {
+  const lang = useLanguage();
+  return useCallback((text: string) => lang === "en" ? (UI_TRANSLATIONS[text] ?? text) : text, [lang]);
 }

@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Download, FolderOpen, Link2, Loader2, Maximize2, Play, Plus, Sparkles, Trash2, Upload } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -102,6 +103,7 @@ export function ScenarioShelf({
   scenario: Scenario;
   onLoad: (scenario: Scenario) => void;
 }) {
+  const tr = useTranslation();
   const [saved, setSaved] = useState<SavedScenario[]>([]);
   const [name, setName] = useState("");
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
@@ -177,6 +179,7 @@ export function ScenarioShelf({
       try {
         track({
           event: "scenario_save",
+          partyLabels: Object.fromEntries([...scenario.customParties ?? [], ...scenario.mergers ?? []].map((party) => [party.id, party.name])),
           ...(isScenarioModified(scenario) ? { shares: nationalSharesOf(scenario) } : {}),
         });
       } catch (trackErr) {
@@ -203,6 +206,7 @@ export function ScenarioShelf({
       if (!res.reused) {
         track({
           event: "share_link_create",
+          partyLabels: Object.fromEntries([...item.scenario.customParties ?? [], ...item.scenario.mergers ?? []].map((party) => [party.id, party.name])),
           ...(isScenarioModified(item.scenario) ? { shares: nationalSharesOf(item.scenario) } : {}),
         });
       }
@@ -288,8 +292,8 @@ export function ScenarioShelf({
         {/* Nagłówek panelu */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="eyebrow">Biblioteka wariantów</p>
-            <h2 className="mt-0.5 font-display text-lg font-bold text-ink">Twoje scenariusze</h2>
+            <p className="eyebrow">{tr("Biblioteka wariantów")}</p>
+            <h2 className="mt-0.5 font-display text-lg font-bold text-ink">{tr("Twoje scenariusze")}</h2>
           </div>
           <div className="flex items-center gap-1.5">
             <Button
@@ -299,8 +303,7 @@ export function ScenarioShelf({
               className="min-h-9 gap-1 text-[11px] font-semibold text-ink"
               title="Zobacz scenariusze stworzone przez społeczność"
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Społeczność
-            </Button>
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" /> {tr("Społeczność")}</Button>
             <Button
               variant="outline"
               size="sm"
@@ -308,8 +311,7 @@ export function ScenarioShelf({
               className="min-h-9 gap-1 text-[11px] font-semibold"
               title="Otwórz pełny widok biblioteki"
             >
-              <Maximize2 className="h-3.5 w-3.5" /> Rozwiń
-            </Button>
+              <Maximize2 className="h-3.5 w-3.5" /> {tr("Rozwiń")}</Button>
             <Button
               variant="outline"
               size="sm"
@@ -317,8 +319,7 @@ export function ScenarioShelf({
               className="min-h-9 gap-1 text-[11px]"
               title="Wczytaj plik scenariusza JSON z dysku"
             >
-              <Upload className="h-3.5 w-3.5" /> Plik
-            </Button>
+              <Upload className="h-3.5 w-3.5" /> {tr("Plik")}</Button>
           </div>
           <input
             ref={fileInputRef}
@@ -340,7 +341,7 @@ export function ScenarioShelf({
             value={name}
             onChange={(event) => setName(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && saveLocal()}
-            placeholder="Nazwa nowego wariantu..."
+            placeholder={tr("Nazwa nowego wariantu...")}
             maxLength={60}
             aria-label="Nazwa nowego scenariusza"
             className="h-10 text-xs"
@@ -351,8 +352,7 @@ export function ScenarioShelf({
             onClick={saveLocal}
             title="Zapisz obecny stan w pamięci"
           >
-            <Plus className="h-3.5 w-3.5" /> Zapisz
-          </Button>
+            <Plus className="h-3.5 w-3.5" /> {tr("Zapisz")}</Button>
           <Button
             variant="outline"
             size="icon"
@@ -370,9 +370,9 @@ export function ScenarioShelf({
           {saved.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-5 text-center">
               <FolderOpen className="mx-auto h-7 w-7 text-muted-foreground/60" />
-              <p className="mt-2 text-xs font-semibold text-ink">Brak zapisanych wariantów</p>
+              <p className="mt-2 text-xs font-semibold text-ink">{tr("Brak zapisanych wariantów")}</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Dostosuj poparcie i kliknij <strong>Zapisz</strong>, aby zachować wariant.
+                Dostosuj poparcie i kliknij <strong>{tr("Zapisz")}</strong>, aby zachować wariant.
               </p>
               <div className="mt-3.5">
                 <Button
@@ -381,8 +381,7 @@ export function ScenarioShelf({
                   onClick={() => setCommunityOpen(true)}
                   className="gap-1.5 text-xs font-semibold border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Poznaj scenariusze społeczności
-                </Button>
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> {tr("Poznaj scenariusze społeczności")}</Button>
               </div>
             </div>
           ) : (
@@ -416,8 +415,7 @@ export function ScenarioShelf({
                     </h3>
                     {isActive ? (
                       <span className="inline-flex shrink-0 items-center gap-1 rounded bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
-                        <Check className="h-3 w-3" /> Wczytany
-                      </span>
+                        <Check className="h-3 w-3" /> {tr("Wczytany")}</span>
                     ) : null}
                   </div>
 
@@ -446,7 +444,7 @@ export function ScenarioShelf({
                       className="h-8 gap-1.5 px-3 text-xs font-semibold"
                       onClick={() => handleLoad(item.scenario, item.name, item.id)}
                     >
-                      <Play className="h-3 w-3 fill-current" /> {isActive ? "Aktywny" : "Wczytaj"}
+                      <Play className="h-3 w-3 fill-current" /> {isActive ? tr("Aktywny") : tr("Wczytaj")}
                     </Button>
                     <div className="flex items-center gap-1">
                       <Button
@@ -500,8 +498,7 @@ export function ScenarioShelf({
             }}
             className="h-auto min-h-9 px-1 text-right text-[11px]"
           >
-            Przywróć stan wyjściowy
-          </Button>
+            {tr("Przywróć stan wyjściowy")}</Button>
         </div>
       </aside>
 
@@ -512,11 +509,9 @@ export function ScenarioShelf({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <DialogTitle className="font-display text-2xl font-bold text-ink">
-                  Biblioteka zapisanych scenariuszy
-                </DialogTitle>
+                  {tr("Biblioteka zapisanych scenariuszy")}</DialogTitle>
                 <DialogDescription className="text-sm text-muted-foreground">
-                  Wszystkie zachowane warianty sejmowe z pełnymi nazwami, poparciem partii i akcjami udostępniania (do 5 linków na IP).
-                </DialogDescription>
+                  {tr("Wszystkie zachowane warianty sejmowe z pełnymi nazwami, poparciem partii i akcjami udostępniania (do 5 linków na IP).")}</DialogDescription>
               </div>
               <Button
                 variant="outline"
@@ -527,8 +522,7 @@ export function ScenarioShelf({
                 }}
                 className="gap-1.5 text-xs font-semibold shrink-0"
               >
-                <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Scenariusze społeczności
-              </Button>
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" /> {tr("Scenariusze społeczności")}</Button>
             </div>
           </DialogHeader>
 
@@ -536,10 +530,9 @@ export function ScenarioShelf({
             {saved.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-12 text-center">
                 <FolderOpen className="mx-auto h-10 w-10 text-muted-foreground/50" />
-                <h3 className="mt-3 font-display text-base font-bold text-ink">Brak zapisanych wariantów</h3>
+                <h3 className="mt-3 font-display text-base font-bold text-ink">{tr("Brak zapisanych wariantów")}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Zapisz obecny stan w symulatorze, aby pojawił się tutaj.
-                </p>
+                  {tr("Zapisz obecny stan w symulatorze, aby pojawił się tutaj.")}</p>
                 <div className="mt-4">
                   <Button
                     variant="outline"
@@ -550,8 +543,7 @@ export function ScenarioShelf({
                     }}
                     className="gap-1.5 text-xs font-semibold border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
                   >
-                    <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Poznaj scenariusze społeczności
-                  </Button>
+                    <Sparkles className="h-3.5 w-3.5 text-amber-500" /> {tr("Poznaj scenariusze społeczności")}</Button>
                 </div>
               </div>
             ) : (
@@ -582,17 +574,16 @@ export function ScenarioShelf({
                           </h3>
                           {isActive ? (
                             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-bold text-primary">
-                              <Check className="h-3.5 w-3.5" /> Wczytany
-                            </span>
+                              <Check className="h-3.5 w-3.5" /> {tr("Wczytany")}</span>
                           ) : null}
                         </div>
                         <p className="mt-1 num text-xs text-muted-foreground">
-                          Zapisano: {new Date(item.savedAt).toLocaleString("pl-PL")}
+                          {tr("Zapisano:")}{new Date(item.savedAt).toLocaleString("pl-PL")}
                         </p>
 
                         {/* Pełny pasek poparcia partii */}
                         <div className="mt-4 space-y-1.5">
-                          <p className="text-xs font-semibold text-muted-foreground">Poparcie ogólnokrajowe:</p>
+                          <p className="text-xs font-semibold text-muted-foreground">{tr("Poparcie ogólnokrajowe:")}</p>
                           <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
                             {rankedParties.map((p) => (
                               <div
@@ -628,7 +619,7 @@ export function ScenarioShelf({
                             setExpandedOpen(false);
                           }}
                         >
-                          <Play className="h-3.5 w-3.5 fill-current" /> {isActive ? "Wczytano do Sejmu" : "Wczytaj scenariusz"}
+                          <Play className="h-3.5 w-3.5 fill-current" /> {isActive ? tr("Wczytano do Sejmu") : tr("Wczytaj scenariusz")}
                         </Button>
                         <div className="flex items-center gap-1.5">
                           <Button
@@ -640,8 +631,7 @@ export function ScenarioShelf({
                             title="Wygeneruj link na serwerze (do 5 na IP)"
                           >
                             {sharingId === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
-                            Udostępnij link
-                          </Button>
+                            {tr("Udostępnij link")}</Button>
                           <Button
                             variant="outline"
                             size="icon"

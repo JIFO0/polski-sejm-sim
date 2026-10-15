@@ -1,3 +1,4 @@
+import { useTranslation } from "@/lib/i18n";
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Minus } from "lucide-react";
 import { supportParties } from "@/data/parties";
 import { PartyLogo } from "@/components/PartyLogo";
@@ -22,6 +23,7 @@ export function TurnoutGroups({
   onMove: (partyId: string, side: Side) => void;
   embedded?: boolean;
 }) {
+  const tr = useTranslation();
   const onMove = (partyId: string, side: Side) => {
     track({ event: "turnout_group_move", meta: `${partyId}:${side}` });
     rawOnMove(partyId, side);
@@ -29,9 +31,9 @@ export function TurnoutGroups({
 
   const parties = supportParties();
   const groups: { side: Side; title: string; note: string }[] = [
-    { side: "lower", title: "Zyskują przy niższej frekwencji", note: "Bardziej zdyscyplinowany elektorat" },
-    { side: "neutral", title: "Frekwencja nie wpływa", note: "Poparcie pozostaje bez korekty" },
-    { side: "higher", title: "Zyskują przy wyższej frekwencji", note: "Większa mobilizacja nowych wyborców" },
+    { side: "lower", title: tr("Zyskują przy niższej frekwencji"), note: tr("Bardziej zdyscyplinowany elektorat") },
+    { side: "neutral", title: tr("Frekwencja nie wpływa"), note: tr("Poparcie pozostaje bez korekty") },
+    { side: "higher", title: tr("Zyskują przy wyższej frekwencji"), note: tr("Większa mobilizacja nowych wyborców") },
   ];
 
   return (
@@ -39,8 +41,8 @@ export function TurnoutGroups({
       <div className="flex items-center gap-3">
         <ArrowLeftRight className="h-5 w-5 text-primary" />
         <div>
-          <h2 className="font-display text-xl font-bold text-ink">Wpływ frekwencji</h2>
-          <p className="text-sm text-muted-foreground">Przeciągnij partię między grupami. Na telefonie użyj strzałek na karcie partii.</p>
+          <h2 className="font-display text-xl font-bold text-ink">{tr("Wpływ frekwencji")}</h2>
+          <p className="text-sm text-muted-foreground">{tr("Przeciągnij partię między grupami. Na telefonie użyj strzałek na karcie partii.")}</p>
         </div>
       </div>
       <div className="mt-5 grid gap-4 lg:grid-cols-3">

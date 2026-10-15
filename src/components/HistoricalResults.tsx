@@ -1,20 +1,20 @@
+import { useTranslation } from "@/lib/i18n";
 import { ExternalLink, History } from "lucide-react";
 import { HISTORICAL_ELECTIONS } from "@/data/historical";
 import { Button } from "@/components/ui/button";
 
 export function HistoricalResults() {
+  const tr = useTranslation();
   return (
     <section className="panel p-5 md:p-6" aria-labelledby="historical-results-title">
       <div className="flex items-start gap-3">
         <History className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div>
-          <p className="eyebrow">Punkt odniesienia</p>
+          <p className="eyebrow">{tr("Punkt odniesienia")}</p>
           <h2 id="historical-results-title" className="mt-1 font-display text-2xl font-bold text-ink">
-            Wyniki wyborów 2023, 2019, 2015 i 2011
-          </h2>
+            {tr("Wyniki wyborów 2023, 2019, 2015 i 2011")}</h2>
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-            Oficjalne wyniki wyborów do Sejmu. To porównanie historyczne, nie gotowe scenariusze symulacji.
-          </p>
+            {tr("Oficjalne wyniki wyborów do Sejmu. To porównanie historyczne, nie gotowe scenariusze symulacji.")}</p>
         </div>
       </div>
 
@@ -26,11 +26,11 @@ export function HistoricalResults() {
                 <h3 id={`election-${election.year}`} className="font-display text-xl font-bold text-ink">
                   Sejm {election.year}
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">Frekwencja {election.turnout.toFixed(2)}%</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{tr("Frekwencja")}{election.turnout.toFixed(2)}%</p>
               </div>
               <Button variant="ghost" size="sm" asChild>
                 <a href={election.sourceUrl} target="_blank" rel="noreferrer">
-                  Dane PKW <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                  {tr("Dane PKW")}<ExternalLink className="ml-1.5 h-3.5 w-3.5" />
                 </a>
               </Button>
             </div>
@@ -42,7 +42,7 @@ export function HistoricalResults() {
                     <span className="truncate text-sm font-semibold" title={committee.name}>{committee.short}</span>
                   </div>
                   <span className="num text-right text-sm">{committee.share.toFixed(2)}%</span>
-                  <span className="num text-right text-sm font-bold text-ink">{committee.seats} mand.</span>
+                  <span className="num text-right text-sm font-bold text-ink">{committee.seats} {tr("mand.")}</span>
                 </div>
               ))}
             </div>
