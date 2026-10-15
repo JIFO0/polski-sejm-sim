@@ -1,6 +1,7 @@
 import { PARTIES } from "@/data/parties";
 import { simulate, type Scenario } from "@/lib/simulation";
 import { SOCIAL_IMAGE_HEIGHT, SOCIAL_IMAGE_WIDTH } from "./scenario-metadata";
+import { coalitionResult } from "./coalition-result";
 
 /** Local deterministic export: no uploads, screenshots or remote image requests. */
 export async function downloadSocialImage(scenario: Scenario, en = false) {
@@ -49,7 +50,7 @@ export async function downloadSocialImage(scenario: Scenario, en = false) {
   text(en ? "460 seats / majority: 231" : "460 mandatów / większość: 231", 70, 535, 17, ink, 700);
   text(en ? "SEAT DISTRIBUTION" : "PODZIAŁ MANDATÓW", 700, 175, 13, muted, 800);
   const rows = Math.max(1, Math.ceil(ranked.length / 2));
-  const step = Math.min(55, 345 / rows);
+  const step = Math.min(55, 170 / rows);
   ranked.forEach(([id, seats], index) => {
     const column = index < rows ? 0 : 1;
     const row = index % rows;
@@ -58,6 +59,20 @@ export async function downloadSocialImage(scenario: Scenario, en = false) {
     text(map[id]?.short ?? id, x + 18, y + 1, Math.min(17, step * .55), ink, 600, 140);
     text(String(seats), x + 174, y + 1, Math.min(23, step * .6), ink, 800, 45);
   });
+  const { winners, strongest } = coalitionResult(scenario.coalitions ?? [], result.seatsByParty);
+  ctx.fillStyle = token("--border"); ctx.fillRect(700, 385, 452, 1);
+  text(en ? "COALITION MAJORITY" : "WIĘKSZOŚĆ KOALICYJNA", 700, 409, 13, muted, 800, 452);
+  const coalitionLines = winners.length > 0
+    ? winners.flatMap((coalition) => [
+      `${coalition.name}: ${coalition.seats} ${en ? "seats" : "mandatów"}`,
+      [...new Set(coalition.members)].map((id) => map[id]?.short ?? id).join(" + "),
+    ])
+    : [
+      en ? "No configured coalition has a majority" : "Żadna utworzona koalicja nie ma większości",
+      ...(strongest ? [`${strongest.name}: ${strongest.seats} ${en ? "seats" : "mandatów"}`, `${en ? "Needs" : "Brakuje"} ${231 - strongest.seats} ${en ? "seats for a majority" : "mandatów do większości"}`] : [en ? "No coalitions defined in this scenario" : "Nie utworzono koalicji w tym scenariuszu"]),
+    ];
+  const lineHeight = Math.min(26, 125 / coalitionLines.length);
+  coalitionLines.forEach((line, index) => text(line, 700, 438 + index * lineHeight, Math.min(index === 0 ? 18 : 15, lineHeight * .72), winners.length > 0 && index % 2 === 0 ? primary : ink, index % 2 === 0 ? 700 : 500, 452));
   ctx.fillStyle = token("--border"); ctx.fillRect(48, 560, 1104, 1);
   text(en ? "Community scenario, not a poll or a SejmSim publication." : "Scenariusz społeczności, nie sondaż ani publikacja SejmSim.", 48, 593, 15, muted, 600, 870);
   ctx.font = `700 32px ${css.getPropertyValue("--font-display").trim() || '"Space Grotesk", sans-serif'}`;

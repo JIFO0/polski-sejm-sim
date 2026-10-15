@@ -22,4 +22,5 @@
 - Visit charts use fixed plot and axis rows, and rolling calendar-day windows in Europe/Warsaw with explicit zero-visit days.
 - Optional scenario metadata stays inside the versioned scenario payload so local saves, JSON and existing share links retain it without separate storage or analytics collection.
 - Social image downloads are deterministic browser-canvas renders of the simulation, using semantic theme tokens and scenario party identities; no remote rendering or image uploads are involved.
+- Social export coalition results derive from configured scenario groups and simulated seat totals, listing every majority group rather than inventing coalition combinations.
 - Theme preferences use a versioned browser key so obsolete default-derived settings do not override the current default, while new explicit choices persist.
