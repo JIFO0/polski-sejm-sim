@@ -1,4 +1,5 @@
 import { useTranslation } from "@/lib/i18n";
+import { Link } from "@tanstack/react-router";
 import { RotateCcw, Users, X } from "lucide-react";
 import { DISTRICTS } from "@/data/districts";
 import { MERGED_INTO, PARTIES, PARTY_MAP, type MergerDef } from "@/data/parties";
@@ -76,8 +77,18 @@ export function DistrictPanel({
     <div className="panel flex h-full flex-col overflow-hidden">
       <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
         <div>
-          <p className="eyebrow">
-            {tr("Okręg nr")}{district.id}, {district.seats} {tr("mandatów")}</p>
+          <p className="eyebrow flex items-center gap-1">
+            <span>
+              {tr("Okręg nr")}{district.id}, {district.seats} {tr("mandatów")}
+            </span>
+            <Link
+              to="/metoda-dhondta"
+              className="ml-1 font-mono text-[10px] text-primary hover:underline"
+              title="Jak przeliczane są mandaty w okręgu? Metoda D'Hondta"
+            >
+              (D'Hondt)
+            </Link>
+          </p>
           <h3 className="mt-0.5 font-display text-xl font-bold text-ink">{district.name}</h3>
         </div>
         <div className="flex gap-1">

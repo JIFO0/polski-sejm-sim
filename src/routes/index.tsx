@@ -1,7 +1,7 @@
 import { useTranslation } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Download, Info, RotateCcw, Upload, UserRound, Users } from "lucide-react";
+import { Calculator, Download, Info, RotateCcw, Upload, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { toast } from "sonner";
@@ -449,25 +449,11 @@ function Index() {
             <LanguageToggle />
             <ThemeToggle />
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/metoda-dhondta">{tr("Metoda D'Hondta")}</Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/zrodla">{tr("Źródła")}</Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
               <Link to="/o-projekcie">
-                <Info className="mr-1.5 h-4 w-4" /> {tr("O projekcie")}</Link>
+                <Info className="mr-1.5 h-4 w-4" /> {tr("O projekcie")}
+              </Link>
             </Button>
             <FeedbackDialog />
-            <Button variant="outline" size="sm" asChild>
-              <a
-                href="https://jifo.dev/#kontakt"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track({ event: "contact_click" })}
-              >
-                <UserRound className="mr-1.5 h-4 w-4" /> {tr("Kontakt")}</a>
-            </Button>
             <SupportButton size="sm" />
             <AccessibilityMenu />
           </nav>
@@ -569,8 +555,19 @@ function Index() {
                       {leader?.short}: {result.seatsByParty[leader?.id ?? ""] ?? 0}
                     </p>
                   </div>
-                  <p className="num text-xs text-muted-foreground">
-                    {tr("większość:")} {MAJORITY} {tr("mandatów")} </p>
+                  <div className="text-right">
+                    <p className="num text-xs text-muted-foreground">
+                      {tr("większość:")} {MAJORITY} {tr("mandatów")}
+                    </p>
+                    <Link
+                      to="/metoda-dhondta"
+                      className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                      title="Zobacz, jak metoda D'Hondta przelicza głosy na mandaty w 41 okręgach"
+                    >
+                      <Calculator className="h-3 w-3" />
+                      <span>{tr("Metoda D'Hondta")}</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
               <ScenarioShelf scenario={scenario} onLoad={loadScenario} onMetadataChange={(metadata) => setScenario((current) => ({ ...current, ...metadata }))} />
@@ -698,10 +695,22 @@ function Index() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-display text-lg font-bold text-ink">
-                        {tr("Wynik ogólnokrajowy")}</h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-display text-lg font-bold text-ink">
+                          {tr("Wynik ogólnokrajowy")}
+                        </h3>
+                        <Link
+                          to="/metoda-dhondta"
+                          className="inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors"
+                          title="Jak procenty poparcia przeliczają się na mandaty? Wyjaśnienie metody D'Hondta"
+                        >
+                          <Calculator className="h-3 w-3" />
+                          <span>{tr("Metoda D'Hondta")}</span>
+                        </Link>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        {tr("Suwak i pole procentowe zmieniają poparcie z zachowaniem regionalnych różnic.")}</p>
+                        {tr("Suwak i pole procentowe zmieniają poparcie z zachowaniem regionalnych różnic.")}
+                      </p>
                     </div>
                     <Button
                       variant={showVotes ? "secondary" : "outline"}
@@ -1000,9 +1009,20 @@ function Index() {
         <CollapsibleSection title={tr("Progi wyborcze")}>
           <section>
             <div className="panel p-5">
-              <h2 className="font-display text-xl font-bold text-ink">{tr("Partie i progi")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {tr("Komitet partyjny 5%, koalicyjny 8%, mniejszość narodowa bez progu.")}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-xl font-bold text-ink">{tr("Partie i progi")}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {tr("Komitet partyjny 5%, koalicyjny 8%, mniejszość narodowa bez progu.")}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" asChild className="h-8 gap-1.5 text-xs text-primary">
+                  <Link to="/metoda-dhondta">
+                    <Calculator className="h-3.5 w-3.5" />
+                    <span>{tr("Zasady podziału mandatów (D'Hondt)")}</span>
+                  </Link>
+                </Button>
+              </div>
               <div className="mt-4 space-y-2">
                 {resultParties().map((p) => {
                   const s = scenario.parties[p.id] ?? DEFAULT_SETTINGS;

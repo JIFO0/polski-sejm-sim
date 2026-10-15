@@ -225,5 +225,8 @@ export const UI_TRANSLATIONS: Record<string, string> = {
   "Gdy średnia istnieje, nakładamy ją na profil okręgowy: w każdym okręgu zachowujemy wzajemne proporcje partii, a po zsumowaniu głosów w kraju wychodzi ta średnia. Mandaty dalej liczymy osobno w 41 okręgach.": "The average is applied to the district profile, retaining regional proportions while matching national support. Seats are still allocated separately in the 41 districts.",
   "Nie pobieramy automatycznie cudzych stron z sondażami. Nie odtwarzamy baz danych zestawień. Historyczne wyniki wyborów w symulatorze są osobnym, tylko do odczytu odniesieniem do danych PKW i nie są presetem sondażowym. Logotypy partii pochodzą z Wikimedia Commons i należą do ich właścicieli.": "We do not automatically scrape polling websites or reproduce other databases. Historical election results are read-only PKW references, not polling presets. Party logos come from Wikimedia Commons and belong to their owners.",
   "Metoda D'Hondta": "D'Hondt method",
-  "Kalkulator i metoda D'Hondta": "D'Hondt method & calculator"
+  "Kalkulator i metoda D'Hondta": "D'Hondt method & calculator",
+  "Zasady podziału mandatów (D'Hondt)": "Seat allocation rules (D'Hondt)",
+  "Jak liczone są mandaty? Metoda D'Hondta": "How seats are calculated? D'Hondt method",
+  "Jak procenty przeliczają się na mandaty?": "How do percentages convert to seats?"
 };
