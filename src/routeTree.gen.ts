@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OProjekcieRouteImport } from './routes/o-projekcie'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StatystykiRouteImport } from './routes/statystyki'
+import { Route as ZrodlaRouteImport } from './routes/zrodla'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,18 +35,25 @@ const StatystykiRoute = StatystykiRouteImport.update({
   path: '/statystyki',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZrodlaRoute = ZrodlaRouteImport.update({
+  id: '/zrodla',
+  path: '/zrodla',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
+  '/zrodla': typeof ZrodlaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
+  '/zrodla': typeof ZrodlaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,20 @@ export interface FileRoutesById {
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
+  '/zrodla': typeof ZrodlaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki'
+  fullPaths: '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki' | '/zrodla'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki'
-  id: '__root__' | '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki'
+  to: '/' | '/o-projekcie' | '/sitemap.xml' | '/statystyki' | '/zrodla'
+  id:
+    | '__root__'
+    | '/'
+    | '/o-projekcie'
+    | '/sitemap.xml'
+    | '/statystyki'
+    | '/zrodla'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +82,7 @@ export interface RootRouteChildren {
   OProjekcieRoute: typeof OProjekcieRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatystykiRoute: typeof StatystykiRoute
+  ZrodlaRoute: typeof ZrodlaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatystykiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zrodla': {
+      id: '/zrodla'
+      path: '/zrodla'
+      fullPath: '/zrodla'
+      preLoaderRoute: typeof ZrodlaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   OProjekcieRoute: OProjekcieRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatystykiRoute: StatystykiRoute,
+  ZrodlaRoute: ZrodlaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
