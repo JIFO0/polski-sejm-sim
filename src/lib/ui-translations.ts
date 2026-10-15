@@ -1,4 +1,5 @@
 export const UI_TRANSLATIONS: Record<string, string> = {
+  "sekcję": "section",
   "Symulator wyborów do Sejmu RP 2027": "Polish parliamentary election simulator 2027",
   "Symulator wyborów do Sejmu 2027": "Parliamentary election simulator 2027",
   "Narzędzie do analizy poparcia, frekwencji i możliwych koalicji. Gdy w zbiorze są opublikowane sondaże, punktem wyjścia jest średnia liczona przez SejmSim.": "Explore support, turnout and possible coalitions. Published polls provide the starting point through SejmSim’s weighted average.",

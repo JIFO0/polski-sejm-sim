@@ -63,7 +63,14 @@ export function CommunityScenariosDialog({
     void getFeatured()
       .then((res) => {
         if (res.ok && Array.isArray(res.items)) {
-          setItems(res.items as unknown as FeaturedItem[]);
+          const items: FeaturedItem[] = [];
+          for (const item of res.items) {
+            try {
+              const scenario = JSON.parse(item.scenarioJson) as Scenario;
+              if (scenario.version === 1 && scenario.districts && scenario.parties) items.push({ ...item, scenario });
+            } catch { /* Skip malformed archived scenarios. */ }
+          }
+          setItems(items);
         }
       })
       .catch((err) => {

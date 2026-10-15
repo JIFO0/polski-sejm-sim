@@ -24,9 +24,9 @@ export function CollapsibleSection({
         <Button
           variant="ghost"
           className="mb-1 h-auto min-h-11 w-full justify-between rounded-b-none rounded-t-lg border border-border/70 bg-surface/85 px-4 py-3 text-left shadow-sm hover:bg-surface"
-          aria-label={`${open ? tr("Zwiń") : tr("Rozwiń")} sekcję ${title}`}
+          aria-label={`${open ? tr("Zwiń") : tr("Rozwiń")} ${tr("sekcję")} ${tr(title)}`}
         >
-          <span className="font-display text-lg font-bold text-ink">{title}</span>
+          <span className="font-display text-lg font-bold text-ink">{tr(title)}</span>
           <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             {open ? tr("Zwiń") : tr("Rozwiń")}
             <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
