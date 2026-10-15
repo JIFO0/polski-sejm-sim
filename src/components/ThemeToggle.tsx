@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
 
 const KEY = "sejmsim.theme";
 const listeners = new Set<() => void>();
@@ -36,6 +37,7 @@ export function setDarkTheme(dark: boolean) {
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const dark = useDarkTheme();
+  const en = useLanguage() === "en";
 
   return (
     <Button
@@ -43,8 +45,8 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       type="button"
       role="switch"
       aria-checked={dark}
-      aria-label={dark ? "Włącz jasny motyw" : "Włącz ciemny motyw"}
-      title={dark ? "Jasny motyw" : "Ciemny motyw"}
+      aria-label={en ? (dark ? "Switch to light theme" : "Switch to dark theme") : (dark ? "Włącz jasny motyw" : "Włącz ciemny motyw")}
+      title={en ? (dark ? "Light theme" : "Dark theme") : (dark ? "Jasny motyw" : "Ciemny motyw")}
       onClick={() => {
         const next = !isDark();
         setDarkTheme(next);
