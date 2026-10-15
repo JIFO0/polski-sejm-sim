@@ -10,6 +10,12 @@ import { defaultScenario, type Scenario } from "@/lib/simulation";
 import { isScenarioModified, nationalSharesOf, track } from "@/lib/analytics";
 import { PARTIES, PARTY_MAP } from "@/data/parties";
 import { CommunityScenariosDialog } from "@/components/CommunityScenariosDialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { ScenarioDetails } from "@/components/ScenarioDetails";
+import { SocialExportButton } from "@/components/SocialExportButton";
+import { scenarioMetadata } from "@/lib/scenario-metadata";
+import { useLanguage } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -99,11 +105,14 @@ function scenarioPartyMap(sc: Scenario): Record<string, { short: string; color: 
 export function ScenarioShelf({
   scenario,
   onLoad,
+  onMetadataChange,
 }: {
   scenario: Scenario;
   onLoad: (scenario: Scenario) => void;
+  onMetadataChange: (metadata: Pick<Scenario, "author" | "description">) => void;
 }) {
   const tr = useTranslation();
+  const en = useLanguage() === "en";
   const [saved, setSaved] = useState<SavedScenario[]>([]);
   const [name, setName] = useState("");
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
@@ -171,9 +180,10 @@ export function ScenarioShelf({
         id: newId,
         name: title,
         savedAt: new Date().toISOString(),
-        scenario: { ...scenario, name: title, createdAt: new Date().toISOString() },
+        scenario: { ...scenario, ...scenarioMetadata(scenario.author, scenario.description), name: title, createdAt: new Date().toISOString() },
       };
       if (!persist([entry, ...saved].slice(0, 10))) return;
+      onLoad(entry.scenario);
       setActiveScenarioId(newId);
       setName("");
       try {
@@ -365,6 +375,16 @@ export function ScenarioShelf({
           </Button>
         </div>
 
+        <details className="mt-3 border-b border-border pb-3">
+          <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">{en ? "Author and description (optional)" : "Autor i opis (opcjonalnie)"}</summary>
+          <div className="mt-3 space-y-3">
+            <div className="space-y-1.5"><Label htmlFor="scenario-author" className="text-xs">{en ? "Scenario author (optional)" : "Autor scenariusza (opcjonalnie)"}</Label><Input id="scenario-author" value={scenario.author ?? ""} maxLength={80} onChange={(event) => onMetadataChange({ author: event.target.value })} placeholder={en ? "Name or nickname" : "Imię lub pseudonim"} className="text-xs" /></div>
+            <div className="space-y-1.5"><Label htmlFor="scenario-description" className="text-xs">{en ? "Scenario description (optional)" : "Opis scenariusza (opcjonalnie)"}</Label><Textarea id="scenario-description" value={scenario.description ?? ""} maxLength={2000} rows={4} onChange={(event) => onMetadataChange({ description: event.target.value })} placeholder={en ? "Describe your assumptions and the polls you based your scenario on." : "Opisz swoje założenia oraz sondaże, na których bazuje scenariusz."} className="text-xs" /></div>
+          </div>
+        </details>
+        <div className="mt-3"><SocialExportButton scenario={{ ...scenario, name: name.trim() || scenario.name }} /></div>
+        {(scenario.author || scenario.description) && <div className="mt-2 border-b border-border"><p className="text-xs font-semibold text-ink">{scenario.name}</p><ScenarioDetails scenario={scenario} /></div>}
+
         {/* Lista zapisanych scenariuszy z wyraźnymi nazwami */}
         <div className="mt-3 flex-1 space-y-2.5 overflow-y-auto pr-1">
           {saved.length === 0 ? (
@@ -418,6 +438,7 @@ export function ScenarioShelf({
                     ) : null}
                   </div>
 
+                  <ScenarioDetails scenario={item.scenario} />
                   {/* Pigułki z czołowymi partiami i data */}
                   <div className="flex flex-wrap items-center gap-1.5">
                     {topParties.map((p) => (
@@ -446,6 +467,7 @@ export function ScenarioShelf({
                       <Play className="h-3 w-3 fill-current" /> {isActive ? tr("Aktywny") : tr("Wczytaj")}
                     </Button>
                     <div className="flex items-center gap-1">
+                      <SocialExportButton scenario={item.scenario} compact />
                       <Button
                         variant="outline"
                         size="sm"
@@ -579,6 +601,7 @@ export function ScenarioShelf({
                         <p className="mt-1 num text-xs text-muted-foreground">
                           {tr("Zapisano:")}{new Date(item.savedAt).toLocaleString("pl-PL")}
                         </p>
+                        <ScenarioDetails scenario={item.scenario} />
 
                         {/* Pełny pasek poparcia partii */}
                         <div className="mt-4 space-y-1.5">
@@ -621,6 +644,7 @@ export function ScenarioShelf({
                           <Play className="h-3.5 w-3.5 fill-current" /> {isActive ? tr("Wczytano do Sejmu") : tr("Wczytaj scenariusz")}
                         </Button>
                         <div className="flex items-center gap-1.5">
+                          <SocialExportButton scenario={item.scenario} compact />
                           <Button
                             variant="outline"
                             size="sm"
