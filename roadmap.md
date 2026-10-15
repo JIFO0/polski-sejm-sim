@@ -1,5 +1,10 @@
 # Roadmap
 
+- [ ] Logo i podpis SejmSim na grafice do posta
+- [ ] Przywrócić jasny motyw także dla wcześniejszych ustawień
+- [ ] Czerwone ludziki we wszystkich wejściach do społeczności
+- [ ] Zaproszenie raz po minucie i weryfikacja
+
 - [x] Jasny motyw i sondaże pod instrukcją
 - [x] Opcjonalny autor i opis zapisane i widoczne przy scenariuszach
 - [x] Grafika 1200×630 do posta z oznaczeniem scenariusza społeczności

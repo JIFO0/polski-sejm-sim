@@ -1,6 +1,6 @@
 import { useTranslation } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Download, FolderOpen, Link2, Loader2, Maximize2, Play, Plus, Sparkles, Trash2, Upload } from "lucide-react";
+import { Check, Copy, Download, FolderOpen, Link2, Loader2, Maximize2, Play, Plus, Users, Trash2, Upload } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { createShare, getShare } from "@/lib/shares.functions";
 import { toast } from "sonner";
@@ -313,7 +313,7 @@ export function ScenarioShelf({
               className="min-h-9 gap-1 text-[11px] font-semibold text-ink"
               title="Zobacz scenariusze stworzone przez społeczność"
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" /> {tr("Społeczność")}</Button>
+              <Users className="h-3.5 w-3.5 text-primary" /> {tr("Społeczność")}</Button>
             <Button
               variant="outline"
               size="sm"
@@ -400,7 +400,7 @@ export function ScenarioShelf({
                   onClick={() => setCommunityOpen(true)}
                   className="gap-1.5 text-xs font-semibold border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> {tr("Poznaj scenariusze społeczności")}</Button>
+                  <Users className="h-3.5 w-3.5 text-primary" /> {tr("Poznaj scenariusze społeczności")}</Button>
               </div>
             </div>
           ) : (
@@ -543,7 +543,7 @@ export function ScenarioShelf({
                 }}
                 className="gap-1.5 text-xs font-semibold shrink-0"
               >
-                <Sparkles className="h-3.5 w-3.5 text-amber-500" /> {tr("Scenariusze społeczności")}</Button>
+                <Users className="h-3.5 w-3.5 text-primary" /> {tr("Scenariusze społeczności")}</Button>
             </div>
           </DialogHeader>
 
@@ -564,7 +564,7 @@ export function ScenarioShelf({
                     }}
                     className="gap-1.5 text-xs font-semibold border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
                   >
-                    <Sparkles className="h-3.5 w-3.5 text-amber-500" /> {tr("Poznaj scenariusze społeczności")}</Button>
+                    <Users className="h-3.5 w-3.5 text-primary" /> {tr("Poznaj scenariusze społeczności")}</Button>
                 </div>
               </div>
             ) : (

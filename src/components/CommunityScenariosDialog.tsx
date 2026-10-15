@@ -1,6 +1,6 @@
 import { useTranslation } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Copy, Eye, Loader2, Play, Sparkles, Users } from "lucide-react";
+import { Copy, Eye, Loader2, Play, Users } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { getFeaturedScenarios } from "@/lib/shares.functions";
 import { toast } from "sonner";
@@ -104,7 +104,7 @@ export function CommunityScenariosDialog({
       <DialogContent className="max-h-[85vh] w-[min(48rem,calc(100vw-2rem))] overflow-y-auto p-6 sm:rounded-2xl">
         <DialogHeader>
           <div className="flex items-center gap-2 text-primary">
-            <Sparkles className="h-5 w-5 text-amber-500" />
+            <Users className="h-5 w-5 text-primary" />
             <DialogTitle className="font-display text-xl font-bold text-ink">
               {tr("Scenariusze społeczności")}</DialogTitle>
           </div>
@@ -119,7 +119,7 @@ export function CommunityScenariosDialog({
           </div>
         ) : items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <Users className="mx-auto h-8 w-8 text-muted-foreground/60" />
+            <Users className="mx-auto h-8 w-8 text-primary" />
             <p className="mt-2 text-sm font-semibold text-ink">{tr("Brak wyróżnionych scenariuszy")}</p>
             <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
               {tr("Scenariusze wybrane przez autora pojawią się tutaj wkrótce. Stwórz własny wariant, udostępnij go i podziel się ze znajomymi!")}</p>

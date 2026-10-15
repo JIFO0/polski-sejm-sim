@@ -16,8 +16,8 @@ import { FeedbackInvitation } from "@/components/FeedbackInvitation";
 import { useLanguage } from "@/lib/i18n";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { THEME_BOOT } from "@/lib/theme-preference";
 
-const THEME_BOOT = `(function(){try{var dark=localStorage.getItem("sejmsim.theme")==="dark";document.documentElement.classList.toggle("dark",dark);document.documentElement.style.colorScheme=dark?"dark":"light";}catch(e){}})();`;
 
 function NotFoundComponent() {
   return (

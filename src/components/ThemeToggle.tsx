@@ -3,8 +3,9 @@ import { Moon, Sun } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
+import { THEME_KEY } from "@/lib/theme-preference";
 
-const KEY = "sejmsim.theme";
+const KEY = THEME_KEY;
 const listeners = new Set<() => void>();
 
 function subscribe(listener: () => void) {
