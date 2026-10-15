@@ -1,5 +1,12 @@
 import { DISTRICTS, type District } from "@/data/districts";
-import { PARTIES, PARTY_MAP, type CustomPartyDef, type MergerDef, type ThresholdKind } from "@/data/parties";
+import {
+  PARTIES,
+  PARTY_MAP,
+  type CustomPartyDef,
+  type MergerDef,
+  type ThresholdKind,
+} from "@/data/parties";
+import { baselineSharesFor, currentPollAverage } from "@/lib/poll-average";
 
 export const BASE_TURNOUT = 74.4;
 export const MAJORITY = 231;
@@ -46,7 +53,11 @@ export interface Scenario {
 export function defaultScenario(): Scenario {
   const districts: Record<number, DistrictState> = {};
   for (const d of DISTRICTS) {
-    districts[d.id] = { shares: { ...d.base }, turnout: BASE_TURNOUT, electorate: d.electorate };
+    districts[d.id] = {
+      shares: baselineSharesFor(d.id),
+      turnout: BASE_TURNOUT,
+      electorate: d.electorate,
+    };
   }
   const parties: Record<string, PartySettings> = {};
   for (const p of PARTIES) {
@@ -58,7 +69,7 @@ export function defaultScenario(): Scenario {
   }
   return {
     version: 1,
-    name: "Sondaż ewybory.eu: punkt wyjścia",
+    name: currentPollAverage() ? "Średnia sondaży SejmSim" : "Profil okręgowy SejmSim",
     createdAt: new Date().toISOString(),
     turnoutEffect: 1,
     independentSupport: false,
@@ -92,7 +103,8 @@ export function effectiveShares(
     const settings = parties[id];
     if (settings?.enabled === false) continue;
     const fallbackSens = PARTY_MAP[id]?.turnoutSensitivity ?? 0;
-    const sens = settings?.turnoutSensitivity !== undefined ? settings.turnoutSensitivity : fallbackSens;
+    const sens =
+      settings?.turnoutSensitivity !== undefined ? settings.turnoutSensitivity : fallbackSens;
     const v = Math.max(0, pct * (1 + sens * turnoutEffect * delta));
     raw[id] = v;
     sum += v;
@@ -202,7 +214,10 @@ export function simulate(scenario: Scenario): SimulationResult {
       turnout: BASE_TURNOUT,
       electorate: d.electorate,
     };
-    const electorate = typeof state.electorate === "number" && state.electorate > 0 ? state.electorate : d.electorate;
+    const electorate =
+      typeof state.electorate === "number" && state.electorate > 0
+        ? state.electorate
+        : d.electorate;
     const shares = effectiveShares(
       d,
       state,
@@ -242,36 +257,38 @@ export function simulate(scenario: Scenario): SimulationResult {
   });
 
   const seatsByParty: Record<string, number> = {};
-  const districts: DistrictResult[] = perDistrict.map(({ d, shares, votes, allocVotes, valid, electorate }) => {
-    const eligible: Record<string, number> = {};
-    for (const id of qualified) eligible[id] = allocVotes[id] ?? 0;
-    const seatsHere = dhondt(eligible, d.seats);
-    for (const [id, n] of Object.entries(seatsHere)) {
-      seatsByParty[id] = (seatsByParty[id] ?? 0) + n;
-    }
-    let winner: string | null = null;
-    let bestSeats = -1;
-    let bestVotes = -1;
-    for (const [id, n] of Object.entries(seatsHere)) {
-      if (n > bestSeats || (n === bestSeats && (allocVotes[id] ?? 0) > bestVotes)) {
-        bestSeats = n;
-        bestVotes = allocVotes[id] ?? 0;
-        winner = id;
+  const districts: DistrictResult[] = perDistrict.map(
+    ({ d, shares, votes, allocVotes, valid, electorate }) => {
+      const eligible: Record<string, number> = {};
+      for (const id of qualified) eligible[id] = allocVotes[id] ?? 0;
+      const seatsHere = dhondt(eligible, d.seats);
+      for (const [id, n] of Object.entries(seatsHere)) {
+        seatsByParty[id] = (seatsByParty[id] ?? 0) + n;
       }
-    }
-    if (bestSeats <= 0) winner = null;
-    return {
-      id: d.id,
-      name: d.name,
-      seats: d.seats,
-      electorate,
-      votes,
-      shares,
-      seatsByParty: seatsHere,
-      winner,
-      validVotes: valid,
-    };
-  });
+      let winner: string | null = null;
+      let bestSeats = -1;
+      let bestVotes = -1;
+      for (const [id, n] of Object.entries(seatsHere)) {
+        if (n > bestSeats || (n === bestSeats && (allocVotes[id] ?? 0) > bestVotes)) {
+          bestSeats = n;
+          bestVotes = allocVotes[id] ?? 0;
+          winner = id;
+        }
+      }
+      if (bestSeats <= 0) winner = null;
+      return {
+        id: d.id,
+        name: d.name,
+        seats: d.seats,
+        electorate,
+        votes,
+        shares,
+        seatsByParty: seatsHere,
+        winner,
+        validVotes: valid,
+      };
+    },
+  );
 
   return {
     districts,

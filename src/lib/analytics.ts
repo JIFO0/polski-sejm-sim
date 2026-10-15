@@ -19,13 +19,10 @@ export function nationalSharesOf(scenario: Scenario): Record<string, number> {
     Array.from(allParties.values()).map((party) => [
       party.id,
       Math.round(
-        (DISTRICTS.reduce(
-          (total, district) => {
-            const el = scenario.districts[district.id]?.electorate ?? district.electorate;
-            return total + (scenario.districts[district.id]?.shares[party.id] ?? 0) * el;
-          },
-          0,
-        ) /
+        (DISTRICTS.reduce((total, district) => {
+          const el = scenario.districts[district.id]?.electorate ?? district.electorate;
+          return total + (scenario.districts[district.id]?.shares[party.id] ?? 0) * el;
+        }, 0) /
           (weight > 0 ? weight : 1)) *
           10,
       ) / 10,
@@ -53,7 +50,8 @@ function detectTrafficSource(): string {
     if (!referrer) return "bezpośrednie";
     const host = new URL(referrer).hostname.toLowerCase();
     if (host.includes("google")) return "google";
-    if (host.includes("twitter") || host.includes("t.co") || host.includes("x.com")) return "twitter/x";
+    if (host.includes("twitter") || host.includes("t.co") || host.includes("x.com"))
+      return "twitter/x";
     if (host.includes("facebook") || host.includes("fb.com")) return "facebook";
     if (host.includes("wykop")) return "wykop";
     if (host.includes("reddit")) return "reddit";
@@ -64,17 +62,20 @@ function detectTrafficSource(): string {
   }
 }
 
+import { baselineSharesFor } from "@/lib/poll-average";
 import { BASE_TURNOUT } from "@/lib/simulation";
 
-/** Sprawdza czy scenariusz różni się czymkolwiek od domyślnego punktu wyjścia ewybory.eu */
+/** Sprawdza, czy scenariusz różni się od punktu wyjścia (średnia SejmSim albo profil okręgowy). */
 export function isScenarioModified(scenario: Scenario): boolean {
   if (!scenario || !scenario.districts) return false;
   for (const d of DISTRICTS) {
     const st = scenario.districts[d.id];
     if (!st) return true;
     if (Math.abs((st.turnout ?? BASE_TURNOUT) - BASE_TURNOUT) > 0.05) return true;
-    for (const [partyId, baseShare] of Object.entries(d.base)) {
-      if (Math.abs((st.shares[partyId] ?? 0) - baseShare) > 0.05) return true;
+    const base = baselineSharesFor(d.id);
+    const partyIds = new Set([...Object.keys(base), ...Object.keys(st.shares)]);
+    for (const partyId of partyIds) {
+      if (Math.abs((st.shares[partyId] ?? 0) - (base[partyId] ?? 0)) > 0.05) return true;
     }
   }
   return false;
@@ -91,9 +92,12 @@ export function detectDevice(): "telefon" | "tablet" | "komputer" {
 
   // Smartfony / urządzenia mobilne
   const isMobileUA =
-    /mobile|iphone|ipod|android.*mobile|blackberry|iemobile|opera mini|webos|windows phone/i.test(ua);
+    /mobile|iphone|ipod|android.*mobile|blackberry|iemobile|opera mini|webos|windows phone/i.test(
+      ua,
+    );
 
-  const w = window.innerWidth || (document.documentElement ? document.documentElement.clientWidth : 0);
+  const w =
+    window.innerWidth || (document.documentElement ? document.documentElement.clientWidth : 0);
 
   if (isTabletUA) return "tablet";
   if (isMobileUA) return "telefon";
@@ -120,4 +124,3 @@ export function trackPageViewOncePerSession() {
     meta: `${detectDevice()}|${detectTrafficSource()}`,
   });
 }
-

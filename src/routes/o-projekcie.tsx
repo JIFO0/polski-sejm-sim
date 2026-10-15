@@ -1,6 +1,16 @@
 import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, BarChart3, ExternalLink, Globe, Mail, MapPinned, Play, Save, UsersRound } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  ExternalLink,
+  Globe,
+  Mail,
+  MapPinned,
+  Play,
+  Save,
+  UsersRound,
+} from "lucide-react";
 
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { FloatingNav } from "@/components/FloatingNav";
@@ -117,15 +127,29 @@ function AboutProject() {
                 Cześć, nazywam się <strong>Iwo Laskowski</strong>.
               </p>
               <p>
-                Pomysł na SejmSim zrodził się z dyskusji z przyjacielem o kolejnych sondażach i prospektach na najbliższe wybory. Niestety nie było za bardzo narzędzia które w łatwy i wygodny sposób dawało możliwość na edycję wszystkich parametrów. Inna sprawa jest też taka, że w mediach widzimy zasadniczo głównie słupki z poparciem ogólnokrajowym, a niekoniecznie skupiamy się na poszczególnych konkretnych okręgach, które mają wbrew pozorom bardzo duże znaczenie.
+                Pomysł na SejmSim zrodził się z dyskusji z przyjacielem o kolejnych sondażach i
+                prospektach na najbliższe wybory. Niestety nie było za bardzo narzędzia które w
+                łatwy i wygodny sposób dawało możliwość na edycję wszystkich parametrów. Inna sprawa
+                jest też taka, że w mediach widzimy zasadniczo głównie słupki z poparciem
+                ogólnokrajowym, a niekoniecznie skupiamy się na poszczególnych konkretnych okręgach,
+                które mają wbrew pozorom bardzo duże znaczenie.
               </p>
               <p>
-                O mandatach decydują <strong>41 okręgów wyborczych</strong>, lokalna frekwencja oraz metoda D&apos;Hondta,
-                która premiuje silniejsze ugrupowania, a mniejsze partie zepchnąć pod próg. Różnica 1–2 punktów
-                procentowych w odpowiednich regionach może przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji. Celem tego narzędzia jest to uświadomić.
+                O mandatach decydują <strong>41 okręgów wyborczych</strong>, lokalna frekwencja oraz
+                metoda D&apos;Hondta, która premiuje silniejsze ugrupowania, a mniejsze partie
+                zepchnąć pod próg. Różnica 1–2 punktów procentowych w odpowiednich regionach może
+                przesądzić o tym, kto ma większość 231 posłów, a kto ląduje w opozycji. Celem tego
+                narzędzia jest to uświadomić.
               </p>
               <p>
-                Jestem programistą, więc tego typu problem uznałem że jest w granicach moich możliwości. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go w publiczny, bezpłatny symulator na <strong className="text-foreground">sejmsim.pl</strong>. Potrzebowałem troszkę konsultacji z ludźmi mądrzejszymi ode mnie, ale przecież na tym polega nauka nowych rzeczy. Ostatecznie jednak po prostu chcę, żeby cała Polska mogła analizować poparcie, scenariusze i być świadomymi wyborcami zaangażowanymi w proces demokratyczny.
+                Jestem programistą, więc tego typu problem uznałem że jest w granicach moich
+                możliwości. Zacząłem od skryptu w Pythonie na własny użytek, a potem rozwinąłem go w
+                publiczny, bezpłatny symulator na{" "}
+                <strong className="text-foreground">sejmsim.pl</strong>. Potrzebowałem troszkę
+                konsultacji z ludźmi mądrzejszymi ode mnie, ale przecież na tym polega nauka nowych
+                rzeczy. Ostatecznie jednak po prostu chcę, żeby cała Polska mogła analizować
+                poparcie, scenariusze i być świadomymi wyborcami zaangażowanymi w proces
+                demokratyczny.
               </p>
             </div>
           </header>
@@ -133,18 +157,25 @@ function AboutProject() {
           {/* CO POTRAFI SEJMSIM */}
           <section aria-labelledby="funkcje-projektu" className="border-t border-border pt-10">
             <p className="eyebrow">Możliwości narzędzia</p>
-            <h2 id="funkcje-projektu" className="mt-1 font-display text-2xl font-bold text-ink sm:text-3xl">
+            <h2
+              id="funkcje-projektu"
+              className="mt-1 font-display text-2xl font-bold text-ink sm:text-3xl"
+            >
               Co można sprawdzić w SejmSim?
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-base">
-              Punktem wyjścia jest średnia sondażowa serwisu ewybory.eu wyciągnięta z końcówki września, ale każdy parametr można dowolnie modyfikować, aby zgadzał się z naszymi predykcjami.
+              Gdy w zbiorze są opublikowane sondaże, punktem wyjścia jest średnia liczona przez sam
+              SejmSim. Każdy parametr można potem zmienić. Opis danych, wag i ciszy wyborczej jest
+              na stronie źródeł.
             </p>
             <ul className="mt-6 grid gap-4 sm:grid-cols-2">
               {features.map(({ icon: Icon, title, text }) => (
                 <li key={title} className="panel p-5 transition-shadow hover:shadow-md">
                   <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
                   <h3 className="mt-3 font-display text-base font-bold text-ink">{title}</h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">{text}</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                    {text}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -155,8 +186,9 @@ function AboutProject() {
             <p className="eyebrow">Ważna uwaga</p>
             <h2 className="mt-1 font-display text-2xl font-bold text-ink">Symulator nie wróżka</h2>
             <p className="mx-auto mt-2.5 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              SejmSim pokazuje matematyczne skutki przyjętych założeń w oparciu o algorytm D&apos;Hondta i rozkład okręgowy.
-              To narzędzie analityczne do sprawdzania scenariuszy i nie jest prognozą ani oficjalnym badaniem opinii.
+              SejmSim pokazuje matematyczne skutki przyjętych założeń w oparciu o algorytm
+              D&apos;Hondta i rozkład okręgowy. To narzędzie analityczne do sprawdzania scenariuszy
+              i nie jest prognozą ani oficjalnym badaniem opinii.
             </p>
           </section>
 
@@ -188,9 +220,7 @@ function AboutProject() {
                         @jifo
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Twórca SejmSim z Gdyni
-                    </p>
+                    <p className="text-xs text-muted-foreground">Twórca SejmSim z Gdyni</p>
                   </div>
                 </div>
 
@@ -215,7 +245,10 @@ function AboutProject() {
 
               <div className="mt-5 border-t border-border pt-5 space-y-3">
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Platforma <strong className="text-foreground">sejmsim.pl</strong> powstaje pro bono jako niezależne, darmowe, ogólnodostępne narzędzie obywatelskie bez reklam. Każda wpłata jest ogromnie doceniana i pomaga utrzymać serwery, dopracowywać algorytmy i dodawać nowe funkcje. Jeżeli masz jakieś pomysły, daj koniecznie znać!
+                  Platforma <strong className="text-foreground">sejmsim.pl</strong> powstaje pro
+                  bono jako niezależne, darmowe, ogólnodostępne narzędzie obywatelskie bez reklam.
+                  Każda wpłata jest ogromnie doceniana i pomaga utrzymać serwery, dopracowywać
+                  algorytmy i dodawać nowe funkcje. Jeżeli masz jakieś pomysły, daj koniecznie znać!
                 </p>
                 <p className="font-display text-sm font-semibold text-ink">
                   Pomyślnych analiz życzy JIFO!
@@ -226,6 +259,9 @@ function AboutProject() {
                     <Link to="/">
                       <Play className="mr-1.5 h-4 w-4 fill-current" /> Uruchom SejmSim
                     </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/zrodla">Źródła i metodologia</Link>
                   </Button>
                   <SupportButton size="default" />
                 </div>
