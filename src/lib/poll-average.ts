@@ -61,6 +61,10 @@ export interface Poll {
   /** Liczebność próby. */
   sampleSize: number | null;
   method: PollMethod | null;
+  /** Pełniejszy opis metody, gdy skrót `method` nie wystarcza (np. udział CATI i CAWI). */
+  methodDetail?: string | null | undefined;
+  /** Tytuł i numer publikacji źródłowej, np. „CBOS Flash nr 35/2026”. */
+  publicationTitle?: string | null | undefined;
   /** Poparcie partii w procentach. Klucze jak w `src/data/parties.ts`. */
   results: Record<string, number> | null;
   /** Link do pierwotnej publikacji. */
@@ -117,6 +121,8 @@ export const pollSchema = z.object({
   publishedAt: dayField.nullable(),
   sampleSize: z.number().int().positive().nullable(),
   method: z.enum(["CATI", "CAWI", "mix"]).nullable(),
+  methodDetail: z.string().min(1).nullable().optional(),
+  publicationTitle: z.string().min(1).nullable().optional(),
   results: z.record(z.string(), z.number().min(0).max(100)).nullable(),
   sourceUrl: z.string().url().nullable(),
 });

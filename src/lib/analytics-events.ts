@@ -23,6 +23,7 @@ export const EVENTS = [
   "support_click",
   "contact_click",
   "about_view",
+  "dhondt_guide_view",
   "custom_party_add",
   "merger_create",
   "theme_toggle",
@@ -57,6 +58,7 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   support_click: "Kliknięcia wsparcia (Buy Me a Coffee)",
   contact_click: "Kliknięcia w kontakt (jifo.dev/#kontakt)",
   about_view: "Wejścia na stronę o projekcie (/o-projekcie)",
+  dhondt_guide_view: "Wejścia na stronę metody D'Hondta",
   custom_party_add: "Dodane własne partie",
   merger_create: "Utworzone wspólne listy",
   theme_toggle: "Przełączenia motywu",
@@ -64,4 +66,3 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   community_scenario_load: "Wczytane scenariusze społeczności",
   share_copy: "Skopiowane linki społeczności",
 };
-

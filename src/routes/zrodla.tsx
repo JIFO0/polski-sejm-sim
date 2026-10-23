@@ -8,6 +8,7 @@ import { FloatingNav } from "@/components/FloatingNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { ParticleField } from "@/components/ParticleField";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { OwnWorkNotice } from "@/components/OwnWorkNotice";
 import { Button } from "@/components/ui/button";
 import { trackPageViewOncePerSession } from "@/lib/analytics";
 import {
@@ -73,6 +74,17 @@ function SourcesPage() {
           <h1 className="mt-1 font-display text-3xl font-bold text-ink sm:text-4xl">
             {tr("Źródła i metodologia")} </h1>
         </header>
+
+        <OwnWorkNotice />
+
+        <section className="space-y-3 text-sm leading-relaxed text-muted-foreground md:text-base">
+          <h2 className="font-display text-xl font-bold text-ink">
+            {tr("Centrum Badania Opinii Społecznej (CBOS)")}
+          </h2>
+          <p>
+            {tr("sejmsim.pl korzysta z wyników opublikowanych na cbos.pl za zgodą Centrum Badania Opinii Społecznej (CBOS), w celach niekomercyjnych. Przy każdym badaniu podajemy pełną nazwę ośrodka, tytuł i numer publikacji, termin, wielkość próby, metodę i bezpośredni link. Średnia liczona na tej stronie jest opracowaniem własnym sejmsim.pl, a nie oficjalnym wynikiem CBOS.")}
+          </p>
+        </section>
 
         <section className="space-y-3 text-sm leading-relaxed text-muted-foreground md:text-base">
           <h2 className="font-display text-xl font-bold text-ink">{tr("Skąd biorą się liczby")}</h2>

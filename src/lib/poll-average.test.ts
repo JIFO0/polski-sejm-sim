@@ -92,7 +92,22 @@ assert.equal(dataset.length, POLLS.length);
 assert.ok(dataset.length >= 8);
 const cbos = dataset.find((item) => item.id === "cbos-2026-10-05");
 assert.equal(cbos?.results?.["ko"], 28.6);
-assert.equal(cbos?.sourceUrl?.includes("cbos.pl"), true);
+assert.equal(cbos?.institute, "Centrum Badania Opinii Społecznej (CBOS)");
+assert.equal(cbos?.publicationTitle?.includes("CBOS Flash nr 35/2026"), true);
+assert.equal(cbos?.methodDetail?.includes("CATI"), true);
+assert.equal(cbos?.sampleSize, 1000);
+assert.equal(
+  cbos?.sourceUrl,
+  "https://www.cbos.pl/PL/publikacje/flashe/pliki/2026/fl_035_2026.pdf",
+);
+const cbosSeptember = dataset.find((item) => item.id === "cbos-2026-09-07");
+assert.equal(cbosSeptember?.publicationTitle?.includes("CBOS Flash nr 33/2026"), true);
+assert.equal(cbosSeptember?.sampleSize, 1001);
+assert.equal(cbosSeptember?.fieldworkFrom, "2026-09-07");
+assert.equal(cbosSeptember?.fieldworkTo, "2026-09-09");
+const withoutOptional = dataset.find((item) => item.id === "opinia24-2026-10-05");
+assert.equal(withoutOptional?.publicationTitle, undefined);
+assert.equal(withoutOptional?.institute, "Opinia24");
 assert.throws(() => parsePollDataset([dataset[0], { ...dataset[0], id: dataset[0]?.id }]));
 assert.throws(() =>
   parsePollDataset([

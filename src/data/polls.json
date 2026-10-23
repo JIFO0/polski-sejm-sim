@@ -1,13 +1,15 @@
 [
   {
     "id": "cbos-2026-10-05",
-    "institute": "CBOS",
+    "institute": "Centrum Badania Opinii Społecznej (CBOS)",
     "commissioner": null,
     "fieldworkFrom": "2026-10-05",
     "fieldworkTo": "2026-10-08",
     "publishedAt": "2026-10-12",
     "sampleSize": 1000,
     "method": "mix",
+    "methodDetail": "wywiady telefoniczne wspomagane komputerowo (CATI – 80%) oraz wywiady internetowe (CAWI – 20%)",
+    "publicationTitle": "Preferencje partyjne w pierwszej dekadzie października (CATI). CBOS Flash nr 35/2026",
     "results": {
       "ko": 28.6,
       "pis": 18.2,
@@ -19,7 +21,7 @@
       "psl": 2.8,
       "pl2050": 1.2
     },
-    "sourceUrl": "https://www.cbos.pl/PL/publikacje/flashe_tekst.php?nr=35%2F2026"
+    "sourceUrl": "https://www.cbos.pl/PL/publikacje/flashe/pliki/2026/fl_035_2026.pdf"
   },
   {
     "id": "pollster-se-2026-10-06",
@@ -157,13 +159,15 @@
   },
   {
     "id": "cbos-2026-09-07",
-    "institute": "CBOS",
+    "institute": "Centrum Badania Opinii Społecznej (CBOS)",
     "commissioner": null,
     "fieldworkFrom": "2026-09-07",
     "fieldworkTo": "2026-09-09",
     "publishedAt": "2026-09-11",
-    "sampleSize": 1000,
+    "sampleSize": 1001,
     "method": "mix",
+    "methodDetail": "wywiady telefoniczne wspomagane komputerowo (CATI – 80%) oraz wywiady internetowe (CAWI – 20%)",
+    "publicationTitle": "Preferencje partyjne w pierwszej dekadzie września (CATI). CBOS Flash nr 33/2026",
     "results": {
       "ko": 26.1,
       "pis": 15.0,
@@ -175,7 +179,7 @@
       "psl": 2.5,
       "pl2050": 0.8
     },
-    "sourceUrl": "https://www.cbos.pl/PL/publikacje/flashe_tekst.php?nr=33%2F2026"
+    "sourceUrl": "https://www.cbos.pl/PL/publikacje/flashe/pliki/2026/fl_033_2026.pdf"
   },
   {
     "id": "united-surveys-wp-2026-09-04",

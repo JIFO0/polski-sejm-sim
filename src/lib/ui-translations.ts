@@ -228,5 +228,13 @@ export const UI_TRANSLATIONS: Record<string, string> = {
   "Kalkulator i metoda D'Hondta": "D'Hondt method & calculator",
   "Zasady podziału mandatów (D'Hondt)": "Seat allocation rules (D'Hondt)",
   "Jak liczone są mandaty? Metoda D'Hondta": "How seats are calculated? D'Hondt method",
-  "Jak procenty przeliczają się na mandaty?": "How do percentages convert to seats?"
+  "Jak procenty przeliczają się na mandaty?": "How do percentages convert to seats?",
+  "Średnia i symulacja mandatów to opracowanie własne sejmsim.pl na podstawie opublikowanych sondaży, m.in. Centrum Badania Opinii Społecznej (CBOS). Nie są to oficjalne wyniki CBOS ani żadnego innego ośrodka.": "The average and the seat simulation are sejmsim.pl’s own analysis of published polls, including Centrum Badania Opinii Społecznej (CBOS). They are not official results of CBOS or of any other polling institute.",
+  "Wyniki wykorzystane i przetworzone przez sejmsim.pl": "Results used and processed by sejmsim.pl",
+  "Termin badania": "Fieldwork",
+  "Metoda": "Method",
+  "Publikacja": "Publication",
+  "Wielkość próby": "Sample size",
+  "Centrum Badania Opinii Społecznej (CBOS)": "Centrum Badania Opinii Społecznej (CBOS)",
+  "sejmsim.pl korzysta z wyników opublikowanych na cbos.pl za zgodą Centrum Badania Opinii Społecznej (CBOS), w celach niekomercyjnych. Przy każdym badaniu podajemy pełną nazwę ośrodka, tytuł i numer publikacji, termin, wielkość próby, metodę i bezpośredni link. Średnia liczona na tej stronie jest opracowaniem własnym sejmsim.pl, a nie oficjalnym wynikiem CBOS.": "sejmsim.pl uses results published on cbos.pl with the consent of Centrum Badania Opinii Społecznej (CBOS), for non-commercial purposes. Each poll is cited with the institute’s full name, publication title and number, fieldwork dates, sample size, method and a direct link. The average on this site is sejmsim.pl’s own analysis, not an official CBOS result.",
 };

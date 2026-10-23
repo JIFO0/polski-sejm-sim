@@ -48,6 +48,7 @@ import { TurnoutGroups } from "@/components/TurnoutGroups";
 import { HistoricalResults } from "@/components/HistoricalResults";
 import { HistoricalDistrictResults } from "@/components/HistoricalDistrictResults";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { OwnWorkNotice } from "@/components/OwnWorkNotice";
 import { PollSourcesPanel } from "@/components/PollSourcesPanel";
 import { PartyLogo } from "@/components/PartyLogo";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
@@ -569,6 +570,7 @@ function Index() {
                     </Link>
                   </div>
                 </div>
+                <OwnWorkNotice className="mt-4" />
               </div>
               <ScenarioShelf scenario={scenario} onLoad={loadScenario} onMetadataChange={(metadata) => setScenario((current) => ({ ...current, ...metadata }))} />
             </div>

@@ -52,12 +52,14 @@ Dopisz jeden obiekt do tablicy w `src/data/polls.json`. Nie zgaduj brakujących 
   "publishedAt": "2026-10-01",
   "sampleSize": 1000,
   "method": "CATI",
+  "methodDetail": null,
+  "publicationTitle": null,
   "results": { "ko": 32.0, "pis": 28.0, "konf": 12.0 },
   "sourceUrl": "https://przyklad.pl/publikacja-sondazu"
 }
 ```
 
-- `method` to `CATI`, `CAWI`, `mix` albo `null`.
+- `method` to `CATI`, `CAWI`, `mix` albo `null`. Opcjonalne `methodDetail` podaje pełniejszy opis metody, a `publicationTitle` tytuł i numer publikacji. Oba pola można pominąć.
 - Klucze w `results` są identyfikatorami partii z `src/data/parties.ts` (`ko`, `pis`, `konf`, `kkp`, `nl`, `razem`, `rp`, `psl`, `pl2050`, `inne`). Wartości to procenty.
 - `sourceUrl` prowadzi do publikacji źródłowej, nie do cudzej średniej.
 - `id` ma być unikalne i stałe.

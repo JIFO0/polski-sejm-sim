@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Clock, ExternalLink, Search } from "lucide-react";
 import { PARTIES } from "@/data/parties";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { OwnWorkNotice } from "@/components/OwnWorkNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +18,14 @@ function fieldwork(poll: Poll) {
   return [poll.fieldworkFrom, poll.fieldworkTo].filter(Boolean).map(formatPolishDate).join(" / ");
 }
 
+function isCbos(poll: Poll) {
+  return (poll.institute ?? "").includes("CBOS") || (poll.sourceUrl ?? "").includes("cbos.pl");
+}
+
+function methodText(poll: Poll) {
+  return poll.methodDetail || poll.method || "";
+}
+
 export function PollSourcesPanel() {
   const lang = useLanguage();
   const en = lang === "en";
@@ -28,7 +37,7 @@ export function PollSourcesPanel() {
   const average = currentPollAverage(moment);
   const silence = activeSilence(moment);
   const polls = pollsVisibleAt(moment).filter((poll) => poll.results && Object.keys(poll.results).length > 0);
-  const filtered = polls.filter((poll) => `${poll.institute ?? ""} ${poll.commissioner ?? ""}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = polls.filter((poll) => `${poll.institute ?? ""} ${poll.commissioner ?? ""} ${poll.publicationTitle ?? ""}`.toLowerCase().includes(search.toLowerCase()));
   const series = useMemo(() => [...polls].sort((a, b) => (a.publishedAt ?? "").localeCompare(b.publishedAt ?? "")), [polls]);
   const entries = Object.entries(average?.results ?? {}).filter(([id]) => id !== "inne").sort((a, b) => b[1] - a[1]);
   const toggle = (id: string) => setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
@@ -37,6 +46,8 @@ export function PollSourcesPanel() {
   const y = (value: number) => 16 + (1 - value / max) * 192;
 
   return (
+    <div className="space-y-3">
+    <OwnWorkNotice />
     <CollapsibleSection title={en ? "Opinion polls" : "Sondaże"} defaultOpen={false}>
       <section className="border-x border-b border-border bg-surface/80 px-4 py-5 backdrop-blur-sm md:px-6" aria-labelledby="polls-heading">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -58,6 +69,7 @@ export function PollSourcesPanel() {
             <TabsTrigger value="sources">{en ? "Polls & sources" : "Badania i źródła"} ({polls.length})</TabsTrigger>
           </TabsList>
           <TabsContent value="average" className="mt-5">
+            <OwnWorkNotice className="mb-4" />
             {average ? <>
               <div className="mb-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
                 <span>{en ? "Polls included" : "Uwzględnione badania"}: <strong className="text-ink">{average.polls.length}</strong></span>
@@ -101,6 +113,7 @@ export function PollSourcesPanel() {
                 {series.filter((_, index) => index === 0 || index === series.length - 1).map((poll) => <text key={poll.id} x={x(series.indexOf(poll))} y="235" textAnchor={series.indexOf(poll) === 0 ? "start" : "end"} className="fill-muted-foreground text-[11px]">{formatPolishDate(poll.publishedAt)}</text>)}
               </svg>
               <figcaption className="text-xs text-muted-foreground">{en ? "Individual polls ordered by publication date" : "Pojedyncze badania według daty publikacji"}</figcaption>
+              <OwnWorkNotice className="mt-3" />
               <div className="mt-3 overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b border-border"><th scope="col" className="py-2">{en ? "Poll / date" : "Badanie / data"}</th>{selected.map((id) => <th scope="col" key={id} className="px-2">{label(id)}</th>)}<th scope="col" className="px-2">{en ? "Source" : "Źródło"}</th></tr></thead><tbody>{series.map((poll) => <tr key={poll.id} className="border-b border-border/60"><th scope="row" className="py-2 font-normal">{poll.institute} <span className="text-muted-foreground">{formatPolishDate(poll.publishedAt)}</span></th>{selected.map((id) => <td key={id} className="num px-2">{poll.results?.[id] != null ? pct(poll.results[id]) : "-"}</td>)}<td className="px-2">{poll.sourceUrl ? <a href={poll.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 whitespace-nowrap text-primary hover:underline" aria-label={`${en ? "Source" : "Źródło"}: ${poll.institute}, ${formatPolishDate(poll.publishedAt)}`}>{en ? "Publication" : "Publikacja"}<ExternalLink className="h-3 w-3" /></a> : "-"}</td></tr>)}</tbody></table></div>
             </figure>}
           </TabsContent>
@@ -109,10 +122,17 @@ export function PollSourcesPanel() {
             <div className="mt-4 divide-y divide-border">
               {filtered.map((poll) => <article key={poll.id} className="py-3">
                 <Button variant="ghost" className="h-auto w-full justify-between gap-3 whitespace-normal px-0 text-left" onClick={() => setExpanded(expanded === poll.id ? null : poll.id)} aria-expanded={expanded === poll.id}>
-                  <span><span className="block font-semibold text-ink">{poll.institute ?? (en ? "Unknown institute" : "Ośrodek niepodany")}</span><span className="mt-1 block text-xs font-normal text-muted-foreground">{formatPolishDate(poll.publishedAt)} / n = {poll.sampleSize ?? "n/a"}{poll.commissioner ? ` / ${poll.commissioner}` : ""}</span></span>
+                  <span><span className="block font-semibold text-ink">{poll.institute ?? (en ? "Unknown institute" : "Ośrodek niepodany")}</span><span className="mt-1 block text-xs font-normal text-muted-foreground">{poll.publicationTitle ? `${poll.publicationTitle} / ` : ""}{formatPolishDate(poll.publishedAt)} / n = {poll.sampleSize ?? "n/a"}{poll.commissioner ? ` / ${poll.commissioner}` : ""}</span></span>
                   <span className="text-xs text-primary">{expanded === poll.id ? (en ? "Hide" : "Zwiń") : (en ? "Results" : "Wyniki")}</span>
                 </Button>
-                {expanded === poll.id && <div className="pt-3"><p className="text-xs text-muted-foreground">{en ? "Fieldwork" : "Termin badania"}: {fieldwork(poll) || "n/a"}{poll.method ? ` / ${poll.method}` : ""}</p><div className="mt-2 flex flex-wrap gap-3">{Object.entries(poll.results ?? {}).sort((a, b) => b[1] - a[1]).map(([id, value]) => <span key={id} className="inline-flex items-center gap-1.5 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: color(id) }} />{label(id)} <strong className="num">{pct(value)}</strong></span>)}</div>{poll.sourceUrl && <Button asChild variant="link" className="mt-2 h-auto px-0"><a href={poll.sourceUrl} target="_blank" rel="noreferrer">{en ? "Source publication" : "Publikacja źródłowa"}<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></Button>}</div>}
+                {isCbos(poll) && <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
+                  <p>{en ? "Fieldwork" : "Termin badania"}: {fieldwork(poll) || "n/a"}</p>
+                  <p>{en ? "Sample size" : "Wielkość próby"}: N = {poll.sampleSize ?? "n/a"}</p>
+                  <p>{en ? "Method" : "Metoda"}: {methodText(poll) || "n/a"}</p>
+                  {poll.sourceUrl && <a href={poll.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">cbos.pl<ExternalLink className="h-3 w-3" /></a>}
+                  <p className="text-ink">{en ? "Results used and processed by sejmsim.pl" : "Wyniki wykorzystane i przetworzone przez sejmsim.pl"}</p>
+                </div>}
+                {expanded === poll.id && <div className="pt-3">{!isCbos(poll) && <p className="text-xs text-muted-foreground">{en ? "Fieldwork" : "Termin badania"}: {fieldwork(poll) || "n/a"}{poll.method ? ` / ${poll.method}` : ""}</p>}<div className="mt-2 flex flex-wrap gap-3">{Object.entries(poll.results ?? {}).sort((a, b) => b[1] - a[1]).map(([id, value]) => <span key={id} className="inline-flex items-center gap-1.5 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: color(id) }} />{label(id)} <strong className="num">{pct(value)}</strong></span>)}</div>{poll.sourceUrl && !isCbos(poll) && <Button asChild variant="link" className="mt-2 h-auto px-0"><a href={poll.sourceUrl} target="_blank" rel="noreferrer">{en ? "Source publication" : "Publikacja źródłowa"}<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></Button>}</div>}
               </article>)}
               {filtered.length === 0 && <p className="py-6 text-sm text-muted-foreground">{en ? "No matching polls" : "Brak pasujących badań"}</p>}
             </div>
@@ -121,5 +141,6 @@ export function PollSourcesPanel() {
         <div className="mt-5 border-t border-border pt-3"><Button asChild variant="link" className="h-auto px-0 text-xs"><Link to="/zrodla">{en ? "Sources and methodology" : "Źródła i metodologia"}<ExternalLink className="ml-1 h-3 w-3" /></Link></Button></div>
       </section>
     </CollapsibleSection>
+    </div>
   );
 }
