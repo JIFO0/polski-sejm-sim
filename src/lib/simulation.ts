@@ -7,6 +7,12 @@ import {
   type ThresholdKind,
 } from "@/data/parties";
 import { baselineSharesFor, currentPollAverage } from "@/lib/poll-average";
+import {
+  getAdjustedSeats,
+  type DemographicAdjustmentMode,
+} from "@/data/demographicAdjustment";
+
+export type { DemographicAdjustmentMode } from "@/data/demographicAdjustment";
 
 export const BASE_TURNOUT = 74.4;
 export const MAJORITY = 231;
@@ -43,6 +49,8 @@ export interface Scenario {
   turnoutEffect: number;
   /** Gdy aktywne, zmiana jednej partii korzysta z puli nieprzypisanej zamiast skalować pozostałe. */
   independentSupport?: boolean;
+  /** Korekta demograficzna okręgów (wniosek PKW) */
+  demographicAdjustment?: DemographicAdjustmentMode | boolean | undefined;
   districts: Record<number, DistrictState>;
   parties: Record<string, PartySettings>;
   coalitions: Coalition[];
@@ -173,6 +181,8 @@ export interface DistrictResult {
   id: number;
   name: string;
   seats: number;
+  baseSeats: number;
+  seatDelta: number;
   electorate: number;
   votes: Record<string, number>;
   shares: Record<string, number>;
@@ -190,6 +200,9 @@ export interface SimulationResult {
   totalVotes: number;
   totalElectorate: number;
   nationalTurnout: number;
+  demographicAdjustmentActive?: boolean | undefined;
+  demographicAdjustmentMode?: DemographicAdjustmentMode | undefined;
+  partySeatDeltas?: Record<string, number> | undefined;
 }
 
 export function simulate(scenario: Scenario): SimulationResult {
@@ -258,12 +271,21 @@ export function simulate(scenario: Scenario): SimulationResult {
     return (nationalShares[id] ?? 0) >= settings.threshold - 1e-9;
   });
 
+  const adjMode: DemographicAdjustmentMode =
+    typeof scenario.demographicAdjustment === "string"
+      ? scenario.demographicAdjustment
+      : scenario.demographicAdjustment
+        ? "pkw"
+        : "none";
+  const adjustmentActive = adjMode !== "none";
+
   const seatsByParty: Record<string, number> = {};
   const districts: DistrictResult[] = perDistrict.map(
     ({ d, shares, votes, allocVotes, valid, electorate }) => {
       const eligible: Record<string, number> = {};
       for (const id of qualified) eligible[id] = allocVotes[id] ?? 0;
-      const seatsHere = dhondt(eligible, d.seats);
+      const targetSeats = getAdjustedSeats(d.id, d.seats, adjMode);
+      const seatsHere = dhondt(eligible, targetSeats);
       for (const [id, n] of Object.entries(seatsHere)) {
         seatsByParty[id] = (seatsByParty[id] ?? 0) + n;
       }
@@ -281,7 +303,9 @@ export function simulate(scenario: Scenario): SimulationResult {
       return {
         id: d.id,
         name: d.name,
-        seats: d.seats,
+        seats: targetSeats,
+        baseSeats: d.seats,
+        seatDelta: targetSeats - d.seats,
         electorate,
         votes,
         shares,
@@ -292,6 +316,27 @@ export function simulate(scenario: Scenario): SimulationResult {
     },
   );
 
+  let partySeatDeltas: Record<string, number> | undefined;
+  if (adjustmentActive) {
+    partySeatDeltas = {};
+    for (const pid of qualified) partySeatDeltas[pid] = 0;
+    for (const { d, allocVotes } of perDistrict) {
+      const eligible: Record<string, number> = {};
+      for (const id of qualified) eligible[id] = allocVotes[id] ?? 0;
+      const baseSeatsHere = dhondt(eligible, d.seats);
+      for (const [id, n] of Object.entries(baseSeatsHere)) {
+        if (partySeatDeltas[id] !== undefined) {
+          partySeatDeltas[id] -= n;
+        }
+      }
+    }
+    for (const [id, n] of Object.entries(seatsByParty)) {
+      if (partySeatDeltas[id] !== undefined) {
+        partySeatDeltas[id] += n;
+      }
+    }
+  }
+
   return {
     districts,
     nationalShares,
@@ -301,6 +346,9 @@ export function simulate(scenario: Scenario): SimulationResult {
     totalVotes,
     totalElectorate,
     nationalTurnout: totalElectorate > 0 ? (totalVotes / totalElectorate) * 100 : 0,
+    demographicAdjustmentActive: adjustmentActive,
+    demographicAdjustmentMode: adjMode,
+    partySeatDeltas,
   };
 }
 

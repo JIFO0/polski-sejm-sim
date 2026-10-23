@@ -393,6 +393,15 @@ function DhondtMethodPage() {
                 partia ze stabilnym poparciem 6–7% w skali kraju, w mniejszych miastach i regionach wiejskich nie zdobędzie
                 ani jednego mandatu, a wszystkie miejsca w okręgu zgarną dwa najsilniejsze komitety.
               </p>
+
+              <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3.5 text-xs leading-relaxed text-muted-foreground">
+                <p className="font-semibold text-ink flex items-center gap-1.5 mb-1">
+                  <span>Aktualizacja okręgów wyborczych (korekta demograficzna PKW)</span>
+                </p>
+                <p>
+                  Zgodnie z art. 202–203 Kodeksu wyborczego liczba posłów w okręgu powinna odpowiadać liczbie jego mieszkańców (jednolita norma przedstawicielska). Ponieważ Polacy migrują z mniejszych ośrodków i wyludniającej się prowincji do dużych miast i ich stref podmiejskich, PKW regularnie wnosi o przesunięcie mandatów (np. +2 w obwarzanku warszawskim, +1 we Wrocławiu, Warszawie, Krakowie, Gdańsku czy Poznaniu; -1 w okręgach wałbrzyskim, legnickim, chełmskim, kieleckim, koszalińskim itp.). W SejmSim możesz włączyć ten wariant i sprawdzić jego bezpośredni wpływ na większość parlamentarną.
+                </p>
+              </div>
             </div>
           </section>
 

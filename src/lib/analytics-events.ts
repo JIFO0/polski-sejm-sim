@@ -30,6 +30,7 @@ export const EVENTS = [
   "language_change",
   "community_scenario_load",
   "share_copy",
+  "demographic_adjustment_toggle",
 ] as const;
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
@@ -65,4 +66,5 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   language_change: "Zmiany języka",
   community_scenario_load: "Wczytane scenariusze społeczności",
   share_copy: "Skopiowane linki społeczności",
+  demographic_adjustment_toggle: "Przełączenia korekty demograficznej PKW",
 };

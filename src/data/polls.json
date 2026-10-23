@@ -1,5 +1,77 @@
 [
   {
+    "id": "pollster-2026-10-19",
+    "institute": "Instytut Badań Pollster",
+    "commissioner": null,
+    "fieldworkFrom": "2026-10-19",
+    "fieldworkTo": "2026-10-21",
+    "publishedAt": "2026-10-22",
+    "sampleSize": 1014,
+    "method": null,
+    "publicationTitle": "Sondaż Instytutu Badań Pollster, 19–21 października 2026",
+    "results": {
+      "ko": 33.54,
+      "pis": 22.06,
+      "konf": 12.18,
+      "kkp": 8.03,
+      "nl": 7.77,
+      "rp": 5.61,
+      "razem": 5.14,
+      "psl": 3.44,
+      "pl2050": 1.72,
+      "inne": 0.36
+    },
+    "sourceUrl": "https://zero.pl/news/nowy-sondaz-partyjny-ko-prowadzi-psl-i-polska-2050-pod-progiem"
+  },
+  {
+    "id": "ibris-polsat-2026-10-14",
+    "institute": "IBRiS",
+    "commissioner": "Polsat News",
+    "fieldworkFrom": "2026-10-14",
+    "fieldworkTo": "2026-10-16",
+    "publishedAt": "2026-10-20",
+    "sampleSize": 1000,
+    "method": "CATI",
+    "methodDetail": "telefoniczne, standaryzowane wywiady kwestionariuszowe wspomagane komputerowo (CATI)",
+    "publicationTitle": "Sondaż IBRiS dla Polsat News, 14–16 października 2026",
+    "results": {
+      "ko": 27.8,
+      "pis": 19.1,
+      "konf": 12.7,
+      "kkp": 11.4,
+      "nl": 7,
+      "rp": 5.8,
+      "psl": 5.1,
+      "razem": 3.8,
+      "pl2050": 0.5
+    },
+    "sourceUrl": "https://www.polsatnews.pl/wiadomosc/2026-10-20/nowy-sondaz-partyjny-sygnal-dla-rzadu-uwage-zwraca-wynik-partii-brauna/"
+  },
+  {
+    "id": "united-surveys-wp-2026-10-16",
+    "institute": "United Surveys by IBRiS",
+    "commissioner": "Wirtualna Polska",
+    "fieldworkFrom": "2026-10-16",
+    "fieldworkTo": "2026-10-18",
+    "publishedAt": "2026-10-19",
+    "sampleSize": 1000,
+    "method": "mix",
+    "methodDetail": "połączone wywiady telefoniczne oraz internetowe (CATI i CAWI)",
+    "publicationTitle": "Sondaż United Surveys by IBRiS dla Wirtualnej Polski, 16–18 października 2026",
+    "results": {
+      "ko": 29.7,
+      "pis": 17.2,
+      "konf": 13.2,
+      "kkp": 10,
+      "nl": 7.3,
+      "rp": 6.2,
+      "psl": 4.4,
+      "razem": 3.2,
+      "pl2050": 0.4
+    },
+    "sourceUrl": "https://wiadomosci.wp.pl/ko-na-czele-ale-bez-wladzy-mamy-najnowszy-sondaz-partyjny-7341734268368928a"
+  },
+  {
     "id": "cbos-2026-10-05",
     "institute": "Centrum Badania Opinii Społecznej (CBOS)",
     "commissioner": null,
@@ -32,6 +104,7 @@
     "publishedAt": "2026-10-12",
     "sampleSize": 1018,
     "method": null,
+    "publicationTitle": "Sondaż Instytutu Badań Pollster dla Super Expressu, 6–7 października 2026",
     "results": {
       "ko": 33.48,
       "pis": 22.55,
@@ -54,6 +127,8 @@
     "publishedAt": "2026-10-08",
     "sampleSize": 1001,
     "method": "mix",
+    "methodDetail": "technika mixed-mode: wywiady telefoniczne wspomagane komputerowo (CATI) oraz wywiady internetowe (CAWI)",
+    "publicationTitle": "Sondaż partyjny Opinia24, 5–7 października 2026",
     "results": {
       "ko": 33.1,
       "pis": 17.3,
@@ -77,6 +152,8 @@
     "publishedAt": "2026-10-07",
     "sampleSize": 1000,
     "method": "mix",
+    "methodDetail": "metoda łączona CATI (wywiady telefoniczne wspomagane komputerowo) oraz CAWI (ankiety internetowe)",
+    "publicationTitle": "Sondaż United Surveys by IBRiS dla Wirtualnej Polski, 2–4 października 2026",
     "results": {
       "ko": 30.6,
       "pis": 18.0,
@@ -99,6 +176,7 @@
     "publishedAt": "2026-09-23",
     "sampleSize": 1029,
     "method": null,
+    "publicationTitle": "Sondaż Instytutu Badań Pollster dla Super Expressu, 21–22 września 2026",
     "results": {
       "ko": 32.17,
       "pis": 22.59,
@@ -122,6 +200,7 @@
     "publishedAt": "2026-09-23",
     "sampleSize": 1070,
     "method": null,
+    "publicationTitle": "Sondaż IBRiS dla Rzeczpospolitej, 18–19 września 2026",
     "results": {
       "ko": 30.9,
       "pis": 17.3,
@@ -133,7 +212,7 @@
       "razem": 3.1,
       "pl2050": 0.2
     },
-    "sourceUrl": "https://wiadomosci.radiozet.pl/polityka/pis-traci-poparcie-najnowszy-sondaz-nie-pozostawia-zludzen-mocno-podgryzane"
+    "sourceUrl": "https://www.rp.pl/polityka/art45172361-sondaz-ko-na-czele-ale-blisko-utraty-wladzy-konfederacja-dogania-pis"
   },
   {
     "id": "united-surveys-wp-2026-09-18",
@@ -144,6 +223,8 @@
     "publishedAt": "2026-09-22",
     "sampleSize": 1000,
     "method": "mix",
+    "methodDetail": "CATI i CAWI",
+    "publicationTitle": "Sondaż United Surveys by IBRiS dla Wirtualnej Polski, 18–20 września 2026",
     "results": {
       "ko": 31.5,
       "pis": 17.2,
@@ -155,7 +236,7 @@
       "razem": 3.2,
       "pl2050": 0.5
     },
-    "sourceUrl": "https://www.fronda.pl/a/sondaz-nowe-przetasowania-w-arytmetyce-sejmowej,260171.html"
+    "sourceUrl": "https://wiadomosci.wp.pl/duzy-wzrost-partii-brauna-spadek-pis-kto-mialby-wiekszosc-w-sejmie-7331875326544128a"
   },
   {
     "id": "cbos-2026-09-07",
@@ -190,6 +271,8 @@
     "publishedAt": "2026-09-10",
     "sampleSize": 1000,
     "method": "mix",
+    "methodDetail": "mix-mode, łącząca internetowe wywiady CAWI z telefonicznymi wywiadami CATI",
+    "publicationTitle": "Sondaż United Surveys by IBRiS dla Wirtualnej Polski, 4–6 września 2026",
     "results": {
       "ko": 30.2,
       "pis": 19.2,

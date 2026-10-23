@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { PartyLogo } from "@/components/PartyLogo";
 import { ShareInput } from "@/components/ShareInput";
 import { BASE_TURNOUT, type DistrictResult, type DistrictState } from "@/lib/simulation";
+import { DISTRICT_DEMOGRAPHIC_NOTES } from "@/data/demographicAdjustment";
 
 export function DistrictPanel({
   districtId,
@@ -77,10 +78,22 @@ export function DistrictPanel({
     <div className="panel flex h-full flex-col overflow-hidden">
       <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
         <div>
-          <p className="eyebrow flex items-center gap-1">
+          <p className="eyebrow flex items-center gap-1.5 flex-wrap">
             <span>
-              {tr("Okręg nr")}{district.id}, {district.seats} {tr("mandatów")}
+              {tr("Okręg nr")}{district.id}, {result?.seats ?? district.seats} {tr("mandatów")}
             </span>
+            {result?.seatDelta ? (
+              <span
+                className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                  result.seatDelta > 0
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    : "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                }`}
+                title={`Korekta demograficzna PKW: ${result.seatDelta > 0 ? `+${result.seatDelta}` : result.seatDelta} mandat(y)`}
+              >
+                {result.seatDelta > 0 ? `+${result.seatDelta}` : result.seatDelta} PKW
+              </span>
+            ) : null}
             <Link
               to="/metoda-dhondta"
               className="ml-1 font-mono text-[10px] text-primary hover:underline"
@@ -102,6 +115,13 @@ export function DistrictPanel({
       </div>
 
       <div className="space-y-5 overflow-y-auto px-5 py-4">
+        {result?.seatDelta !== 0 && DISTRICT_DEMOGRAPHIC_NOTES[district.id] ? (
+          <div className="rounded-lg border border-border/70 bg-surface/60 p-2.5 text-xs text-muted-foreground">
+            <span className="font-semibold text-ink">Demografia (PKW): </span>
+            {DISTRICT_DEMOGRAPHIC_NOTES[district.id]}
+          </div>
+        ) : null}
+
         {/* Kwalifikowani wyborcy (Uprawnieni) */}
         <div className="rounded-lg border border-border/70 bg-surface-strong/40 p-3">
           <div className="flex items-center justify-between gap-2">

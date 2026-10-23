@@ -89,7 +89,14 @@ assert.equal(proportionMargin(50, null), null);
 
 const dataset = parsePollDataset(POLLS);
 assert.equal(dataset.length, POLLS.length);
-assert.ok(dataset.length >= 8);
+assert.ok(dataset.length >= 11);
+const latest = dataset.find((item) => item.id === "pollster-2026-10-19");
+assert.equal(latest?.results?.["ko"], 33.54);
+assert.equal(latest?.sampleSize, 1014);
+assert.equal(latest?.method, null);
+const opinia = dataset.find((item) => item.id === "opinia24-2026-10-05");
+assert.equal(opinia?.method, "mix");
+assert.equal(opinia?.methodDetail?.includes("CATI"), true);
 const cbos = dataset.find((item) => item.id === "cbos-2026-10-05");
 assert.equal(cbos?.results?.["ko"], 28.6);
 assert.equal(cbos?.institute, "Centrum Badania Opinii Społecznej (CBOS)");
@@ -105,9 +112,8 @@ assert.equal(cbosSeptember?.publicationTitle?.includes("CBOS Flash nr 33/2026"),
 assert.equal(cbosSeptember?.sampleSize, 1001);
 assert.equal(cbosSeptember?.fieldworkFrom, "2026-09-07");
 assert.equal(cbosSeptember?.fieldworkTo, "2026-09-09");
-const withoutOptional = dataset.find((item) => item.id === "opinia24-2026-10-05");
-assert.equal(withoutOptional?.publicationTitle, undefined);
-assert.equal(withoutOptional?.institute, "Opinia24");
+assert.equal(opinia?.publicationTitle?.includes("Opinia24"), true);
+assert.equal(opinia?.institute, "Opinia24");
 assert.throws(() => parsePollDataset([dataset[0], { ...dataset[0], id: dataset[0]?.id }]));
 assert.throws(() =>
   parsePollDataset([

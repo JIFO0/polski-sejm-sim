@@ -58,7 +58,7 @@ export function PollSourcesPanel() {
           </div>
           <div className="flex items-start gap-2 text-xs text-muted-foreground">
             <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>{en ? "Last polling update" : "Ostatnia aktualizacja sondaży"}<time dateTime="2026-10-15T12:07:00+02:00" className="mt-1 block font-semibold text-ink">{en ? "15 October 2026, 12:07 (Warsaw)" : "15 października 2026, 12:07"}</time></div>
+            <div>{en ? "Last polling update" : "Ostatnia aktualizacja sondaży"}<time dateTime="2026-10-22" className="mt-1 block font-semibold text-ink">{en ? "22 October 2026" : "22 października 2026"}</time></div>
           </div>
         </div>
         {silence && <p className="mt-4 border-l-2 border-primary bg-primary/10 p-3 text-sm">{en ? "Polling updates are paused during the election silence period." : "Trwa cisza wyborcza. Aktualizacje sondaży są wstrzymane."}</p>}
@@ -125,14 +125,14 @@ export function PollSourcesPanel() {
                   <span><span className="block font-semibold text-ink">{poll.institute ?? (en ? "Unknown institute" : "Ośrodek niepodany")}</span><span className="mt-1 block text-xs font-normal text-muted-foreground">{poll.publicationTitle ? `${poll.publicationTitle} / ` : ""}{formatPolishDate(poll.publishedAt)} / n = {poll.sampleSize ?? "n/a"}{poll.commissioner ? ` / ${poll.commissioner}` : ""}</span></span>
                   <span className="text-xs text-primary">{expanded === poll.id ? (en ? "Hide" : "Zwiń") : (en ? "Results" : "Wyniki")}</span>
                 </Button>
-                {isCbos(poll) && <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
+                <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
                   <p>{en ? "Fieldwork" : "Termin badania"}: {fieldwork(poll) || "n/a"}</p>
                   <p>{en ? "Sample size" : "Wielkość próby"}: N = {poll.sampleSize ?? "n/a"}</p>
-                  <p>{en ? "Method" : "Metoda"}: {methodText(poll) || "n/a"}</p>
-                  {poll.sourceUrl && <a href={poll.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">cbos.pl<ExternalLink className="h-3 w-3" /></a>}
-                  <p className="text-ink">{en ? "Results used and processed by sejmsim.pl" : "Wyniki wykorzystane i przetworzone przez sejmsim.pl"}</p>
-                </div>}
-                {expanded === poll.id && <div className="pt-3">{!isCbos(poll) && <p className="text-xs text-muted-foreground">{en ? "Fieldwork" : "Termin badania"}: {fieldwork(poll) || "n/a"}{poll.method ? ` / ${poll.method}` : ""}</p>}<div className="mt-2 flex flex-wrap gap-3">{Object.entries(poll.results ?? {}).sort((a, b) => b[1] - a[1]).map(([id, value]) => <span key={id} className="inline-flex items-center gap-1.5 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: color(id) }} />{label(id)} <strong className="num">{pct(value)}</strong></span>)}</div>{poll.sourceUrl && !isCbos(poll) && <Button asChild variant="link" className="mt-2 h-auto px-0"><a href={poll.sourceUrl} target="_blank" rel="noreferrer">{en ? "Source publication" : "Publikacja źródłowa"}<ExternalLink className="ml-1.5 h-3.5 w-3.5" /></a></Button>}</div>}
+                  <p>{en ? "Method" : "Metoda"}: {methodText(poll) || (en ? "not stated in the source" : "niepodana w źródle")}</p>
+                  {poll.sourceUrl && <a href={poll.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">{isCbos(poll) ? "cbos.pl" : (en ? "Source publication" : "Publikacja źródłowa")}<ExternalLink className="h-3 w-3" /></a>}
+                  {isCbos(poll) && <p className="text-ink">{en ? "Results used and processed by sejmsim.pl" : "Wyniki wykorzystane i przetworzone przez sejmsim.pl"}</p>}
+                </div>
+                {expanded === poll.id && <div className="pt-3"><div className="mt-2 flex flex-wrap gap-3">{Object.entries(poll.results ?? {}).sort((a, b) => b[1] - a[1]).map(([id, value]) => <span key={id} className="inline-flex items-center gap-1.5 text-xs"><span className="h-2 w-2 rounded-full" style={{ background: color(id) }} />{label(id)} <strong className="num">{pct(value)}</strong></span>)}</div></div>}
               </article>)}
               {filtered.length === 0 && <p className="py-6 text-sm text-muted-foreground">{en ? "No matching polls" : "Brak pasujących badań"}</p>}
             </div>

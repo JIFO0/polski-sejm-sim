@@ -1,7 +1,7 @@
 import { useTranslation } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Calculator, Download, Info, RotateCcw, Upload, Users } from "lucide-react";
+import { ArrowRight, Calculator, Download, Info, RotateCcw, Scale, Upload, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { toast } from "sonner";
@@ -42,6 +42,7 @@ import { ParticleField } from "@/components/ParticleField";
 import { PolandMap, type MapMode } from "@/components/PolandMap";
 import { Hemicycle } from "@/components/Hemicycle";
 import { DistrictPanel } from "@/components/DistrictPanel";
+import type { DemographicAdjustmentMode } from "@/data/demographicAdjustment";
 import { CoalitionBuilder } from "@/components/CoalitionBuilder";
 import { ScenarioShelf } from "@/components/ScenarioShelf";
 import { TurnoutGroups } from "@/components/TurnoutGroups";
@@ -557,8 +558,14 @@ function Index() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="num text-xs text-muted-foreground">
-                      {tr("większość:")} {MAJORITY} {tr("mandatów")}
+                    <p className="num text-xs text-muted-foreground flex items-center justify-end gap-1.5 flex-wrap">
+                      <span>{tr("większość:")} {MAJORITY} {tr("mandatów")}</span>
+                      {result.demographicAdjustmentActive ? (
+                        <span className="inline-flex items-center gap-1 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <Scale className="h-3 w-3" />
+                          <span>Korekta PKW ({result.demographicAdjustmentMode === "crw" ? "CRW ±13" : "±11"})</span>
+                        </span>
+                      ) : null}
                     </p>
                     <Link
                       to="/metoda-dhondta"
@@ -601,35 +608,117 @@ function Index() {
           {/* MAPA + PANEL */}
           <section className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
             <div className="panel p-4 md:p-6">
-              <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="mr-auto">
                   <h2 className="font-display text-2xl font-bold text-ink">{tr("41 okręgów")}</h2>
                   <p className="text-sm text-muted-foreground">
                     {tr("Kliknij okręg, żeby ustawić poparcie i frekwencję.")}</p>
                 </div>
-                <div className="flex rounded-lg border border-border p-0.5">
-                  <button
-                    onClick={() => {
-                      setMode("winner");
-                      track({ event: "map_mode_change", meta: "zwyciezca" });
-                    }}
-                    className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      mode === "winner" ? "bg-ink text-background" : "text-muted-foreground"
-                    }`}
-                  >
-                    {tr("Zwycięzca")}</button>
-                  <button
-                    onClick={() => {
-                      setMode("party");
-                      track({ event: "map_mode_change", meta: `partia:${focusParty}` });
-                    }}
-                    className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                      mode === "party" ? "bg-ink text-background" : "text-muted-foreground"
-                    }`}
-                  >
-                    {tr("Jedna partia")}</button>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Dyskretny przełącznik korekty demograficznej PKW z ikonką info */}
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs">
+                    <span className="font-semibold text-ink flex items-center gap-1.5">
+                      <Scale className="h-3.5 w-3.5 text-primary" />
+                      <span>{tr("Korekta PKW")}</span>
+                    </span>
+                    <Switch
+                      checked={Boolean(scenario.demographicAdjustment)}
+                      onCheckedChange={(checked) => {
+                        track({
+                          event: "demographic_adjustment_toggle",
+                          meta: checked ? "pkw" : "none",
+                        });
+                        setScenario((s) => ({
+                          ...s,
+                          demographicAdjustment: checked ? "pkw" : undefined,
+                        }));
+                        if (checked) {
+                          toast.success("Włączono korektę demograficzną mandatów PKW (±11 mandatów)");
+                        } else {
+                          toast.info("Przywrócono standardowy podział mandatów");
+                        }
+                      }}
+                      aria-label="Włącz korektę demograficzną okręgów wyborczych PKW"
+                      className="scale-75"
+                    />
+                    <Link
+                      to="/korekta-okregow"
+                      className="text-muted-foreground hover:text-primary transition-colors p-0.5"
+                      title="Dowiedz się więcej o korekcie demograficznej okręgów PKW"
+                    >
+                      <Info className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+
+                  {/* Przyciski trybu mapy */}
+                  <div className="flex rounded-lg border border-border p-0.5">
+                    <button
+                      onClick={() => {
+                        setMode("winner");
+                        track({ event: "map_mode_change", meta: "zwyciezca" });
+                      }}
+                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        mode === "winner" ? "bg-ink text-background" : "text-muted-foreground"
+                      }`}
+                    >
+                      {tr("Zwycięzca")}</button>
+                    <button
+                      onClick={() => {
+                        setMode("party");
+                        track({ event: "map_mode_change", meta: `partia:${focusParty}` });
+                      }}
+                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        mode === "party" ? "bg-ink text-background" : "text-muted-foreground"
+                      }`}
+                    >
+                      {tr("Jedna partia")}</button>
+                    <button
+                      onClick={() => {
+                        setMode("adjustment");
+                        track({ event: "map_mode_change", meta: "korekta_okregow" });
+                      }}
+                      className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        mode === "adjustment" ? "bg-ink text-background" : "text-muted-foreground"
+                      }`}
+                    >
+                      {tr("Korekta okręgów")}</button>
+                  </div>
                 </div>
               </div>
+
+              {/* Informacyjny pasek wpływu na mandaty po włączeniu korekty */}
+              {result.demographicAdjustmentActive && result.partySeatDeltas ? (
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-1.5 text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                      <Scale className="h-3 w-3" />
+                      Wpływ korekty PKW:
+                    </span>
+                    {Object.entries(result.partySeatDeltas)
+                      .filter(([, delta]) => delta !== 0)
+                      .map(([pid, delta]) => (
+                        <span
+                          key={pid}
+                          className={`font-mono font-bold ${
+                            delta > 0
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-rose-600 dark:text-rose-400"
+                          }`}
+                        >
+                          {PARTY_MAP[pid]?.short}: {delta > 0 ? `+${delta}` : delta}
+                        </span>
+                      ))}
+                  </div>
+                  <Link
+                    to="/korekta-okregow"
+                    className="font-medium text-primary hover:underline flex items-center gap-1 text-[11px]"
+                  >
+                    <span>Analiza i wykaz okręgów</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              ) : null}
 
               {mode === "party" ? (
                 <div className="mb-3 flex flex-wrap gap-1.5">
@@ -1120,6 +1209,15 @@ function Index() {
               className="inline-flex items-center text-primary hover:underline"
             >
               {tr("Kalkulator i metoda D'Hondta")}
+            </Link>
+            <span className="text-border" aria-hidden="true">
+              •
+            </span>
+            <Link
+              to="/korekta-okregow"
+              className="inline-flex items-center text-primary hover:underline"
+            >
+              {tr("Korekta okręgów (wniosek PKW)")}
             </Link>
             <span className="text-border" aria-hidden="true">
               •

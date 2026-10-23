@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as KorektaOkregowRouteImport } from './routes/korekta-okregow'
 import { Route as MetodaDhondtaRouteImport } from './routes/metoda-dhondta'
 import { Route as OProjekcieRouteImport } from './routes/o-projekcie'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -19,6 +20,11 @@ import { Route as ZrodlaRouteImport } from './routes/zrodla'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KorektaOkregowRoute = KorektaOkregowRouteImport.update({
+  id: '/korekta-okregow',
+  path: '/korekta-okregow',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MetodaDhondtaRoute = MetodaDhondtaRouteImport.update({
@@ -49,6 +55,7 @@ const ZrodlaRoute = ZrodlaRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/korekta-okregow': typeof KorektaOkregowRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/korekta-okregow': typeof KorektaOkregowRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/korekta-okregow': typeof KorektaOkregowRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/korekta-okregow'
     | '/metoda-dhondta'
     | '/o-projekcie'
     | '/sitemap.xml'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/korekta-okregow'
     | '/metoda-dhondta'
     | '/o-projekcie'
     | '/sitemap.xml'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/korekta-okregow'
     | '/metoda-dhondta'
     | '/o-projekcie'
     | '/sitemap.xml'
@@ -101,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  KorektaOkregowRoute: typeof KorektaOkregowRoute
   MetodaDhondtaRoute: typeof MetodaDhondtaRoute
   OProjekcieRoute: typeof OProjekcieRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -115,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/korekta-okregow': {
+      id: '/korekta-okregow'
+      path: '/korekta-okregow'
+      fullPath: '/korekta-okregow'
+      preLoaderRoute: typeof KorektaOkregowRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/metoda-dhondta': {
@@ -157,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  KorektaOkregowRoute: KorektaOkregowRoute,
   MetodaDhondtaRoute: MetodaDhondtaRoute,
   OProjekcieRoute: OProjekcieRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
