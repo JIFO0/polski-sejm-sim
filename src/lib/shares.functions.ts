@@ -97,6 +97,19 @@ export const getShare = createServerFn({ method: "POST" })
     return { ok: true as const, name: row.name, scenarioJson: JSON.stringify(row.scenario), expiresAt: row.expires_at };
   });
 
+export const recordShareView = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({ id: z.string().regex(/^[a-z0-9]{6,20}$/) }).parse(data))
+  .handler(async ({ data }) => {
+    const { incrementShareViews } = await import("./server-db.server");
+    try {
+      incrementShareViews(data.id);
+      return { ok: true as const };
+    } catch (err) {
+      console.error("recordShareView error:", err);
+      return { ok: false as const };
+    }
+  });
+
 const ownerSchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200) });
 
 export const listShares = createServerFn({ method: "POST" })
@@ -170,7 +183,7 @@ export const toggleFeaturedShare = createServerFn({ method: "POST" })
     }
   });
 
-export const getFeaturedScenarios = createServerFn({ method: "GET" }).handler(async () => {
+export const getFeaturedScenarios = createServerFn({ method: "POST" }).handler(async () => {
   const { listFeaturedScenarios } = await import("./server-db.server");
   try {
     const items = listFeaturedScenarios().map(({ scenario, ...item }) => ({ ...item, scenarioJson: JSON.stringify(scenario) }));

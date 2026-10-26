@@ -2,7 +2,7 @@ import { useTranslation } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Copy, Eye, Loader2, Play, Users } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { getFeaturedScenarios } from "@/lib/shares.functions";
+import { getFeaturedScenarios, recordShareView } from "@/lib/shares.functions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,6 +58,7 @@ export function CommunityScenariosDialog({
   const [items, setItems] = useState<FeaturedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const getFeatured = useServerFn(getFeaturedScenarios);
+  const recordView = useServerFn(recordShareView);
 
   useEffect(() => {
     if (!open) return;
@@ -83,7 +84,13 @@ export function CommunityScenariosDialog({
 
   const handleSelect = (item: FeaturedItem) => {
     onLoad(item.scenario);
+    void recordView({ data: { id: item.id } }).catch((err) => {
+      console.error("recordShareView error:", err);
+    });
     track({ event: "community_scenario_load", meta: item.id });
+    setItems((prev) =>
+      prev.map((it) => (it.id === item.id ? { ...it, views: (it.views ?? 0) + 1 } : it))
+    );
     toast.success(`Wczytano scenariusz społeczności: ${item.name}`);
     onOpenChange(false);
   };
@@ -139,11 +146,12 @@ export function CommunityScenariosDialog({
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col justify-between rounded-xl border border-border/80 bg-surface/90 p-3.5 shadow-xs transition-all hover:border-primary/40 hover:bg-surface"
+                  className="group flex flex-col justify-between rounded-xl border border-border/80 bg-surface/90 p-3.5 shadow-xs transition-all hover:border-primary/40 hover:bg-surface cursor-pointer"
+                  onClick={() => handleSelect(item)}
                 >
                   <div>
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-display text-sm font-bold text-ink leading-snug line-clamp-2">
+                      <h4 className="font-display text-sm font-bold text-ink leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                         {item.name}
                       </h4>
                       <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-mono text-muted-foreground" title={tr("Liczba wyświetleń")}>
@@ -168,22 +176,29 @@ export function CommunityScenariosDialog({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/50 pt-2.5">
+                  <div
+                    className="mt-4 flex items-center justify-between gap-2 border-t border-border/50 pt-2.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button
                       size="sm"
                       className="h-8 gap-1.5 px-3 text-xs font-semibold"
                       onClick={() => handleSelect(item)}
                     >
-                      <Play className="h-3 w-3 fill-current" /> {tr("Wczytaj")}</Button>
-                    <div className="flex items-center gap-1.5"><SocialExportButton scenario={item.scenario} compact /><Button
-                      size="icon"
-                      variant="outline"
-                      className="h-8 w-8 shrink-0"
-                      title={tr("Skopiuj link do tego scenariusza")}
-                      onClick={() => void copyShareLink(item.id, item.name)}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button></div>
+                      <Play className="h-3 w-3 fill-current" /> {tr("Wczytaj")}
+                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      <SocialExportButton scenario={item.scenario} compact />
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8 shrink-0"
+                        title={tr("Skopiuj link do tego scenariusza")}
+                        onClick={() => void copyShareLink(item.id, item.name)}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );
