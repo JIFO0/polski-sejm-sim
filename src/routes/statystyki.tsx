@@ -93,7 +93,7 @@ function StatsPage() {
   const [key, setKey] = useState("");
   const [shares, setShares] = useState<ShareRow[]>([]);
   const fetchShares = useServerFn(listShares);
-  const [privateScenarios, setPrivateScenarios] = useState<{ id: number; name: string; scenario: Record<string, unknown>; created_at: string }[]>([]);
+  const [privateScenarios, setPrivateScenarios] = useState<{ id: number; name: string; created_at: string; author: string; description: string; json: string }[]>([]);
   const fetchPrivate = useServerFn(listPrivateScenariosFn);
   const removePrivate = useServerFn(deletePrivateScenarioFn);
   const deactivate = useServerFn(deactivateShare);
@@ -861,8 +861,7 @@ function StatsPage() {
                     <thead><tr className="text-left text-muted-foreground"><th className="py-1">Nazwa</th><th>Autor</th><th>Opis</th><th>Data</th><th /></tr></thead>
                     <tbody>
                       {privateScenarios.map((p) => {
-                        const author = typeof p.scenario["author"] === "string" ? (p.scenario["author"] as string) : "";
-                        const description = typeof p.scenario["description"] === "string" ? (p.scenario["description"] as string) : "";
+                        const { author, description } = p;
                         return (
                           <tr key={p.id} className="border-t align-top">
                             <td className="py-2 pr-2 font-semibold text-ink">{p.name}</td>
@@ -871,7 +870,7 @@ function StatsPage() {
                             <td className="whitespace-nowrap py-2 pr-2">{new Date(p.created_at).toLocaleString("pl-PL")}</td>
                             <td className="whitespace-nowrap py-2">
                               <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
-                                const blob = new Blob([JSON.stringify(p.scenario, null, 2)], { type: "application/json" });
+                                const blob = new Blob([p.json], { type: "application/json" });
                                 const a = document.createElement("a");
                                 a.href = URL.createObjectURL(blob);
                                 a.download = `scenariusz-${p.id}.json`;

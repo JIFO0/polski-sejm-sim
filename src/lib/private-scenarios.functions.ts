@@ -31,7 +31,15 @@ export const listPrivateScenariosFn = createServerFn({ method: "POST" })
     const { isOwner } = await import("./owner-auth.server");
     if (!isOwner(data.login, data.key)) return { ok: false as const, items: [] };
     const { listPrivateScenarios } = await import("./server-db.server");
-    return { ok: true as const, items: listPrivateScenarios() };
+    const items = listPrivateScenarios().map((r) => ({
+      id: r.id,
+      name: r.name,
+      created_at: r.created_at,
+      author: typeof r.scenario["author"] === "string" ? r.scenario["author"] : "",
+      description: typeof r.scenario["description"] === "string" ? r.scenario["description"] : "",
+      json: JSON.stringify(r.scenario, null, 2),
+    }));
+    return { ok: true as const, items };
   });
 
 export const deletePrivateScenarioFn = createServerFn({ method: "POST" })
