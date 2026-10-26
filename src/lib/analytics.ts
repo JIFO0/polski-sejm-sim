@@ -126,3 +126,15 @@ export function trackPageViewOncePerSession() {
     meta: `${detectDevice()}|${detectTrafficSource()}`,
   });
 }
+
+/** Anonimowe cechy scenariusza (bez treści opisu ani autora). */
+export function scenarioTraits(scenario: Scenario): string {
+  const parts = scenario.customParties?.length ?? 0;
+  const lists = scenario.mergers?.length ?? 0;
+  const tags = [isScenarioModified(scenario) ? "zmieniony" : "bazowy"];
+  if (parts) tags.push("własne partie");
+  if (lists) tags.push("wspólne listy");
+  if (scenario.author?.trim()) tags.push("autor");
+  if (scenario.description?.trim()) tags.push("opis");
+  return tags.join(", ").slice(0, 200);
+}

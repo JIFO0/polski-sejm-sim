@@ -189,6 +189,7 @@ export function ScenarioShelf({
       try {
         track({
           event: "scenario_save",
+          meta: scenarioTraits(scenario),
           partyLabels: Object.fromEntries([...scenario.customParties ?? [], ...scenario.mergers ?? []].map((party) => [party.id, party.name])),
           ...(isScenarioModified(scenario) ? { shares: nationalSharesOf(scenario) } : {}),
         });
@@ -216,6 +217,7 @@ export function ScenarioShelf({
       if (!res.reused) {
         track({
           event: "share_link_create",
+          meta: scenarioTraits(item.scenario),
           partyLabels: Object.fromEntries([...item.scenario.customParties ?? [], ...item.scenario.mergers ?? []].map((party) => [party.id, party.name])),
           ...(isScenarioModified(item.scenario) ? { shares: nationalSharesOf(item.scenario) } : {}),
         });
