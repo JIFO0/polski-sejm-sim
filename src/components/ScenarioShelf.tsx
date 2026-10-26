@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
-import { isScenarioModified, nationalSharesOf, track } from "@/lib/analytics";
+import { isScenarioModified, scenarioTraits, nationalSharesOf, track } from "@/lib/analytics";
 import { PARTIES, PARTY_MAP } from "@/data/parties";
 import { CommunityScenariosDialog } from "@/components/CommunityScenariosDialog";
 import { Textarea } from "@/components/ui/textarea";

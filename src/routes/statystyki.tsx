@@ -815,6 +815,53 @@ function StatsPage() {
 
             <section className="panel p-5">
               <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" /> Analiza trendów: największy ruch
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">Tygodnie liczone od poniedziałku, czas polski.</p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                {([["Najmocniejsze tygodnie", summary.topWeeks.map((w) => ({ k: w.week, label: `od ${new Date(`${w.week}T12:00:00Z`).toLocaleDateString("pl-PL")}`, count: w.count }))], ["Najmocniejsze miesiące", summary.topMonths.map((m) => ({ k: m.month, label: m.label, count: m.count }))]] as const).map(([title, items]) => {
+                  const max = Math.max(1, ...items.map((i) => i.count));
+                  return (
+                    <div key={title}>
+                      <h3 className="text-sm font-semibold text-ink">{title}</h3>
+                      {items.length === 0 ? <p className="mt-2 text-xs text-muted-foreground">Brak danych.</p> : (
+                        <ol className="mt-2 space-y-2">
+                          {items.map((i, idx) => (
+                            <li key={i.k} className="text-xs">
+                              <div className="flex justify-between"><span>{idx + 1}. {i.label}</span><span className="num font-bold text-ink">{i.count}</span></div>
+                              <div className="mt-1 h-2 rounded bg-muted"><div className="h-2 rounded bg-primary" style={{ width: `${(i.count / max) * 100}%` }} /></div>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <h3 className="mt-5 text-sm font-semibold text-ink">Ostatnie tygodnie</h3>
+              <div className="mt-2 flex h-28 items-end gap-1">
+                {[...summary.visitsByWeek].reverse().map((w) => {
+                  const max = Math.max(1, ...summary.visitsByWeek.map((x) => x.count));
+                  return <div key={w.week} title={`Tydzień od ${w.week}: ${w.count}`} className="flex-1 rounded-t bg-primary/80" style={{ height: `${Math.max(4, (w.count / max) * 100)}%` }} />;
+                })}
+              </div>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink">Tworzone scenariusze</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Zapisy w przeglądarce, linki zapisane na serwerze i pobrane grafiki. Bez treści opisów i autorów.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {summary.scenarioTraits.map((t) => <span key={t.tag} className="rounded-full border px-2 py-1 text-xs">{t.tag}: <b className="num">{t.count}</b></span>)}
+                <span className="rounded-full border px-2 py-1 text-xs">grafiki do posta: <b className="num">{summary.socialImageDownloads}</b></span>
+              </div>
+              <table className="mt-3 w-full text-xs">
+                <thead><tr className="text-left text-muted-foreground"><th>Miesiąc</th><th>Zapisy</th><th>Linki serwera</th><th>Grafiki</th></tr></thead>
+                <tbody>{summary.scenarioActivityByMonth.map((m) => <tr key={m.month} className="border-t"><td className="py-1">{m.month}</td><td className="num">{m.saves}</td><td className="num">{m.links}</td><td className="num">{m.images}</td></tr>)}</tbody>
+              </table>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" /> Wejścia według dnia tygodnia
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">Kiedy w tygodniu ludzie faktycznie otwierają symulator (czas polski).</p>
