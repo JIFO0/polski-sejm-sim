@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
+import { savePrivateScenario } from "@/lib/private-scenarios.functions";
 import { isScenarioModified, scenarioTraits, nationalSharesOf, track } from "@/lib/analytics";
 import { PARTIES, PARTY_MAP } from "@/data/parties";
 import { CommunityScenariosDialog } from "@/components/CommunityScenariosDialog";
@@ -196,6 +197,7 @@ export function ScenarioShelf({
       } catch (trackErr) {
         console.warn("Analytics track failed in saveLocal", trackErr);
       }
+      void savePrivateScenario({ data: { name: title.slice(0, 60), scenario: entry.scenario as unknown as Record<string, unknown> } }).catch(() => undefined);
       toast.success(`Scenariusz "${title}" zapisany!`);
     } catch (err) {
       console.error("saveLocal error:", err);

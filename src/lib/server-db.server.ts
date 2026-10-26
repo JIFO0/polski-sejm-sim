@@ -61,6 +61,14 @@ export function getDb(): DatabaseSync {
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_feedback_ip_created ON feedback(ip_hash, created_at);
+
+    CREATE TABLE IF NOT EXISTS private_scenarios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      scenario TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_private_scenarios_created ON private_scenarios(created_at);
   `);
 
   const shareCols = db.prepare("PRAGMA table_info(shared_scenarios)").all() as { name: string }[];
@@ -431,10 +439,33 @@ export function insertFeedbackRecord(entry: {
   return true;
 }
 
+const MAX_PRIVATE_SCENARIOS = 5000;
+
+export function insertPrivateScenario(name: string, scenario: Record<string, unknown>): void {
+  maybeRunMaintenance();
+  const db = getDb();
+  db.prepare("INSERT INTO private_scenarios (name, scenario, created_at) VALUES (?, ?, ?)").run(name, JSON.stringify(scenario), new Date().toISOString());
+  db.prepare(`DELETE FROM private_scenarios WHERE id NOT IN (SELECT id FROM private_scenarios ORDER BY id DESC LIMIT ${MAX_PRIVATE_SCENARIOS})`).run();
+}
+
+export function listPrivateScenarios(limit = 300): { id: number; name: string; scenario: Record<string, unknown>; created_at: string }[] {
+  const rows = getDb().prepare("SELECT id, name, scenario, created_at FROM private_scenarios ORDER BY id DESC LIMIT ?").all(limit) as { id: number; name: string; scenario: string; created_at: string }[];
+  return rows.map((r) => {
+    let scenario: Record<string, unknown> = {};
+    try { scenario = JSON.parse(r.scenario); } catch { /* uszkodzony wpis */ }
+    return { ...r, scenario };
+  });
+}
+
+export function deletePrivateScenario(id: number): boolean {
+  return Number(getDb().prepare("DELETE FROM private_scenarios WHERE id = ?").run(id).changes) > 0;
+}
+
 export function clearAllPlatformData(): { ok: boolean; deletedEvents: number; deletedShares: number } {
   const db = getDb();
   const resEvents = db.prepare("DELETE FROM analytics_events").run();
   const resShares = db.prepare("DELETE FROM shared_scenarios").run();
+  db.prepare("DELETE FROM private_scenarios").run();
   try {
     db.exec("VACUUM;");
   } catch {

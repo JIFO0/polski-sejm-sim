@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { getAnalyticsSummary, clearAllAnalyticsData, testFeedbackWebhook } from "@/lib/analytics.functions";
+import { deletePrivateScenarioFn, listPrivateScenariosFn } from "@/lib/private-scenarios.functions";
 import { deactivateShare, deleteShare, listShares, togglePermanentShare, toggleFeaturedShare } from "@/lib/shares.functions";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { EVENT_LABELS } from "@/lib/analytics-events";
@@ -92,6 +93,9 @@ function StatsPage() {
   const [key, setKey] = useState("");
   const [shares, setShares] = useState<ShareRow[]>([]);
   const fetchShares = useServerFn(listShares);
+  const [privateScenarios, setPrivateScenarios] = useState<{ id: number; name: string; scenario: Record<string, unknown>; created_at: string }[]>([]);
+  const fetchPrivate = useServerFn(listPrivateScenariosFn);
+  const removePrivate = useServerFn(deletePrivateScenarioFn);
   const deactivate = useServerFn(deactivateShare);
   const removeShare = useServerFn(deleteShare);
   const togglePermanent = useServerFn(togglePermanentShare);
@@ -134,8 +138,9 @@ function StatsPage() {
     setError(null);
     try {
       const creds = { login: login.trim(), key: key.trim() };
-      const [res, sh] = await Promise.all([fetchSummary({ data: creds }), fetchShares({ data: creds })]);
+      const [res, sh, priv] = await Promise.all([fetchSummary({ data: creds }), fetchShares({ data: creds }), fetchPrivate({ data: creds })]);
       if (sh.ok) setShares(sh.shares);
+      if (priv.ok) setPrivateScenarios(priv.items);
       if (!res.ok) {
         setError(res.error);
         setSummary(null);
@@ -845,6 +850,47 @@ function StatsPage() {
                   return <div key={w.week} title={`Tydzień od ${w.week}: ${w.count}`} className="flex-1 rounded-t bg-primary/80" style={{ height: `${Math.max(4, (w.count / max) * 100)}%` }} />;
                 })}
               </div>
+            </section>
+
+            <section className="panel p-5">
+              <h2 className="font-display text-lg font-bold text-ink">Scenariusze niepubliczne ({privateScenarios.length})</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Kopie scenariuszy zapisanych przez użytkowników w bibliotece. Nie są nigdzie publikowane. Przechowywane jest maksymalnie 5000 ostatnich.</p>
+              {privateScenarios.length === 0 ? <p className="mt-3 text-xs text-muted-foreground">Nikt jeszcze nie zapisał scenariusza.</p> : (
+                <div className="mt-3 max-h-[480px] overflow-auto">
+                  <table className="w-full text-xs">
+                    <thead><tr className="text-left text-muted-foreground"><th className="py-1">Nazwa</th><th>Autor</th><th>Opis</th><th>Data</th><th /></tr></thead>
+                    <tbody>
+                      {privateScenarios.map((p) => {
+                        const author = typeof p.scenario["author"] === "string" ? (p.scenario["author"] as string) : "";
+                        const description = typeof p.scenario["description"] === "string" ? (p.scenario["description"] as string) : "";
+                        return (
+                          <tr key={p.id} className="border-t align-top">
+                            <td className="py-2 pr-2 font-semibold text-ink">{p.name}</td>
+                            <td className="py-2 pr-2">{author || "-"}</td>
+                            <td className="max-w-[320px] py-2 pr-2 text-muted-foreground"><span className="line-clamp-3" title={description}>{description || "-"}</span></td>
+                            <td className="whitespace-nowrap py-2 pr-2">{new Date(p.created_at).toLocaleString("pl-PL")}</td>
+                            <td className="whitespace-nowrap py-2">
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
+                                const blob = new Blob([JSON.stringify(p.scenario, null, 2)], { type: "application/json" });
+                                const a = document.createElement("a");
+                                a.href = URL.createObjectURL(blob);
+                                a.download = `scenariusz-${p.id}.json`;
+                                a.click();
+                                URL.revokeObjectURL(a.href);
+                              }}>JSON</Button>{" "}
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={async () => {
+                                if (!window.confirm(`Usunąć „${p.name}”?`)) return;
+                                const r = await removePrivate({ data: { login: login.trim(), key: key.trim(), id: p.id } });
+                                if (r.ok) setPrivateScenarios((all) => all.filter((x) => x.id !== p.id));
+                              }}><Trash2 className="h-3 w-3" /></Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
 
             <section className="panel p-5">
