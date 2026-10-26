@@ -47,7 +47,6 @@ export function PollSourcesPanel() {
 
   return (
     <div className="space-y-3">
-    <OwnWorkNotice />
     <CollapsibleSection title={en ? "Opinion polls" : "Sondaże"} defaultOpen={false}>
       <section className="border-x border-b border-border bg-surface/80 px-4 py-5 backdrop-blur-sm md:px-6" aria-labelledby="polls-heading">
         <div className="flex flex-wrap items-start justify-between gap-4">

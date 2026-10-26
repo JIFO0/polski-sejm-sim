@@ -96,6 +96,14 @@ export const Route = createFileRoute("/")({
 function Index() {
   const tr = useTranslation();
   const [scenario, setScenario] = useState<Scenario>(() => defaultScenario());
+  const [initialScenarioKey] = useState(() => {
+    const { name: _n, author: _a, description: _d, ...rest } = defaultScenario();
+    return JSON.stringify(rest);
+  });
+  const scenarioChanged = useMemo(() => {
+    const { name: _n, author: _a, description: _d, ...rest } = scenario;
+    return JSON.stringify(rest) !== initialScenarioKey;
+  }, [scenario, initialScenarioKey]);
   const [selected, setSelected] = useState<number | null>(null);
   const [mode, setMode] = useState<MapMode>("winner");
   const [focusParty, setFocusParty] = useState("ko");
@@ -577,7 +585,7 @@ function Index() {
                     </Link>
                   </div>
                 </div>
-                <OwnWorkNotice className="mt-4" />
+                {!scenarioChanged && <OwnWorkNotice className="mt-4" />}
               </div>
               <ScenarioShelf scenario={scenario} onLoad={loadScenario} onMetadataChange={(metadata) => setScenario((current) => ({ ...current, ...metadata }))} />
             </div>
