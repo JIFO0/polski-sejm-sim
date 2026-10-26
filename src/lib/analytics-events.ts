@@ -31,6 +31,7 @@ export const EVENTS = [
   "community_scenario_load",
   "share_copy",
   "demographic_adjustment_toggle",
+  "social_image_download",
 ] as const;
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
@@ -67,4 +68,5 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   community_scenario_load: "Wczytane scenariusze społeczności",
   share_copy: "Skopiowane linki społeczności",
   demographic_adjustment_toggle: "Przełączenia korekty demograficznej PKW",
+  social_image_download: "Pobrane grafiki do posta",
 };

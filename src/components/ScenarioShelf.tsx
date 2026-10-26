@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
-import { isScenarioModified, nationalSharesOf, track } from "@/lib/analytics";
+import { isScenarioModified, scenarioTraits, nationalSharesOf, track } from "@/lib/analytics";
 import { PARTIES, PARTY_MAP } from "@/data/parties";
 import { CommunityScenariosDialog } from "@/components/CommunityScenariosDialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -189,6 +189,7 @@ export function ScenarioShelf({
       try {
         track({
           event: "scenario_save",
+          meta: scenarioTraits(scenario),
           partyLabels: Object.fromEntries([...scenario.customParties ?? [], ...scenario.mergers ?? []].map((party) => [party.id, party.name])),
           ...(isScenarioModified(scenario) ? { shares: nationalSharesOf(scenario) } : {}),
         });
@@ -216,6 +217,7 @@ export function ScenarioShelf({
       if (!res.reused) {
         track({
           event: "share_link_create",
+          meta: scenarioTraits(item.scenario),
           partyLabels: Object.fromEntries([...item.scenario.customParties ?? [], ...item.scenario.mergers ?? []].map((party) => [party.id, party.name])),
           ...(isScenarioModified(item.scenario) ? { shares: nationalSharesOf(item.scenario) } : {}),
         });

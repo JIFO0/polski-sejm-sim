@@ -164,6 +164,30 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
     }
     const visitsByMonth = [...monthMap.values()].sort((a, b) => b.month.localeCompare(a.month));
 
+    // Tygodnie (od poniedziałku, czas polski) i ranking miesięcy
+    const weekMap = new Map<string, number>();
+    for (const { day, count } of visitsByDay) {
+      const d = new Date(`${day}T12:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+      const wk = d.toISOString().slice(0, 10);
+      weekMap.set(wk, (weekMap.get(wk) ?? 0) + count);
+    }
+    const visitsByWeek = [...weekMap.entries()].map(([week, count]) => ({ week, count })).sort((a, b) => b.week.localeCompare(a.week));
+    const topWeeks = [...visitsByWeek].sort((a, b) => b.count - a.count).slice(0, 5);
+    const topMonths = [...visitsByMonth].sort((a, b) => b.count - a.count).slice(0, 5).map(({ month, label, count }) => ({ month, label, count }));
+    const scenarioActivity = new Map<string, { saves: number; links: number; images: number }>();
+    const scenarioTraitCounts = new Map<string, number>();
+    for (const r of rows) {
+      const kind = r.event === "scenario_save" ? "saves" : r.event === "share_link_create" ? "links" : r.event === "social_image_download" ? "images" : null;
+      if (!kind) continue;
+      const ym = getPolishDay(r.created_at).slice(0, 7);
+      const acc = scenarioActivity.get(ym) ?? { saves: 0, links: 0, images: 0 };
+      acc[kind] += 1;
+      scenarioActivity.set(ym, acc);
+      const meta = (r.payload as { meta?: string | null })?.meta;
+      if (meta && kind !== "images") for (const tag of meta.split(", ")) scenarioTraitCounts.set(tag, (scenarioTraitCounts.get(tag) ?? 0) + 1);
+    }
+
     const eventCounts = new Map<string, number>();
     const metaCounts = new Map<string, number>();
     const hours = Array.from({ length: 24 }, () => 0);
@@ -258,6 +282,12 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       partyLabels,
       visitsByDay,
       visitsByMonth,
+      visitsByWeek: visitsByWeek.slice(0, 12),
+      topWeeks,
+      topMonths,
+      scenarioActivityByMonth: [...scenarioActivity.entries()].map(([month, v]) => ({ month, ...v })).sort((a, b) => b.month.localeCompare(a.month)),
+      scenarioTraits: [...scenarioTraitCounts.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count),
+      socialImageDownloads: countBy("social_image_download"),
       // Enriched options
       topDistricts: [...districtViews.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 12),
       topCoalitions: [...coalitionTests.entries()].map(([members, data]) => ({ members, count: data.count, majorityHits: data.majorityHits })).sort((a, b) => b.count - a.count).slice(0, 10),
