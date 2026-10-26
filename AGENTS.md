@@ -24,3 +24,4 @@
 - Social image downloads are deterministic browser-canvas renders of the simulation, using semantic theme tokens and scenario party identities; no remote rendering or image uploads are involved.
 - Social export coalition results derive from configured scenario groups and simulated seat totals, listing every majority group rather than inventing coalition combinations.
 - Theme preferences use a versioned browser key so obsolete default-derived settings do not override the current default, while new explicit choices persist.
+- Library saves are also copied to the local SQLite store (private_scenarios, capped at 5000, no IP) for the owner-only "Scenariusze niepubliczne" view on /statystyki; they are never published.
