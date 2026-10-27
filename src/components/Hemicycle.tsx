@@ -66,6 +66,7 @@ export function Hemicycle({
 
   return (
     <svg viewBox="0 0 100 56" className="h-auto w-full">
+      <style>{`.hemi-seat{transition:fill 300ms ease,opacity 250ms ease;}`}</style>
       {seats.map((s, i) => {
         const dim = highlight && highlight.size > 0 && !highlight.has(s.party);
         return (
@@ -74,9 +75,9 @@ export function Hemicycle({
             cx={s.x}
             cy={s.y}
             r={1.22}
+            className="hemi-seat"
             fill={s.party === "_empty" ? "var(--seat-empty)" : (PARTY_MAP[s.party]?.color ?? "#94A3B8")}
             opacity={s.party === "_empty" ? 0.6 : dim ? 0.16 : 1}
-            style={{ transition: "fill 300ms ease, opacity 250ms ease" }}
           />
         );
       })}

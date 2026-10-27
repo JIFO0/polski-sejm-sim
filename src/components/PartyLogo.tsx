@@ -46,6 +46,9 @@ export function PartyLogo({
       <img
         src={party.logo}
         alt={party.name}
+        width={size}
+        height={size}
+        decoding="async"
         className="h-full w-full object-contain p-[2px]"
         loading="lazy"
       />

@@ -18,6 +18,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { THEME_BOOT } from "@/lib/theme-preference";
 
+const GOOGLE_FONTS_URL =
+  "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap";
 
 function NotFoundComponent() {
   return (
@@ -96,12 +98,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@jifo" },
     ],
     links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap",
-      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -150,6 +146,20 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang={lang}>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preload" as="style" href={GOOGLE_FONTS_URL} />
+        {/* Non-render-blocking font stylesheet swap */}
+        <link
+          rel="stylesheet"
+          href={GOOGLE_FONTS_URL}
+          media="print"
+          // @ts-expect-error inline onload attribute for non-blocking swap in SSR
+          onload="this.media='all'"
+        />
+        <noscript>
+          <link rel="stylesheet" href={GOOGLE_FONTS_URL} />
+        </noscript>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: SCHEMA_ORG }} />
         <HeadContent />

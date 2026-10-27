@@ -33,8 +33,9 @@ function neutralRgb() {
 }
 
 /**
- * Tło: równa siatka kropek tej samej wielkości.
- * Kolor partii pojawia się tylko na chwilę przy kursorze, potem wraca do szarości.
+ * Tło: równa siatka kropek.
+ * Na urządzeniach mobilnych/dotykowych renderowana jednokrotnie (oszczędność CPU i baterii).
+ * Na desktopie animowana interaktywnie przy kursorze.
  */
 export function ParticleField({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -45,15 +46,21 @@ export function ParticleField({ className }: { className?: string }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const isTouch =
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+      window.innerWidth < 768;
     const reduced =
+      isTouch ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
       document.documentElement.dataset["reduceMotion"] === "true";
+
     let width = 0;
     let height = 0;
     let dpr = 1;
     let particles: Particle[] = [];
     const pointer = { x: -9999, y: -9999, active: false };
     let raf = 0;
+    let isRunning = false;
 
     const build = () => {
       const rect = canvas.getBoundingClientRect();
@@ -93,6 +100,17 @@ export function ParticleField({ className }: { className?: string }) {
       }
     };
 
+    const paintStatic = () => {
+      ctx.clearRect(0, 0, width, height);
+      const neutral = neutralRgb();
+      for (const p of particles) {
+        ctx.beginPath();
+        ctx.arc(p.originX, p.originY, DOT, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${neutral[0]}, ${neutral[1]}, ${neutral[2]}, 0.4)`;
+        ctx.fill();
+      }
+    };
+
     const paintDot = (x: number, y: number, from: number, to: number, t: number, alpha: number) => {
       const neutral = neutralRgb();
       const a = from === -1 ? neutral : (RGB[from] ?? neutral);
@@ -106,22 +124,12 @@ export function ParticleField({ className }: { className?: string }) {
       ctx.fill();
     };
 
-    const onPointer = (e: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      pointer.x = e.clientX - rect.left;
-      pointer.y = e.clientY - rect.top;
-      pointer.active = true;
-    };
-    const onLeave = () => {
-      pointer.active = false;
-      pointer.x = -9999;
-      pointer.y = -9999;
-    };
-
     const radius = 185;
 
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
+      let moving = false;
+
       for (const p of particles) {
         let near = 0;
         if (pointer.active) {
@@ -154,43 +162,87 @@ export function ParticleField({ className }: { className?: string }) {
         p.x += p.vx;
         p.y += p.vy;
 
-        if (p.t < 1) p.t = Math.min(1, p.t + 0.04);
+        if (Math.abs(p.vx) > 0.02 || Math.abs(p.vy) > 0.02 || Math.abs(homeDx) > 0.05 || Math.abs(homeDy) > 0.05) {
+          moving = true;
+        }
+
+        if (p.t < 1) {
+          p.t = Math.min(1, p.t + 0.04);
+          moving = true;
+        }
         if (p.colorHold > 0) {
           p.colorHold -= 1;
-        } else if (p.t >= 1) {
+          moving = true;
+        } else if (p.t >= 1 && p.to !== -1) {
           p.from = p.to;
-          p.to = p.to === -1 ? p.partyColor : -1;
+          p.to = -1;
           p.t = 0;
-          p.colorHold = p.to === -1 ? 160 + Math.random() * 450 : 60 + Math.random() * 120;
+          p.colorHold = 60 + Math.random() * 120;
+          moving = true;
         }
 
         const colored = p.to !== -1 || p.from !== -1;
         const alpha = (colored ? 0.65 : 0.35) + near * 0.25;
         paintDot(p.x, p.y, p.from, p.to, p.t, alpha);
       }
-      raf = requestAnimationFrame(draw);
+
+      if (pointer.active || moving) {
+        raf = requestAnimationFrame(draw);
+      } else {
+        isRunning = false;
+      }
+    };
+
+    const startAnimation = () => {
+      if (!isRunning) {
+        isRunning = true;
+        raf = requestAnimationFrame(draw);
+      }
+    };
+
+    const onPointer = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = e.clientX - rect.left;
+      pointer.y = e.clientY - rect.top;
+      pointer.active = true;
+      startAnimation();
+    };
+
+    const onLeave = () => {
+      pointer.active = false;
+      pointer.x = -9999;
+      pointer.y = -9999;
     };
 
     build();
+
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
     if (reduced) {
-      ctx.clearRect(0, 0, width, height);
-      const neutral = neutralRgb();
-      for (const p of particles) {
-        ctx.beginPath();
-        ctx.arc(p.originX, p.originY, DOT, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${neutral[0]}, ${neutral[1]}, ${neutral[2]}, 0.4)`;
-        ctx.fill();
-      }
+      paintStatic();
     } else {
-      raf = requestAnimationFrame(draw);
+      // Defer initial loop until idle to keep main thread completely unblocked for TBT/FCP
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(() => startAnimation());
+      } else {
+        idleTimer = setTimeout(() => startAnimation(), 400);
+      }
       window.addEventListener("pointermove", onPointer, { passive: true });
       window.addEventListener("pointerleave", onLeave);
     }
 
-    const ro = new ResizeObserver(() => build());
+    const ro = new ResizeObserver(() => {
+      build();
+      if (reduced) {
+        paintStatic();
+      } else {
+        startAnimation();
+      }
+    });
     ro.observe(canvas);
 
     return () => {
+      if (idleTimer) clearTimeout(idleTimer);
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("pointerleave", onLeave);

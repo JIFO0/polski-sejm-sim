@@ -17,9 +17,17 @@ export function CollapsibleSection({
 }) {
   const tr = useTranslation();
   const [open, setOpen] = useState(defaultOpen);
+  const [mounted, setMounted] = useState(defaultOpen);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen && !mounted) {
+      setMounted(true);
+    }
+    setOpen(nextOpen);
+  };
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className={className}>
+    <Collapsible open={open} onOpenChange={handleOpenChange} className={className}>
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
@@ -33,9 +41,11 @@ export function CollapsibleSection({
           </span>
         </Button>
       </CollapsibleTrigger>
-      <CollapsibleContent forceMount className="overflow-hidden data-[state=closed]:hidden data-[state=open]:animate-accordion-down">
-        {children}
-      </CollapsibleContent>
+      {mounted ? (
+        <CollapsibleContent className="overflow-hidden data-[state=closed]:hidden data-[state=open]:animate-accordion-down">
+          {children}
+        </CollapsibleContent>
+      ) : null}
     </Collapsible>
   );
 }
