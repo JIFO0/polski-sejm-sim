@@ -1,14 +1,39 @@
 [
   {
+    "id": "pollster-se-2026-10-26",
+    "institute": "Instytut Badań Pollster dla Super Expressu",
+    "commissioner": "Super Express",
+    "fieldworkFrom": "2026-10-26",
+    "fieldworkTo": "2026-10-27",
+    "publishedAt": "2026-10-28",
+    "sampleSize": 1029,
+    "method": "CAWI",
+    "methodDetail": "badanie zrealizowane metodą CAWI na próbie 1029 dorosłych Polaków, błąd oszacowania około 3%",
+    "publicationTitle": "Sondaż Instytutu Badań Pollster dla Super Expressu, 26–27 października 2026",
+    "results": {
+      "ko": 33.44,
+      "pis": 22.35,
+      "konf": 12.24,
+      "kkp": 7.84,
+      "nl": 7.1,
+      "rp": 5.19,
+      "razem": 4.27,
+      "psl": 3.49,
+      "pl2050": 2.65,
+      "inne": 0.88
+    },
+    "sourceUrl": "https://polityka.se.pl/wiadomosci/po-tym-sondazu-prawica-moze-przymierzac-sie-rzadzenia-aa-C8zz-7bZR-mcT1.html"
+  },
+  {
     "id": "pollster-2026-10-19",
-    "institute": "Instytut Badań Pollster",
-    "commissioner": null,
+    "institute": "Instytut Badań Pollster dla zero.pl",
+    "commissioner": "zero.pl",
     "fieldworkFrom": "2026-10-19",
     "fieldworkTo": "2026-10-21",
     "publishedAt": "2026-10-22",
     "sampleSize": 1014,
     "method": null,
-    "publicationTitle": "Sondaż Instytutu Badań Pollster, 19–21 października 2026",
+    "publicationTitle": "Sondaż Instytutu Badań Pollster dla zero.pl, 19–21 października 2026",
     "results": {
       "ko": 33.54,
       "pis": 22.06,
@@ -72,6 +97,29 @@
     "sourceUrl": "https://wiadomosci.wp.pl/ko-na-czele-ale-bez-wladzy-mamy-najnowszy-sondaz-partyjny-7341734268368928a"
   },
   {
+    "id": "ogb-stan360-2026-10-01",
+    "institute": "OGB dla Stan360",
+    "commissioner": "Stan360",
+    "fieldworkFrom": "2026-10-01",
+    "fieldworkTo": "2026-10-13",
+    "publishedAt": "2026-10-15",
+    "sampleSize": 2000,
+    "method": null,
+    "publicationTitle": "Sondaż OGB dla Stan360, 1–13 października 2026",
+    "results": {
+      "ko": 35.91,
+      "pis": 25.03,
+      "konf": 11.8,
+      "kkp": 11.31,
+      "nl": 6.12,
+      "rp": 3.63,
+      "razem": 2.75,
+      "psl": 2.16,
+      "pl2050": 1.29
+    },
+    "sourceUrl": "https://stan360.pl/"
+  },
+  {
     "id": "cbos-2026-10-05",
     "institute": "Centrum Badania Opinii Społecznej (CBOS)",
     "commissioner": null,
@@ -97,7 +145,7 @@
   },
   {
     "id": "pollster-se-2026-10-06",
-    "institute": "Instytut Badań Pollster",
+    "institute": "Instytut Badań Pollster dla Super Expressu",
     "commissioner": "Super Express",
     "fieldworkFrom": "2026-10-06",
     "fieldworkTo": "2026-10-07",
@@ -116,7 +164,7 @@
       "psl": 3.21,
       "pl2050": 1.8
     },
-    "sourceUrl": "https://wiadomosci.wp.pl/triumf-ko-i-koszmar-tuska-w-sondazu-sojusznicy-wyrzuceni-poza-sejm-7339123860445632a"
+    "sourceUrl": "https://se.pl/wiadomosci/polityka/czarne-chmury-nad-ko-w-sondazu-wygrywa-ale-czy-utrzyma-wladze"
   },
   {
     "id": "opinia24-2026-10-05",
@@ -169,7 +217,7 @@
   },
   {
     "id": "pollster-se-2026-09-21",
-    "institute": "Instytut Badań Pollster",
+    "institute": "Instytut Badań Pollster dla Super Expressu",
     "commissioner": "Super Express",
     "fieldworkFrom": "2026-09-21",
     "fieldworkTo": "2026-09-22",
@@ -189,7 +237,7 @@
       "pl2050": 1.54,
       "inne": 0.61
     },
-    "sourceUrl": "https://www.rp.pl/polityka/art45178321-sondaz-instytutu-badan-pollster-ko-daleko-przed-pis-mateusz-morawiecki-tuz-nad-progiem"
+    "sourceUrl": "https://se.pl/wiadomosci/polityka/sondaz-instytutu-badan-pollster-ko-daleko-przed-pis-mateusz-morawiecki-tuz-nad-progiem"
   },
   {
     "id": "ibris-rz-2026-09-18",

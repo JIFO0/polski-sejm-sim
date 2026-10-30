@@ -52,6 +52,8 @@ export interface Poll {
   institute: string | null;
   /** Zleceniodawca. */
   commissioner: string | null;
+  /** Zamawiający (opcjonalne pole / alias zleceniodawcy). */
+  client?: string | null | undefined;
   /** Początek badania, YYYY-MM-DD. */
   fieldworkFrom: string | null;
   /** Koniec badania, YYYY-MM-DD. */
@@ -115,7 +117,8 @@ export const KNOWN_RESULT_KEYS = [
 export const pollSchema = z.object({
   id: z.string().min(1),
   institute: z.string().min(1).nullable(),
-  commissioner: z.string().min(1).nullable(),
+  commissioner: z.string().min(1).nullable().optional(),
+  client: z.string().min(1).nullable().optional(),
   fieldworkFrom: dayField.nullable(),
   fieldworkTo: dayField.nullable(),
   publishedAt: dayField.nullable(),
@@ -140,7 +143,10 @@ export function parsePollDataset(data: unknown): Poll[] {
       }
     }
   }
-  return parsed;
+  return parsed.map((item) => ({
+    ...item,
+    commissioner: item.commissioner ?? item.client ?? null,
+  }));
 }
 
 const MS_DAY = 86_400_000;

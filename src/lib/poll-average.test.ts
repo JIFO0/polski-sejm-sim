@@ -4,6 +4,7 @@ import {
   POLLS,
   computePollAverage,
   parsePollDataset,
+  pollSchema,
   proportionMargin,
   scaleDistrictsToNational,
   type Poll,
@@ -89,7 +90,81 @@ assert.equal(proportionMargin(50, null), null);
 
 const dataset = parsePollDataset(POLLS);
 assert.equal(dataset.length, POLLS.length);
-assert.ok(dataset.length >= 11);
+assert.ok(dataset.length >= 13);
+
+const pollsterLatest = dataset.find((item) => item.id === "pollster-se-2026-10-26");
+assert.equal(pollsterLatest?.results?.["ko"], 33.44);
+assert.equal(pollsterLatest?.results?.["pis"], 22.35);
+assert.equal(pollsterLatest?.results?.["konf"], 12.24);
+assert.equal(pollsterLatest?.results?.["kkp"], 7.84);
+assert.equal(pollsterLatest?.results?.["nl"], 7.1);
+assert.equal(pollsterLatest?.results?.["rp"], 5.19);
+assert.equal(pollsterLatest?.results?.["razem"], 4.27);
+assert.equal(pollsterLatest?.results?.["psl"], 3.49);
+assert.equal(pollsterLatest?.results?.["pl2050"], 2.65);
+assert.equal(pollsterLatest?.results?.["inne"], 0.88);
+assert.equal(pollsterLatest?.institute, "Instytut Badań Pollster dla Super Expressu");
+assert.equal(pollsterLatest?.commissioner, "Super Express");
+assert.equal(pollsterLatest?.method, "CAWI");
+assert.equal(pollsterLatest?.sampleSize, 1029);
+assert.equal(
+  pollsterLatest?.sourceUrl,
+  "https://polityka.se.pl/wiadomosci/po-tym-sondazu-prawica-moze-przymierzac-sie-rzadzenia-aa-C8zz-7bZR-mcT1.html",
+);
+
+const ogb = dataset.find((item) => item.id === "ogb-stan360-2026-10-01");
+assert.equal(ogb?.results?.["ko"], 35.91);
+assert.equal(ogb?.results?.["pis"], 25.03);
+assert.equal(ogb?.results?.["konf"], 11.8);
+assert.equal(ogb?.results?.["kkp"], 11.31);
+assert.equal(ogb?.results?.["nl"], 6.12);
+assert.equal(ogb?.results?.["rp"], 3.63);
+assert.equal(ogb?.results?.["razem"], 2.75);
+assert.equal(ogb?.results?.["psl"], 2.16);
+assert.equal(ogb?.results?.["pl2050"], 1.29);
+assert.equal(ogb?.institute, "OGB dla Stan360");
+assert.equal(ogb?.commissioner, "Stan360");
+assert.equal(ogb?.sampleSize, 2000);
+assert.equal(ogb?.publishedAt, "2026-10-15");
+assert.equal(ogb?.sourceUrl, "https://stan360.pl/");
+
+const pollsterPolls = dataset.filter((item) => (item.institute ?? "").includes("Pollster"));
+assert.ok(pollsterPolls.length >= 4);
+for (const p of pollsterPolls) {
+  assert.ok(
+    p.institute?.startsWith("Instytut Badań Pollster dla "),
+    `Nazwa Pollstera bez zamawiającego: ${p.institute}`,
+  );
+  assert.ok(
+    p.sourceUrl?.includes("se.pl") || p.sourceUrl?.includes("zero.pl"),
+    `Link Pollstera nie prowadzi do zamawiającego: ${p.sourceUrl}`,
+  );
+  assert.ok(
+    !p.sourceUrl?.includes("wp.pl"),
+    `Link Pollstera prowadzi do agregatora wp.pl: ${p.sourceUrl}`,
+  );
+  assert.ok(
+    !p.sourceUrl?.includes("rp.pl"),
+    `Link Pollstera prowadzi do agregatora rp.pl: ${p.sourceUrl}`,
+  );
+}
+
+const withClient = pollSchema.parse({
+  ...dataset[0],
+  client: "Zamawiający Testowy",
+  commissioner: null,
+});
+assert.equal(withClient.client, "Zamawiający Testowy");
+const parsedWithClient = parsePollDataset([
+  {
+    ...dataset[0],
+    id: "test-client",
+    client: "Zamawiający Testowy",
+    commissioner: null,
+  },
+]);
+assert.equal(parsedWithClient[0]?.commissioner, "Zamawiający Testowy");
+
 const latest = dataset.find((item) => item.id === "pollster-2026-10-19");
 assert.equal(latest?.results?.["ko"], 33.54);
 assert.equal(latest?.sampleSize, 1014);
