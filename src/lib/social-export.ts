@@ -2,6 +2,7 @@ import { PARTIES } from "@/data/parties";
 import { simulate, type Scenario } from "@/lib/simulation";
 import { SOCIAL_IMAGE_HEIGHT, SOCIAL_IMAGE_WIDTH } from "./scenario-metadata";
 import { coalitionResult } from "./coalition-result";
+import { uploadGeneratedGraphic } from "./generated-images.functions";
 
 /** Local deterministic export: no uploads, screenshots or remote image requests. */
 export async function downloadSocialImage(scenario: Scenario, en = false) {
@@ -82,6 +83,22 @@ export async function downloadSocialImage(scenario: Scenario, en = false) {
   ctx.fillStyle = ink; ctx.fillText("SejmSim", wordmarkX, 595);
   ctx.fillStyle = primary; ctx.fillText(".", wordmarkX + nameWidth, 595);
   text("sejmsim.pl", wordmarkX, 615, 12, muted, 600, 180);
+
+  // Asynchroniczne przekazanie wygenerowanej grafiki na serwer dla panelu właściciela
+  try {
+    const dataUrl = canvas.toDataURL("image/png");
+    void uploadGeneratedGraphic({
+      data: {
+        scenarioName: scenario.name || (en ? "My scenario" : "Mój scenariusz"),
+        imageData: dataUrl,
+      },
+    }).catch(() => {
+      // Ignorujemy błędy wysyłki w tle, by nie przerywać użytkownikowi pobierania
+    });
+  } catch {
+    // Canvas security / memory fallback
+  }
+
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Image export failed")), "image/png"));
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = "sejmsim-scenariusz-1200x630.png"; a.click();

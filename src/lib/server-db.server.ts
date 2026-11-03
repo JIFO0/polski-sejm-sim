@@ -1,3 +1,14 @@
+export const SEED_SECURITY_KEYS = [
+  "ccdcabbacd0f0e97aff69a30d3e525001ae83514534176e3cde1c7b048af926c",
+  "93f343225c7a854ffb06a75b38e943420d067df5882ce4d0dc9e07d87198f90f",
+  "4e5a00de7e4a9931566f1867035c483c52b4403851bf35d1dd6734b468006458",
+  "395b0954f4598774cb56668f551b90d65a4f96dcad478190ab3462807bd4cc52",
+  "22c3dd59452cfb783112200b9325a9491722f5a047cd884f8a15b8c1e5f8f8e6",
+  "14e2d962766a1d629dcc8bd4f8f43c729c19bc2dd75cf7be411e1c6dbfe5450c",
+  "b634f97db690f04cec79384df021a8e7efff0630272c09e832f487bad4d5fc49",
+  "dc94ffde69afe261fe16ca833d847b924b9647aff5530afba80caa2f4fa857a5",
+];
+
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
@@ -69,6 +80,28 @@ export function getDb(): DatabaseSync {
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_private_scenarios_created ON private_scenarios(created_at);
+
+    CREATE TABLE IF NOT EXISTS generated_images (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scenario_name TEXT NOT NULL,
+      image_data TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_generated_images_created ON generated_images(created_at);
+
+    CREATE TABLE IF NOT EXISTS failed_login_attempts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ip TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_failed_login_ip_created ON failed_login_attempts(ip, created_at);
+
+    CREATE TABLE IF NOT EXISTS security_override_keys (
+      key TEXT PRIMARY KEY,
+      used INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      used_at TEXT
+    );
   `);
 
   const shareCols = db.prepare("PRAGMA table_info(shared_scenarios)").all() as { name: string }[];
@@ -85,6 +118,15 @@ export function getDb(): DatabaseSync {
     WHERE active = 1;
   `);
 
+  
+  const countKeys = db.prepare("SELECT COUNT(*) as count FROM security_override_keys").get() as { count: number };
+  if (!countKeys || countKeys.count === 0) {
+    const insertKey = db.prepare("INSERT OR IGNORE INTO security_override_keys (key, used, created_at) VALUES (?, 0, ?)");
+    const now = new Date().toISOString();
+    for (const k of SEED_SECURITY_KEYS) {
+      insertKey.run(k, now);
+    }
+  }
   dbInstance = db;
   return db;
 }
@@ -98,6 +140,10 @@ export function runMaintenance(): void {
     const db = getDb();
     const nowIso = new Date().toISOString();
 
+    
+    db.prepare("DELETE FROM failed_login_attempts WHERE created_at < ?").run(
+      new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+    );
     // Wygasłe linki znikają same. Wyłączone i wyróżnione zostają, dopóki właściciel ich nie usunie.
     db.prepare("DELETE FROM shared_scenarios WHERE active = 1 AND (featured IS NULL OR featured = 0) AND expires_at < ? AND expires_at < '9999-01-01'").run(nowIso);
 
@@ -466,6 +512,7 @@ export function clearAllPlatformData(): { ok: boolean; deletedEvents: number; de
   const resEvents = db.prepare("DELETE FROM analytics_events").run();
   const resShares = db.prepare("DELETE FROM shared_scenarios").run();
   db.prepare("DELETE FROM private_scenarios").run();
+  db.prepare("DELETE FROM generated_images").run();
   try {
     db.exec("VACUUM;");
   } catch {
@@ -552,3 +599,60 @@ export function getDbStats() {
   };
 }
 
+
+const MAX_GENERATED_IMAGES = 500;
+
+export function insertGeneratedImage(scenarioName: string, imageData: string): void {
+  maybeRunMaintenance();
+  const db = getDb();
+  db.prepare("INSERT INTO generated_images (scenario_name, image_data, created_at) VALUES (?, ?, ?)").run(
+    scenarioName.slice(0, 100),
+    imageData,
+    new Date().toISOString()
+  );
+  db.prepare(`DELETE FROM generated_images WHERE id NOT IN (SELECT id FROM generated_images ORDER BY id DESC LIMIT ${MAX_GENERATED_IMAGES})`).run();
+}
+
+export function listGeneratedImages(limit = 100): Array<{ id: number; scenario_name: string; image_data: string; created_at: string }> {
+  maybeRunMaintenance();
+  const rows = getDb().prepare("SELECT id, scenario_name, image_data, created_at FROM generated_images ORDER BY id DESC LIMIT ?").all(limit) as Array<{ id: number; scenario_name: string; image_data: string; created_at: string }>;
+  return rows;
+}
+
+export function deleteGeneratedImage(id: number): boolean {
+  return Number(getDb().prepare("DELETE FROM generated_images WHERE id = ?").run(id).changes) > 0;
+}
+
+export function countRecentFailedAttempts(ip: string, hours = 12): number {
+  const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const row = getDb().prepare("SELECT COUNT(*) as count FROM failed_login_attempts WHERE ip = ? AND created_at >= ?").get(ip, cutoff) as { count: number } | undefined;
+  return Number(row?.count ?? 0);
+}
+
+export function recordFailedLoginAttempt(ip: string): void {
+  getDb().prepare("INSERT INTO failed_login_attempts (ip, created_at) VALUES (?, ?)").run(ip, new Date().toISOString());
+}
+
+export function clearFailedAttemptsForIp(ip: string): void {
+  getDb().prepare("DELETE FROM failed_login_attempts WHERE ip = ?").run(ip);
+}
+
+export function useSecurityOverrideKey(key: string): boolean {
+  const clean = key.trim().toLowerCase();
+  if (clean.length !== 64) return false;
+  const db = getDb();
+  const row = db.prepare("SELECT key, used FROM security_override_keys WHERE key = ?").get(clean) as { key: string; used: number } | undefined;
+  if (!row || row.used === 1) return false;
+  db.prepare("UPDATE security_override_keys SET used = 1, used_at = ? WHERE key = ?").run(new Date().toISOString(), clean);
+  return true;
+}
+
+export function listSecurityOverrideKeys(): Array<{ key: string; used: boolean; created_at: string; used_at: string | null }> {
+  const rows = getDb().prepare("SELECT key, used, created_at, used_at FROM security_override_keys ORDER BY created_at ASC, key ASC").all() as Array<{ key: string; used: number; created_at: string; used_at: string | null }>;
+  return rows.map((r) => ({
+    key: r.key,
+    used: Boolean(r.used),
+    created_at: r.created_at,
+    used_at: r.used_at,
+  }));
+}

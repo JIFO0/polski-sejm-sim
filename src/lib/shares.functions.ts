@@ -110,13 +110,14 @@ export const recordShareView = createServerFn({ method: "POST" })
     }
   });
 
-const ownerSchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200) });
+const ownerSchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200), securityKey: z.string().max(100).optional() });
 
 export const listShares = createServerFn({ method: "POST" })
   .inputValidator((data) => ownerSchema.parse(data))
   .handler(async ({ data }) => {
-    const { isOwner } = await import("./owner-auth.server");
-    if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
+    const { verifyOwnerAccess } = await import("./owner-auth.server");
+    const auth = await verifyOwnerAccess(data);
+    if (!auth.ok) return { ok: false as const, error: auth.error ?? "Brak dostępu." };
     const { listSharedScenariosForOwner } = await import("./server-db.server");
     try {
       const rows = listSharedScenariosForOwner(1000);
@@ -130,8 +131,9 @@ export const listShares = createServerFn({ method: "POST" })
 export const deactivateShare = createServerFn({ method: "POST" })
   .inputValidator((data) => ownerSchema.extend({ id: z.string().max(20) }).parse(data))
   .handler(async ({ data }) => {
-    const { isOwner } = await import("./owner-auth.server");
-    if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
+    const { verifyOwnerAccess } = await import("./owner-auth.server");
+    const auth = await verifyOwnerAccess(data);
+    if (!auth.ok) return { ok: false as const, error: auth.error ?? "Brak dostępu." };
     const { deactivateShareById } = await import("./server-db.server");
     try {
       deactivateShareById(data.id);
@@ -144,8 +146,9 @@ export const deactivateShare = createServerFn({ method: "POST" })
 export const deleteShare = createServerFn({ method: "POST" })
   .inputValidator((data) => ownerSchema.extend({ id: z.string().max(20) }).parse(data))
   .handler(async ({ data }) => {
-    const { isOwner } = await import("./owner-auth.server");
-    if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
+    const { verifyOwnerAccess } = await import("./owner-auth.server");
+    const auth = await verifyOwnerAccess(data);
+    if (!auth.ok) return { ok: false as const, error: auth.error ?? "Brak dostępu." };
     const { deleteShareById } = await import("./server-db.server");
     try {
       const removed = deleteShareById(data.id);
@@ -158,8 +161,9 @@ export const deleteShare = createServerFn({ method: "POST" })
 export const togglePermanentShare = createServerFn({ method: "POST" })
   .inputValidator((data) => ownerSchema.extend({ id: z.string().max(20) }).parse(data))
   .handler(async ({ data }) => {
-    const { isOwner } = await import("./owner-auth.server");
-    if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
+    const { verifyOwnerAccess } = await import("./owner-auth.server");
+    const auth = await verifyOwnerAccess(data);
+    if (!auth.ok) return { ok: false as const, error: auth.error ?? "Brak dostępu." };
     const { togglePermanentShareById } = await import("./server-db.server");
     try {
       const result = togglePermanentShareById(data.id);
@@ -172,8 +176,9 @@ export const togglePermanentShare = createServerFn({ method: "POST" })
 export const toggleFeaturedShare = createServerFn({ method: "POST" })
   .inputValidator((data) => ownerSchema.extend({ id: z.string().max(20) }).parse(data))
   .handler(async ({ data }) => {
-    const { isOwner } = await import("./owner-auth.server");
-    if (!isOwner(data.login, data.key)) return { ok: false as const, error: "Brak dostępu." };
+    const { verifyOwnerAccess } = await import("./owner-auth.server");
+    const auth = await verifyOwnerAccess(data);
+    if (!auth.ok) return { ok: false as const, error: auth.error ?? "Brak dostępu." };
     const { toggleFeaturedShareById } = await import("./server-db.server");
     try {
       const result = toggleFeaturedShareById(data.id);

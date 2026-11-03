@@ -28,8 +28,9 @@ const ownerSchema = z.object({ login: z.string().max(50), key: z.string().min(1)
 export const listPrivateScenariosFn = createServerFn({ method: "POST" })
   .inputValidator((data) => ownerSchema.parse(data))
   .handler(async ({ data }) => {
-    const { isOwner } = await import("./owner-auth.server");
-    if (!isOwner(data.login, data.key)) return { ok: false as const, items: [] };
+    const { verifyOwnerAccess } = await import("./owner-auth.server");
+    const auth = await verifyOwnerAccess(data);
+    if (!auth.ok) return { ok: false as const, error: auth.error, items: [] };
     const { listPrivateScenarios } = await import("./server-db.server");
     const items = listPrivateScenarios().map((r) => ({
       id: r.id,
@@ -45,8 +46,9 @@ export const listPrivateScenariosFn = createServerFn({ method: "POST" })
 export const deletePrivateScenarioFn = createServerFn({ method: "POST" })
   .inputValidator((data) => ownerSchema.extend({ id: z.number().int() }).parse(data))
   .handler(async ({ data }) => {
-    const { isOwner } = await import("./owner-auth.server");
-    if (!isOwner(data.login, data.key)) return { ok: false };
+    const { verifyOwnerAccess } = await import("./owner-auth.server");
+    const auth = await verifyOwnerAccess(data);
+    if (!auth.ok) return { ok: false, error: auth.error };
     const { deletePrivateScenario } = await import("./server-db.server");
     return { ok: deletePrivateScenario(data.id) };
   });

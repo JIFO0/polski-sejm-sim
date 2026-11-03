@@ -44,7 +44,11 @@ export const trackEvent = createServerFn({ method: "POST" })
     }
   });
 
-const summarySchema = z.object({ login: z.string().max(50), key: z.string().min(1).max(200) });
+const summarySchema = z.object({
+  login: z.string().max(50),
+  key: z.string().min(1).max(200),
+  securityKey: z.string().max(100).optional(),
+});
 
 const WEEKDAY_INDEX: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
 
@@ -89,12 +93,13 @@ function getPolishDay(isoString: string): string {
 export const getAnalyticsSummary = createServerFn({ method: "POST" })
   .inputValidator((data) => summarySchema.parse(data))
   .handler(async ({ data }) => {
-    const { isOwner } = await import("./owner-auth.server");
-    if (!isOwner(data.login, data.key)) {
-      return { ok: false as const, error: "Nieprawidłowy login lub hasło." };
+    const { verifyOwnerAccess } = await import("./owner-auth.server");
+    const auth = await verifyOwnerAccess(data);
+    if (!auth.ok) {
+      return { ok: false as const, error: auth.error ?? "Nieprawidłowy login lub hasło." };
     }
 
-    const { getAllAnalytics, countTotalActiveShares, getDbStats, countAnalyticsEvents, getFeedbackSummary, getShareLibraryStats } =
+    const { getAllAnalytics, countTotalActiveShares, getDbStats, countAnalyticsEvents, getFeedbackSummary, getShareLibraryStats, listSecurityOverrideKeys, listGeneratedImages } =
       await import("./server-db.server");
     const totalEventsInDb = countAnalyticsEvents();
     const rows = getAllAnalytics(Math.max(totalEventsInDb, 1));
@@ -304,6 +309,9 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       trafficSources: [...trafficSources.entries()].map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count),
       dbStats,
       webhookConfigured: Boolean(process.env["DISCORD_FEEDBACK_WEBHOOK_URL"]?.trim()),
+      securityKeys: listSecurityOverrideKeys(),
+      generatedImagesCount: listGeneratedImages(1000).length,
+      isLocalIp: auth.isLocal ?? false,
     };
   });
 

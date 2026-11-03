@@ -37,6 +37,8 @@ import {
 import { toast } from "sonner";
 import { getAnalyticsSummary, clearAllAnalyticsData, testFeedbackWebhook } from "@/lib/analytics.functions";
 import { deletePrivateScenarioFn, listPrivateScenariosFn } from "@/lib/private-scenarios.functions";
+import { listGeneratedGraphicsFn, deleteGeneratedGraphicFn } from "@/lib/generated-images.functions";
+import { Copy, Image as ImageIcon, Key } from "lucide-react";
 import { deactivateShare, deleteShare, listShares, togglePermanentShare, toggleFeaturedShare } from "@/lib/shares.functions";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { EVENT_LABELS } from "@/lib/analytics-events";
@@ -96,6 +98,29 @@ function StatsPage() {
   const [privateScenarios, setPrivateScenarios] = useState<{ id: number; name: string; created_at: string; author: string; description: string; json: string }[]>([]);
   const fetchPrivate = useServerFn(listPrivateScenariosFn);
   const removePrivate = useServerFn(deletePrivateScenarioFn);
+  const [securityKey, setSecurityKey] = useState("");
+  const [graphics, setGraphics] = useState<Array<{ id: number; scenario_name: string; image_data: string; created_at: string }>>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const fetchGraphics = useServerFn(listGeneratedGraphicsFn);
+  const deleteGraphicFn = useServerFn(deleteGeneratedGraphicFn);
+
+  const copyKey = (val: string) => {
+    navigator.clipboard.writeText(val);
+    toast.success("Skopiowano 64-znakowy klucz bezpieczeństwa!");
+  };
+
+  const handleDeleteGraphic = async (id: number) => {
+    if (!window.confirm("Usunąć tę wygenerowaną grafikę?")) return;
+    const res = await deleteGraphicFn({
+      data: { login: login.trim(), key: key.trim(), securityKey: securityKey.trim() || undefined, id },
+    });
+    if (res.ok) {
+      setGraphics((prev) => prev.filter((g) => g.id !== id));
+      toast.success("Grafika została usunięta.");
+    } else {
+      toast.error("Nie udało się usunąć grafiki.");
+    }
+  };
   const deactivate = useServerFn(deactivateShare);
   const removeShare = useServerFn(deleteShare);
   const togglePermanent = useServerFn(togglePermanentShare);
@@ -137,10 +162,17 @@ function StatsPage() {
     setLoading(true);
     setError(null);
     try {
-      const creds = { login: login.trim(), key: key.trim() };
-      const [res, sh, priv] = await Promise.all([fetchSummary({ data: creds }), fetchShares({ data: creds }), fetchPrivate({ data: creds })]);
+      const effectiveKey = key.trim() || securityKey.trim();
+      const creds = { login: login.trim(), key: effectiveKey, securityKey: securityKey.trim() || undefined };
+      const [res, sh, priv, gr] = await Promise.all([
+        fetchSummary({ data: creds }),
+        fetchShares({ data: creds }),
+        fetchPrivate({ data: creds }),
+        fetchGraphics({ data: creds }),
+      ]);
       if (sh.ok) setShares(sh.shares);
       if (priv.ok) setPrivateScenarios(priv.items);
+      if (gr.ok) setGraphics(gr.items);
       if (!res.ok) {
         setError(res.error);
         setSummary(null);
@@ -257,19 +289,45 @@ function StatsPage() {
               Login
             </label>
             <Input id="stats-login" value={login} onChange={(e) => setLogin(e.target.value)} autoComplete="username" />
-            <label htmlFor="stats-key" className="text-sm font-semibold text-foreground">
-              Hasło
-            </label>
-            <Input
-              id="stats-key"
-              type="password"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder="Wpisz hasło"
-              autoComplete="current-password"
-            />
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <Button type="submit" disabled={loading || !key.trim()} className="min-h-11">
+            <div>
+              <label htmlFor="stats-key" className="text-sm font-semibold text-foreground flex items-center justify-between">
+                <span>Klucz dostępu (ANALYTICS_KEY)</span>
+                <span className="text-xs text-muted-foreground font-normal">lub 64-znakowy klucz</span>
+              </label>
+              <Input
+                id="stats-key"
+                type="password"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder="Wpisz klucz dostępu (hasło) lub klucz 64-znakowy"
+                autoComplete="current-password"
+                className="mt-1"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Domyślnym hasłem jest wartość sekretu serwera <code>ANALYTICS_KEY</code>. Możesz również użyć jednego z 64-znakowych kluczy jednorazowych.
+              </p>
+            </div>
+            <div className="pt-1">
+              <label htmlFor="stats-sec-key" className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+                <span>Awaryjny klucz bezpieczeństwa (64 znaki)</span>
+                <span className="text-[10px] text-muted-foreground/70">Odblokowuje IP po 5 błędach</span>
+              </label>
+              <Input
+                id="stats-sec-key"
+                type="text"
+                value={securityKey}
+                onChange={(e) => setSecurityKey(e.target.value.trim())}
+                placeholder="Opcjonalny jednorazowy klucz 64 znaki"
+                className="mt-1 font-mono text-xs"
+                maxLength={64}
+              />
+            </div>
+            {error ? (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2.5 text-xs text-destructive">
+                {error}
+              </div>
+            ) : null}
+            <Button type="submit" disabled={loading || (!key.trim() && !securityKey.trim())} className="min-h-11">
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Pokaż statystyki
             </Button>
@@ -891,6 +949,128 @@ function StatsPage() {
                 </div>
               )}
             </section>
+
+            {/* Wygenerowane grafiki do posta */}
+            <section className="panel p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5 text-primary" /> Wygenerowane grafiki do posta ({graphics.length})
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Grafiki wygenerowane w przeglądarce i zapisane na serwerze (do 500 najnowszych). Kliknij grafikę, by powiększyć.
+                  </p>
+                </div>
+              </div>
+
+              {graphics.length === 0 ? (
+                <p className="mt-4 text-xs text-muted-foreground italic">Nikt jeszcze nie wygenerował grafiki od momentu wdrożenia.</p>
+              ) : (
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {graphics.map((g) => (
+                    <div key={g.id} className="group relative flex flex-col overflow-hidden rounded-lg border bg-card shadow-xs transition-all hover:shadow-md">
+                      <div className="relative w-full overflow-hidden bg-muted cursor-pointer" style={{ aspectRatio: "1200 / 630" }} onClick={() => setPreviewImage(g.image_data)}>
+                        <img src={g.image_data} alt={g.scenario_name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                      </div>
+                      <div className="flex flex-1 flex-col justify-between p-3">
+                        <div>
+                          <h3 className="line-clamp-1 text-sm font-semibold text-ink" title={g.scenario_name}>{g.scenario_name}</h3>
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <Clock className="h-3 w-3" /> {new Date(g.created_at).toLocaleString("pl-PL")}
+                          </p>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-2 pt-2 border-t">
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => {
+                            const a = document.createElement("a");
+                            a.href = g.image_data;
+                            a.download = `sejmsim-grafika-${g.id}.png`;
+                            a.click();
+                          }}>
+                            Pobierz
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteGraphic(g.id)}>
+                            <Trash2 className="h-3.5 w-3.5 mr-1" /> Usuń
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Jednorazowe klucze bezpieczeństwa */}
+            <section className="panel p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                    <Key className="h-5 w-5 text-primary" /> Jednorazowe klucze bezpieczeństwa (64 znaki)
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ochrona przed brute-force: IP spoza sieci lokalnej mają limit 5 prób na 12h. Klucze poniżej pozwalają zdjąć blokadę.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                    Dostępne: {summary.securityKeys?.filter((k: any) => !k.used).length ?? 0} / {summary.securityKeys?.length ?? 0}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                {(summary.securityKeys ?? []).map((k: any, idx: number) => (
+                  <div key={k.key} className={`flex items-center justify-between gap-2 p-2.5 rounded-md border text-xs ${k.used ? "bg-muted/50 border-muted text-muted-foreground" : "bg-card border-border"}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="font-semibold text-foreground">Klucz #{idx + 1}</span>
+                        {k.used ? (
+                          <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">Zużyty ({k.used_at ? new Date(k.used_at).toLocaleDateString("pl-PL") : "tak"})</span>
+                        ) : (
+                          <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-medium px-1.5 py-0.5 rounded">Aktywny</span>
+                        )}
+                      </div>
+                      <code className="block truncate font-mono text-[11px] text-muted-foreground" title={k.key}>{k.key}</code>
+                    </div>
+                    {!k.used && (
+                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyKey(k.key)} title="Kopiuj 64-znakowy klucz">
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <Dialog open={Boolean(previewImage)} onOpenChange={(o) => !o && setPreviewImage(null)}>
+              <DialogContent className="max-w-4xl p-4 bg-card">
+                <DialogHeader>
+                  <DialogTitle className="text-base font-bold text-ink">Podgląd wygenerowanej grafiki</DialogTitle>
+                </DialogHeader>
+                {previewImage && (
+                  <div className="overflow-hidden rounded-md border mt-2">
+                    <img src={previewImage} alt="Podgląd grafiki" className="w-full h-auto block" />
+                  </div>
+                )}
+                <div className="mt-3 flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (!previewImage) return;
+                      const a = document.createElement("a");
+                      a.href = previewImage;
+                      a.download = "sejmsim-scenariusz-1200x630.png";
+                      a.click();
+                    }}
+                  >
+                    Pobierz plik PNG
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setPreviewImage(null)}>
+                    Zamknij
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <section className="panel p-5">
               <h2 className="font-display text-lg font-bold text-ink">Tworzone scenariusze</h2>

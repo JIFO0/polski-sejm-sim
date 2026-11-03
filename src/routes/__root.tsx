@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { useDarkTheme } from "@/components/ThemeToggle";
 import { FeedbackInvitation } from "@/components/FeedbackInvitation";
+import { SupportInvitation } from "@/components/SupportInvitation";
 import { useLanguage } from "@/lib/i18n";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -181,6 +182,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <FeedbackInvitation />
+      <SupportInvitation />
       <Toaster position="top-center" richColors theme={dark ? "dark" : "light"} />
     </QueryClientProvider>
   );

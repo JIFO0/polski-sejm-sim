@@ -25,6 +25,31 @@
     "sourceUrl": "https://polityka.se.pl/wiadomosci/po-tym-sondazu-prawica-moze-przymierzac-sie-rzadzenia-aa-C8zz-7bZR-mcT1.html"
   },
   {
+    "id": "ipsos-tvp-2026-10-21",
+    "institute": "Ipsos dla TVP Info i »19.30«",
+    "commissioner": "TVP Info",
+    "fieldworkFrom": "2026-10-21",
+    "fieldworkTo": "2026-10-22",
+    "publishedAt": "2026-10-23",
+    "sampleSize": 1000,
+    "method": "mix",
+    "methodDetail": "badanie zrealizowane metodą mix (CATI i CAWI) na próbie 1000 dorosłych Polaków",
+    "publicationTitle": "Sondaż Ipsos dla TVP Info i programu »19.30«, 21–22 października 2026",
+    "results": {
+      "ko": 34.0,
+      "pis": 26.0,
+      "konf": 10.0,
+      "kkp": 8.0,
+      "nl": 6.0,
+      "psl": 5.0,
+      "razem": 4.0,
+      "rp": 4.0,
+      "pl2050": 1.0,
+      "inne": 2.0
+    },
+    "sourceUrl": "https://www.tvp.info/83134603/nowy-sondaz-partyjny-ko-na-czele-kto-mialby-wiekszosc-w-sejmie"
+  },
+  {
     "id": "pollster-2026-10-19",
     "institute": "Instytut Badań Pollster dla zero.pl",
     "commissioner": "zero.pl",
