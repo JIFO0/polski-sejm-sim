@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as KorektaOkregowRouteImport } from './routes/korekta-okregow'
 import { Route as MetodaDhondtaRouteImport } from './routes/metoda-dhondta'
 import { Route as OProjekcieRouteImport } from './routes/o-projekcie'
+import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StatystykiRouteImport } from './routes/statystyki'
 import { Route as ZrodlaRouteImport } from './routes/zrodla'
@@ -37,6 +38,11 @@ const OProjekcieRoute = OProjekcieRouteImport.update({
   path: '/o-projekcie',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreviewRoute = PreviewRouteImport.update({
+  id: '/preview',
+  path: '/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/korekta-okregow': typeof KorektaOkregowRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/preview': typeof PreviewRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
   '/zrodla': typeof ZrodlaRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/korekta-okregow': typeof KorektaOkregowRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/preview': typeof PreviewRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
   '/zrodla': typeof ZrodlaRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/korekta-okregow': typeof KorektaOkregowRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/preview': typeof PreviewRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
   '/zrodla': typeof ZrodlaRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/korekta-okregow'
     | '/metoda-dhondta'
     | '/o-projekcie'
+    | '/preview'
     | '/sitemap.xml'
     | '/statystyki'
     | '/zrodla'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/korekta-okregow'
     | '/metoda-dhondta'
     | '/o-projekcie'
+    | '/preview'
     | '/sitemap.xml'
     | '/statystyki'
     | '/zrodla'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/korekta-okregow'
     | '/metoda-dhondta'
     | '/o-projekcie'
+    | '/preview'
     | '/sitemap.xml'
     | '/statystyki'
     | '/zrodla'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   KorektaOkregowRoute: typeof KorektaOkregowRoute
   MetodaDhondtaRoute: typeof MetodaDhondtaRoute
   OProjekcieRoute: typeof OProjekcieRoute
+  PreviewRoute: typeof PreviewRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatystykiRoute: typeof StatystykiRoute
   ZrodlaRoute: typeof ZrodlaRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OProjekcieRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/preview': {
+      id: '/preview'
+      path: '/preview'
+      fullPath: '/preview'
+      preLoaderRoute: typeof PreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   KorektaOkregowRoute: KorektaOkregowRoute,
   MetodaDhondtaRoute: MetodaDhondtaRoute,
   OProjekcieRoute: OProjekcieRoute,
+  PreviewRoute: PreviewRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatystykiRoute: StatystykiRoute,
   ZrodlaRoute: ZrodlaRoute,
