@@ -10,12 +10,9 @@ import {
   Info,
   Layers,
   MapPin,
-  PieChart,
   RotateCcw,
   Scale,
   Settings2,
-  Share2,
-  Sparkles,
   TrendingUp,
   Upload,
   Users,
@@ -79,8 +76,10 @@ import { ShareInput } from "@/components/ShareInput";
 import { SocialExportButton } from "@/components/SocialExportButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const TITLE = "SejmSim 2.0 (Preview) – Uporządkowany symulator Sejmu";
-const DESC = "Wersja poglądowa SejmSim 2.0 ze zoptymalizowanym interfejsem, zakładkami i pływającym paskiem akcji.";
+const TITLE =
+  "SejmSim 2027 – Kalkulator mandatów Sejmu i symulator większości D'Hondta";
+const DESC =
+  "Kalkulator mandatów Sejmu i symulator ordynacji D'Hondta w 41 okręgach. Sprawdź większość 231 mandatów, twórz koalicje i analizuj średnią sondażową.";
 
 const blankState = (id: number): DistrictState => {
   const base = DISTRICTS.find((d) => d.id === id);
@@ -124,7 +123,6 @@ function PreviewIndex() {
   const [showVotes, setShowVotes] = useState(false);
   const [showAllParties, setShowAllParties] = useState(false);
   const [activeTab, setActiveTab] = useState("coalitions");
-  const [isScrolled, setIsScrolled] = useState(false);
 
   const [nationalElectorateInput, setNationalElectorateInput] = useState(() =>
     String(DISTRICTS.reduce((acc, d) => acc + d.electorate, 0)),
@@ -133,11 +131,6 @@ function PreviewIndex() {
 
   useEffect(() => {
     trackPageViewOncePerSession();
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 480);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const [logoVersion, setLogoVersion] = useState(0);
@@ -474,89 +467,48 @@ function PreviewIndex() {
   const focusColor = PARTY_MAP[focusParty]?.color;
 
   return (
-    <div className="relative min-h-dvh overflow-x-hidden pb-24">
+    <div className="relative min-h-dvh overflow-x-hidden pb-28">
       <ParticleField className="pointer-events-none fixed inset-0 z-0 h-dvh w-screen" />
-      <FloatingNav mode="simulator" />
-
-      {/* STICKY TOP MINI-BAR (Widoczny po przewinięciu hemicyklu) */}
-      <div
-        className={`fixed top-0 left-0 right-0 z-40 border-b border-border bg-surface/90 backdrop-blur-md transition-all duration-300 ${
-          isScrolled ? "translate-y-0 opacity-100 shadow-md" : "-translate-y-full opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <LogoMark size={28} className="shrink-0" />
-            <span className="font-display font-bold text-sm tracking-tight hidden sm:inline">SejmSim 2.0</span>
-          </div>
-
-          {/* Mini stacked bar z podziałem mandatów */}
-          <div className="flex-1 max-w-md mx-2">
-            <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted/60">
-              {Object.entries(result.seatsByParty)
-                .filter(([, s]) => s > 0)
-                .sort((a, b) => b[1] - a[1])
-                .map(([pid, seats]) => (
-                  <div
-                    key={pid}
-                    style={{
-                      width: `${(seats / 460) * 100}%`,
-                      background: PARTY_MAP[pid]?.color ?? "#888",
-                    }}
-                    title={`${PARTY_MAP[pid]?.short ?? pid}: ${seats}`}
-                  />
-                ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 font-semibold">
-              <span className="h-2 w-2 rounded-full" style={{ background: leader?.color }} />
-              <span className="text-ink">{leader?.short}:</span>
-              <span className="font-mono text-primary font-bold">{result.seatsByParty[leader?.id ?? ""] ?? 0}</span>
-            </div>
-            <span className="text-muted-foreground hidden md:inline">|</span>
-            <span className="text-muted-foreground hidden md:inline">
-              Większość: <strong className="text-ink">231</strong>
-            </span>
-          </div>
-        </div>
-      </div>
+      <FloatingNav mode="simulator" seatsByParty={result.seatsByParty} leader={leader} />
 
       {/* HEADER & COCKPIT */}
       <header className="relative z-10 border-b border-border bg-surface/80 backdrop-blur-[2px]">
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-6 md:py-10">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                PREVIEW 2.0
-              </span>
-              <span className="text-xs text-muted-foreground">Koncepcja zoptymalizowanego interfejsu</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" asChild className="h-7 text-xs text-primary">
-                <Link to="/">
-                  Wróć do wersji standardowej
-                  <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-              </Button>
-              <LanguageToggle />
-              <ThemeToggle />
-              <AccessibilityMenu />
-            </div>
-          </div>
+          <nav
+            className="flex flex-wrap items-center justify-end gap-2"
+            aria-label="Nawigacja główna"
+          >
+            <LanguageToggle />
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/o-projekcie">
+                <Info className="mr-1.5 h-4 w-4" /> {tr("O projekcie")}
+              </Link>
+            </Button>
+            <FeedbackDialog />
+            <SupportButton size="sm" />
+            <AccessibilityMenu />
+          </nav>
 
           <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(22rem,0.95fr)]">
             {/* Lewa kolumna: Tytuł + Hemicykl */}
             <div className="space-y-6">
-              <div>
-                <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl md:text-5xl">
-                  SejmSim<span className="text-primary">.</span>
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground max-w-xl">
-                  Ustaw poparcie partii, twórz koalicje i sprawdzaj mandaty D'Hondta. Dół strony uporządkowano w wygodne zakładki robocze.
-                </p>
+              <div className="flex items-center gap-3.5">
+                <LogoMark size={56} className="shrink-0 drop-shadow-sm" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="eyebrow !mb-0">{tr("Symulator wyborów do Sejmu RP 2027")}</p>
+                    <span className="rounded bg-primary/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-primary">
+                      sejmsim.pl
+                    </span>
+                  </div>
+                  <h1 className="mt-1 font-display text-3xl font-bold leading-[0.95] text-ink sm:text-4xl md:text-5xl">
+                    SejmSim<span className="text-primary">.</span>
+                    <span className="mt-1.5 block font-sans text-sm font-semibold leading-snug text-muted-foreground sm:text-base">
+                      {tr("Kalkulator mandatów i większości parlamentarnej")}
+                    </span>
+                  </h1>
+                </div>
               </div>
 
               {/* Karta Hemicyklu */}
@@ -1054,7 +1006,7 @@ function PreviewIndex() {
         {/* STOPKA INFORMACYJNA */}
         <footer className="border-t border-border pt-6 text-xs text-muted-foreground">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <p>SejmSim 2.0 (Wersja poglądowa UI). Kalkulacja metodą D'Hondta w 41 okręgach wyborczych.</p>
+            <p>{tr("SejmSim jest niekomercyjnym serwisem obywatelskim. Mandaty liczone są metodą D'Hondta w 41 okręgach wyborczych.")}</p>
             <div className="flex flex-wrap gap-4 font-medium">
               <Link to="/metoda-dhondta" className="text-primary hover:underline">Metoda D'Hondta</Link>
               <Link to="/korekta-okregow" className="text-primary hover:underline">Korekta okręgów</Link>

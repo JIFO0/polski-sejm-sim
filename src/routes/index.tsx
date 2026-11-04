@@ -443,7 +443,7 @@ function Index() {
   return (
     <div className="relative min-h-dvh overflow-hidden">
       <ParticleField className="pointer-events-none fixed inset-0 z-0 h-dvh w-screen" />
-      <FloatingNav mode="simulator" />
+      <FloatingNav mode="simulator" seatsByParty={result.seatsByParty} leader={leader} />
       <header className="relative z-10 overflow-hidden border-b border-border bg-surface/80 backdrop-blur-[2px]">
         <div
           className="pointer-events-none absolute inset-0"
