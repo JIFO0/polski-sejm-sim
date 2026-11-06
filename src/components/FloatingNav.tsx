@@ -8,6 +8,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
 import { PARTY_MAP } from "@/data/parties";
+import { LogoMark } from "@/components/Logos";
 
 export function FloatingNav({
   mode = "simulator",
@@ -16,7 +17,7 @@ export function FloatingNav({
 }: {
   mode?: "simulator" | "about";
   seatsByParty?: Record<string, number>;
-  leader?: { id: string; short: string; color: string };
+  leader?: { id: string; short: string; color: string } | undefined;
 }) {
   const [scrolled, setScrolled] = useState(false);
 
@@ -41,16 +42,37 @@ export function FloatingNav({
           : "-translate-y-3 opacity-0 scale-95"
       }`}
     >
-      {/* Pigułka z paskiem poparcia i przecięciem po środku (230/231) */}
+      {/* Pigułka z logo SejmSim, liderem i paskiem rozkładu mandatów */}
       {seatsByParty && leader ? (
-        <div className="pointer-events-auto flex items-center gap-2 sm:gap-3 rounded-full border border-border/80 bg-surface/90 px-3 py-1.5 shadow-lg shadow-black/5 backdrop-blur-md">
+        <div className="pointer-events-auto flex items-center gap-2 sm:gap-2.5 rounded-full border border-border/80 bg-surface/90 px-2.5 sm:px-3 py-1.5 shadow-lg shadow-black/5 backdrop-blur-md">
+          {/* Logo SejmSim z kliknięciem powracającym na początek strony */}
+          <Link
+            to="/"
+            onClick={(e) => {
+              if (window.location.pathname === "/" || window.location.pathname === "") {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
+            className="flex items-center gap-1.5 shrink-0 hover:opacity-80 transition-opacity"
+            title="SejmSim - powrót na początek strony"
+            aria-label="SejmSim"
+          >
+            <LogoMark size={20} className="shrink-0" />
+            <span className="font-display font-bold text-xs tracking-tight text-ink hidden sm:inline">
+              SejmSim<span className="text-primary">.</span>
+            </span>
+          </Link>
+
+          <span className="h-3 w-px bg-border/80 shrink-0" aria-hidden="true" />
+
           {/* Lider */}
           <div className="flex items-center gap-1.5 shrink-0 text-xs">
             <span
               className="h-2.5 w-2.5 rounded-full shrink-0 shadow-sm"
               style={{ background: leader.color }}
             />
-            <span className="font-bold text-ink hidden xs:inline">{leader.short}:</span>
+            <span className="font-bold text-ink hidden sm:inline">{leader.short}:</span>
             <span className="num font-bold text-primary">
               {seatsByParty[leader.id] ?? 0}
             </span>
@@ -58,7 +80,7 @@ export function FloatingNav({
 
           {/* Pasek rozkładu mandatów z przecięciem 50% (230 | 230) */}
           <div
-            className="relative h-2.5 sm:h-3 w-20 xs:w-28 sm:w-44 md:w-56 rounded-full overflow-hidden bg-muted/80 ring-1 ring-border/40 shrink-0"
+            className="relative h-2.5 sm:h-3 w-20 sm:w-44 md:w-56 rounded-full overflow-hidden bg-muted/80 ring-1 ring-border/40 shrink-0"
             title="Rozkład 460 mandatów w Sejmie. Kreska na środku wskazuje próg większości (231 mandatów)."
           >
             <div className="flex h-full w-full">
@@ -84,20 +106,18 @@ export function FloatingNav({
               aria-hidden="true"
             />
           </div>
-
-          {/* Etykieta większości 231 */}
-          <div
-            className="num text-[11px] font-semibold text-muted-foreground flex items-center gap-1 shrink-0"
-            title="Większość bezwzględna w Sejmie wynosi 231 mandatów"
-          >
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80 hidden sm:inline">
-              Większość
-            </span>
-            <span className="font-bold text-ink">231</span>
-          </div>
         </div>
       ) : (
-        <div />
+        <Link
+          to="/"
+          className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border/80 bg-surface/90 px-3 py-1.5 shadow-lg shadow-black/5 backdrop-blur-md hover:bg-surface transition-colors"
+          title="SejmSim - powrót do symulatora"
+        >
+          <LogoMark size={20} className="shrink-0" />
+          <span className="font-display font-bold text-xs tracking-tight text-ink">
+            SejmSim<span className="text-primary">.</span>
+          </span>
+        </Link>
       )}
 
       {/* Pigułka z ikonkami po prawej */}

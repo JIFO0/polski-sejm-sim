@@ -71,7 +71,7 @@ export function SupportCard({ className = "" }: { className?: string }) {
           <Coffee className="h-3.5 w-3.5" /> Podoba Ci się SejmSim?
         </div>
         <h3 className="font-display text-2xl font-bold text-ink">
-          Postaw kawę i wesprzyj rozwój projektu
+          Postaw herbatę i wesprzyj rozwój projektu
         </h3>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Platforma <strong className="text-foreground">sejmsim.pl</strong> powstaje pro bono jako niezależne narzędzie obywatelskie bez reklam. Każda wpłata pomaga utrzymać serwery, dopracowywać algorytmy i dodawać nowe funkcje.
