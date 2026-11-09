@@ -64,15 +64,15 @@ export function FloatingNav({
             </span>
           </Link>
 
-          <span className="h-3 w-px bg-border/80 shrink-0" aria-hidden="true" />
+          <span className="hidden sm:inline-block h-3 w-px bg-border/80 shrink-0" aria-hidden="true" />
 
-          {/* Lider */}
-          <div className="flex items-center gap-1.5 shrink-0 text-xs">
+          {/* Lider (ukryty na mobile, by pasek rozkładu mandatów mieścił się na małych ekranach) */}
+          <div className="hidden sm:flex items-center gap-1.5 shrink-0 text-xs">
             <span
               className="h-2.5 w-2.5 rounded-full shrink-0 shadow-sm"
               style={{ background: leader.color }}
             />
-            <span className="font-bold text-ink hidden sm:inline">{leader.short}:</span>
+            <span className="font-bold text-ink">{leader.short}:</span>
             <span className="num font-bold text-primary">
               {seatsByParty[leader.id] ?? 0}
             </span>
