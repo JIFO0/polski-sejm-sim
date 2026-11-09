@@ -50,7 +50,13 @@ function applySettings(s: Settings) {
   root.style.fontSize = s.textScale === 100 ? "" : `${s.textScale}%`;
 }
 
-export function AccessibilityMenu(_props: { compact?: boolean }) {
+export function AccessibilityMenu({
+  compact = false,
+  className = "",
+}: {
+  compact?: boolean;
+  className?: string;
+}) {
   const tr = useTranslation();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
 
@@ -81,11 +87,11 @@ export function AccessibilityMenu(_props: { compact?: boolean }) {
       <PopoverTrigger asChild>
         <Button
           size="icon"
-          className="h-12 w-12 shrink-0 rounded-full bg-blue-800 text-white shadow-lg hover:bg-blue-900 focus-visible:ring-4 focus-visible:ring-blue-300"
+          className={`h-9 w-9 shrink-0 rounded-full bg-blue-800 text-white shadow-sm hover:bg-blue-900 focus-visible:ring-2 focus-visible:ring-blue-300 transition-transform active:scale-95 ${className}`}
           aria-label={tr("Ustawienia dostępności")}
           title={tr("Ustawienia dostępności")}
         >
-          <PersonStanding className="!h-7 !w-7" strokeWidth={2.4} />
+          <PersonStanding className="h-5 w-5" strokeWidth={2.2} />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="max-h-[80vh] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto p-4">

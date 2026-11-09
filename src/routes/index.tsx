@@ -456,14 +456,24 @@ function Index() {
         />
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-10 md:py-14">
           <nav
-            className="flex flex-wrap items-center justify-end gap-2"
+            className="flex items-center justify-end gap-1.5 sm:gap-2 flex-wrap"
             aria-label="Nawigacja główna"
           >
             <LanguageToggle />
             <ThemeToggle />
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/o-projekcie">
-                <Info className="mr-1.5 h-4 w-4" /> {tr("O projekcie")}
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="h-9 px-2.5 sm:px-3"
+            >
+              <Link
+                to="/o-projekcie"
+                title={tr("O projekcie")}
+                aria-label={tr("O projekcie")}
+              >
+                <Info className="h-4 w-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">{tr("O projekcie")}</span>
               </Link>
             </Button>
             <FeedbackDialog />

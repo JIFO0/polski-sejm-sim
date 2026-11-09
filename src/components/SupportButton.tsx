@@ -39,7 +39,7 @@ export function SupportButton({
   }
 
   const sizeClasses = {
-    sm: "px-3 py-1.5 text-xs gap-1.5",
+    sm: "h-9 px-2.5 sm:px-3 text-xs gap-1.5",
     default: "px-3.5 py-2 text-xs md:text-sm gap-2",
     lg: "px-5 py-2.5 text-sm md:text-base gap-2.5",
   }[size];
@@ -50,12 +50,13 @@ export function SupportButton({
       target="_blank"
       rel="noreferrer"
       aria-label="Wesprzyj projekt na Buy Me a Coffee"
+      title={tr("Wesprzyj projekt")}
       onClick={handleClick}
       className={`group inline-flex items-center justify-center rounded-full font-medium transition-all duration-200 border border-amber-500/35 bg-amber-500/10 text-amber-900 dark:text-amber-200 hover:bg-amber-500/20 hover:border-amber-500/60 hover:text-amber-950 dark:hover:text-amber-100 shadow-xs active:scale-[0.98] ${sizeClasses} ${className}`}
       {...props}
     >
       <Coffee className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 transition-transform group-hover:rotate-6 shrink-0" />
-      <span>{tr("Wesprzyj projekt")}</span>
+      <span className={size === "sm" ? "hidden sm:inline" : ""}>{tr("Wesprzyj projekt")}</span>
     </a>
   );
 }

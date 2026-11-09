@@ -84,26 +84,31 @@ function AboutProject() {
       {/* Górny pasek nawigacji */}
       <header className="relative z-10 border-b border-border bg-surface/80 backdrop-blur-sm">
         <nav
-          className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-5 py-3.5"
+          className="mx-auto flex max-w-4xl items-center justify-between gap-2 px-4 py-3 sm:px-5 sm:py-3.5"
           aria-label="Nawigacja strony O projekcie"
         >
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/">
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> {tr("Wróć do symulatora")}</Link>
+          <Button variant="ghost" size="sm" asChild className="h-9 px-2.5 sm:px-3">
+            <Link to="/" title={tr("Wróć do symulatora")} aria-label={tr("Wróć do symulatora")}>
+              <ArrowLeft className="h-4 w-4 sm:mr-1.5 shrink-0" />
+              <span className="hidden sm:inline">{tr("Wróć do symulatora")}</span>
+            </Link>
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <LanguageToggle />
             <ThemeToggle />
             <FeedbackDialog />
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild className="h-9 px-2.5 sm:px-3">
               <a
                 href="https://jifo.dev/#kontakt"
                 target="_blank"
                 rel="noreferrer"
+                title={tr("Kontakt")}
+                aria-label={tr("Kontakt")}
                 onClick={() => track({ event: "contact_click" })}
               >
-                {tr("Kontakt")}<ExternalLink className="ml-1 h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{tr("Kontakt")}</span>
+                <ExternalLink className="h-3.5 w-3.5 sm:ml-1 shrink-0" />
               </a>
             </Button>
             <SupportButton size="sm" />

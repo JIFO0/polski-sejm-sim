@@ -96,8 +96,16 @@ export function FeedbackDialog({
             <MessageSquareText className="h-4 w-4" />
           </Button>
         ) : (
-          <Button variant="outline" size="sm" className={className}>
-            <MessageSquareText className="mr-1.5 h-4 w-4" /> {tr("Dodaj opinię")}</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`h-9 px-2.5 sm:px-3 ${className}`}
+            title={tr("Dodaj opinię")}
+            aria-label={tr("Dodaj opinię")}
+          >
+            <MessageSquareText className="h-4 w-4 sm:mr-1.5 shrink-0" />
+            <span className="hidden sm:inline">{tr("Dodaj opinię")}</span>
+          </Button>
         )}
       </DialogTrigger>}
       <DialogContent>

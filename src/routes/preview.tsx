@@ -478,14 +478,24 @@ function PreviewIndex() {
       <header className="relative z-10 border-b border-border bg-surface/80 backdrop-blur-[2px]">
         <div className="relative mx-auto flex max-w-[1400px] flex-col gap-6 px-4 py-8 md:px-6 md:py-10">
           <nav
-            className="flex flex-wrap items-center justify-end gap-2"
+            className="flex items-center justify-end gap-1.5 sm:gap-2 flex-wrap"
             aria-label="Nawigacja główna"
           >
             <LanguageToggle />
             <ThemeToggle />
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/o-projekcie">
-                <Info className="mr-1.5 h-4 w-4" /> {tr("O projekcie")}
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="h-9 px-2.5 sm:px-3"
+            >
+              <Link
+                to="/o-projekcie"
+                title={tr("O projekcie")}
+                aria-label={tr("O projekcie")}
+              >
+                <Info className="h-4 w-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">{tr("O projekcie")}</span>
               </Link>
             </Button>
             <FeedbackDialog />

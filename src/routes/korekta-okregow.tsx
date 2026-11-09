@@ -137,14 +137,14 @@ function KorektaOkregowPage() {
       {/* Header */}
       <header className="relative z-10 border-b border-border bg-surface/80 backdrop-blur-[2px]">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-8 md:py-12">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Button variant="ghost" size="sm" asChild className="gap-2 text-xs font-semibold">
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4" />
-                {tr("Wróć do symulatora SejmSim")}
+          <div className="flex items-center justify-between gap-2">
+            <Button variant="ghost" size="sm" asChild className="h-9 px-2.5 sm:px-3 text-xs font-semibold">
+              <Link to="/" title={tr("Wróć do symulatora SejmSim")} aria-label={tr("Wróć do symulatora SejmSim")}>
+                <ArrowLeft className="h-4 w-4 sm:mr-1.5 shrink-0" />
+                <span className="hidden sm:inline">{tr("Wróć do symulatora SejmSim")}</span>
               </Link>
             </Button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <LanguageToggle />
               <ThemeToggle />
               <FeedbackDialog />
