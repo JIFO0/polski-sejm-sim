@@ -37,6 +37,7 @@ import {
   nationalSharesOf,
   track,
   trackPageViewOncePerSession,
+  trackFunnelStep,
 } from "@/lib/analytics";
 import { ParticleField } from "@/components/ParticleField";
 import { PolandMap, type MapMode } from "@/components/PolandMap";
@@ -225,6 +226,7 @@ function Index() {
 
   /** Zmiana krajowego poparcia przy zachowaniu regionalnych różnic. */
   const nationalSwing = useCallback((pid: string, target: number) => {
+    trackFunnelStep("interaction");
     if (partyTrackRef.current[pid]) clearTimeout(partyTrackRef.current[pid]);
     partyTrackRef.current[pid] = setTimeout(
       () => track({ event: "party_slider_adjust", meta: pid }),
@@ -282,6 +284,7 @@ function Index() {
 
   const turnoutTrackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setGlobalTurnout = useCallback((value: number) => {
+    trackFunnelStep("interaction");
     if (turnoutTrackRef.current) clearTimeout(turnoutTrackRef.current);
     turnoutTrackRef.current = setTimeout(
       () => track({ event: "turnout_set", turnout: value }),

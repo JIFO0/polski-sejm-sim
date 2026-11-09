@@ -113,6 +113,25 @@ function SourcesPage() {
         </section>
 
         <section className="space-y-3 text-sm leading-relaxed text-muted-foreground md:text-base">
+          <h2 className="font-display text-xl font-bold text-ink">
+            {tr("Opinia24")}
+          </h2>
+          <p>
+            {tr(
+              "sejmsim.pl korzysta z publikacji i danych sondażowych pracowni Opinia24 publikowanych w serwisie Puls Opinii (puls.opinia24.pl) za zgodą ośrodka.",
+            )}{" "}
+            <a
+              href="https://puls.opinia24.pl/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              https://puls.opinia24.pl/
+            </a>
+          </p>
+        </section>
+
+        <section className="space-y-3 text-sm leading-relaxed text-muted-foreground md:text-base">
           <h2 className="font-display text-xl font-bold text-ink">{tr("Skąd biorą się liczby")}</h2>
           <p>
             {tr(

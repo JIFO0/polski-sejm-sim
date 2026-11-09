@@ -1,6 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { EVENTS } from "./analytics-events";
+
+const ipTrackLimits = new Map<string, { count: number; resetAt: number }>();
+
+function isTrackRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = ipTrackLimits.get(ip) ?? { count: 0, resetAt: now + 60_000 };
+  if (now > entry.resetAt) {
+    entry.count = 0;
+    entry.resetAt = now + 60_000;
+  }
+  entry.count += 1;
+  ipTrackLimits.set(ip, entry);
+  return entry.count > 120;
+}
 
 const trackSchema = z.object({
   event: z.string().max(60),
@@ -20,22 +35,28 @@ export const trackEvent = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     if (!data?.event || data.event === "unknown") return { ok: false };
+    const ip = getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
+    if (isTrackRateLimited(ip)) return { ok: false };
+
+    // Wykluczenia backendowe: odrzucamy ruch ze statystyk, api i assetów
+    const referer = (getRequestHeader("referer") ?? "").toLowerCase();
+    if (referer.includes("/statystyki") || referer.includes("/api")) {
+      return { ok: false };
+    }
+    const meta = data.meta ? String(data.meta).slice(0, 200) : null;
+    if (meta) {
+      if (meta.startsWith("/statystyki") || meta.startsWith("/api")) return { ok: false };
+      if (/\.(js|css|png|jpg|jpeg|svg|webp|ico|json|woff2?|map)$/i.test(meta)) return { ok: false };
+    }
+
     try {
       const { insertAnalyticsEvent } = await import("./server-db.server");
-      let sanitizedShares: Record<string, number> | null = null;
-      if (data.shares && typeof data.shares === "object") {
-        sanitizedShares = {};
-        for (const [k, v] of Object.entries(data.shares)) {
-          if (typeof v === "number" && !isNaN(v)) {
-            sanitizedShares[k.slice(0, 50)] = Math.max(0, Math.min(100, Math.round(v * 10) / 10));
-          }
-        }
-      }
+      // Zgodnie z punktem 5b: nie zapisujemy preferencji politycznych powiązanych z sesją
       insertAnalyticsEvent(data.event, {
-        shares: sanitizedShares,
-        turnout: typeof data.turnout === "number" && !isNaN(data.turnout) ? Math.max(0, Math.min(100, data.turnout)) : null,
-        meta: data.meta ? String(data.meta).slice(0, 200) : null,
-        partyLabels: data.partyLabels ?? {},
+        shares: null,
+        turnout: null,
+        meta,
+        partyLabels: {},
       });
       return { ok: true };
     } catch (err) {
@@ -136,11 +157,35 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       .map(([party, { sum, n }]) => ({ party, avg: sum / n, count: n }))
       .sort((a, b) => b.avg - a.avg);
 
+    const sessionRows = rows.filter((r) => r.event === "session_start");
+    const totalSessions = sessionRows.length > 0 ? sessionRows.length : countBy("page_view");
+    const totalPageViews = countBy("page_view");
+
     const byDay = new Map<string, number>();
     for (const r of rows) {
-      if (r.event !== "page_view") continue;
+      const isSession = sessionRows.length > 0 ? r.event === "session_start" : r.event === "page_view";
+      if (!isSession) continue;
       const day = getPolishDay(r.created_at);
       byDay.set(day, (byDay.get(day) ?? 0) + 1);
+    }
+
+    const funnelSessions = sessionRows.length;
+    const funnelInteractions = rows.filter((r) => r.event === "funnel_step" && (r.payload as any)?.meta === "interaction").length;
+    const funnelExports = rows.filter((r) => r.event === "funnel_step" && (r.payload as any)?.meta === "export").length;
+    const hasFunnel = funnelSessions > 0 || funnelInteractions > 0 || funnelExports > 0;
+
+    const utmCampaignCounts = new Map<string, number>();
+    const utmSourceCounts = new Map<string, number>();
+    for (const r of rows) {
+      if (r.event === "session_start") {
+        const metaStr = (r.payload as { meta?: string | null })?.meta;
+        if (metaStr && metaStr.includes("|utm:")) {
+          const utmPart = metaStr.split("|utm:")[1] || "";
+          const [uSrc, , uCamp] = utmPart.split("|");
+          if (uSrc && uSrc !== "-") utmSourceCounts.set(uSrc, (utmSourceCounts.get(uSrc) ?? 0) + 1);
+          if (uCamp && uCamp !== "-") utmCampaignCounts.set(uCamp, (utmCampaignCounts.get(uCamp) ?? 0) + 1);
+        }
+      }
     }
     const visitsByDay = [...byDay.entries()]
       .map(([day, count]) => ({ day, count }))
@@ -274,7 +319,16 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       turnoutBuckets: [...turnoutBuckets.entries()].map(([bucket, count]) => ({ bucket, count })).sort((a, b) => a.bucket.localeCompare(b.bucket, undefined, { numeric: true })),
       activeShares,
       totalEvents: totalEventsInDb,
-      pageViews: countBy("page_view"),
+      sessions: totalSessions,
+      pageViews: totalPageViews,
+      uniqueUsersStatus: "niedostępni (brak identyfikatora zgodnie z polityką prywatności)",
+      funnel: hasFunnel ? {
+        sessions: funnelSessions,
+        interactions: funnelInteractions,
+        exports: funnelExports,
+      } : null,
+      utmSources: [...utmSourceCounts.entries()].map(([source, count]) => ({ source, count })).sort((a, b) => b.count - a.count),
+      utmCampaigns: [...utmCampaignCounts.entries()].map(([campaign, count]) => ({ campaign, count })).sort((a, b) => b.count - a.count),
       supportClicks: countBy("support_click"),
       contactClicks: countBy("contact_click"),
       aboutViews: countBy("about_view"),
@@ -374,5 +428,49 @@ export const clearAllAnalyticsData = createServerFn({ method: "POST" })
     const { clearAllPlatformData } = await import("./server-db.server");
     const result = clearAllPlatformData();
     return { ok: true as const, result };
+  });
+
+const recoveryActionSchema = z.object({
+  login: z.string().max(50),
+  key: z.string().min(1).max(200),
+  recoveryPassword: z.string().min(1).max(200),
+  label: z.string().max(80).optional(),
+  id: z.number().int().optional(),
+});
+
+export const revealRecoveryKeysFn = createServerFn({ method: "POST" })
+  .inputValidator((data) => recoveryActionSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key)) {
+      return { ok: false as const, error: "Brak uprawnień właściciela." };
+    }
+    const { revealSecurityOverrideKeys } = await import("./server-db.server");
+    return revealSecurityOverrideKeys(data.recoveryPassword);
+  });
+
+export const generateRecoveryKeyFn = createServerFn({ method: "POST" })
+  .inputValidator((data) => recoveryActionSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key)) {
+      return { ok: false as const, error: "Brak uprawnień właściciela." };
+    }
+    const { generateSecurityOverrideKey } = await import("./server-db.server");
+    return generateSecurityOverrideKey(data.label || "", data.recoveryPassword);
+  });
+
+export const revokeRecoveryKeyFn = createServerFn({ method: "POST" })
+  .inputValidator((data) => recoveryActionSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { isOwner } = await import("./owner-auth.server");
+    if (!isOwner(data.login, data.key)) {
+      return { ok: false as const, error: "Brak uprawnień właściciela." };
+    }
+    if (typeof data.id !== "number") {
+      return { ok: false as const, error: "Brak ID klucza." };
+    }
+    const { revokeSecurityOverrideKey } = await import("./server-db.server");
+    return revokeSecurityOverrideKey(data.id, data.recoveryPassword);
   });
 

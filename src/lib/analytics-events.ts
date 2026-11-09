@@ -1,4 +1,6 @@
 export const EVENTS = [
+  "session_start",
+  "funnel_step",
   "page_view",
   "turnout_set",
   "scenario_save",
@@ -36,7 +38,9 @@ export const EVENTS = [
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
 export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
-  page_view: "Wejścia na stronę",
+  session_start: "Rozpoczęte sesje (timeout 30 min)",
+  funnel_step: "Kroki lejka aktywacji",
+  page_view: "Odsłony stron (pageviews)",
   turnout_set: "Zmiany frekwencji",
   scenario_save: "Zapisy w bibliotece",
   scenario_download: "Pobrane scenariusze",

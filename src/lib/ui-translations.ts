@@ -302,4 +302,7 @@ export const UI_TRANSLATIONS: Record<string, string> = {
   "Ogólnopolska Grupa Badawcza (OGB)": "Ogólnopolska Grupa Badawcza (OGB)",
   "Sondaże Ogólnopolskiej Grupy Badawczej publikowane są za zgodą ośrodka z oznaczeniem „OGB dla Stan360” i linkiem do serwisu stan360.pl.":
     "Polls by Ogólnopolska Grupa Badawcza are published with the institute's consent labelled as 'OGB for Stan360' and linking to the stan360.pl website.",
+  "Opinia24": "Opinia24",
+  "sejmsim.pl korzysta z publikacji i danych sondażowych pracowni Opinia24 publikowanych w serwisie Puls Opinii (puls.opinia24.pl) za zgodą ośrodka.":
+    "sejmsim.pl uses publications and polling data from Opinia24 published on Puls Opinii (puls.opinia24.pl) with the institute's consent.",
 };

@@ -1,5 +1,54 @@
 [
+    {
+    "id": "cbos-2026-11-02",
+    "institute": "Centrum Badania Opinii Społecznej (CBOS)",
+    "commissioner": null,
+    "fieldworkFrom": "2026-11-02",
+    "fieldworkTo": "2026-11-04",
+    "publishedAt": "2026-11-06",
+    "sampleSize": 1000,
+    "method": "mix",
+    "methodDetail": "wywiady telefoniczne wspomagane komputerowo (CATI – 80%) oraz wywiady internetowe (CAWI – 20%)",
+    "publicationTitle": "Preferencje partyjne na początku listopada (CATI). CBOS Flash nr 39/2026",
+    "results": {
+      "ko": 28.1,
+      "pis": 15.8,
+      "konf": 15.4,
+      "kkp": 7.8,
+      "nl": 5.9,
+      "razem": 3.4,
+      "rp": 2.8,
+      "psl": 1.8,
+      "pl2050": 1.1
+    },
+    "sourceUrl": "https://www.cbos.pl/PL/publikacje/flashe/pliki/2026/fl_039_2026.pdf"
+  },
   {
+    "id": "opinia24-2026-11-02",
+    "institute": "Opinia24",
+    "commissioner": null,
+    "fieldworkFrom": "2026-11-02",
+    "fieldworkTo": "2026-11-04",
+    "publishedAt": "2026-11-05",
+    "sampleSize": 1001,
+    "method": "mix",
+    "methodDetail": "technika mixed-mode: wywiady telefoniczne wspomagane komputerowo (CATI) oraz wywiady internetowe (CAWI)",
+    "publicationTitle": "Sondaż partyjny Opinia24, 2–4 listopada 2026",
+    "results": {
+      "ko": 31.8,
+      "pis": 20.1,
+      "konf": 12.2,
+      "kkp": 7.7,
+      "nl": 6.4,
+      "razem": 5.5,
+      "rp": 4.8,
+      "psl": 2.7,
+      "pl2050": 2.5,
+      "inne": 0.8
+    },
+    "sourceUrl": "https://puls.opinia24.pl/"
+  },
+{
     "id": "pollster-se-2026-10-26",
     "institute": "Instytut Badań Pollster dla Super Expressu",
     "commissioner": "Super Express",

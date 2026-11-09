@@ -4,6 +4,41 @@ import { PARTIES } from "@/data/parties";
 import type { Scenario } from "@/lib/simulation";
 import type { AnalyticsEvent } from "@/lib/analytics-events";
 
+export const ADMIN_OPTOUT_KEY = "sejmsim.admin_optout";
+
+/** Sprawdza, czy zalogowany administrator włączył opcję „nie licz mnie”. */
+export function isAdminOptedOut(): boolean {
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem(ADMIN_OPTOUT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Zmienia ustawienie wykluczenia administratora ze statystyk. */
+export function setAdminOptedOut(optOut: boolean): void {
+  try {
+    if (typeof window !== "undefined") {
+      if (optOut) {
+        window.localStorage.setItem(ADMIN_OPTOUT_KEY, "1");
+      } else {
+        window.localStorage.removeItem(ADMIN_OPTOUT_KEY);
+      }
+    }
+  } catch {}
+}
+
+/** Filtruje wykluczone ścieżki (statystyki, api, assety) oraz administratora. */
+export function shouldIgnoreTracking(path?: string): boolean {
+  if (typeof window === "undefined") return false;
+  if (isAdminOptedOut()) return true;
+  const currentPath = path ?? (typeof window !== "undefined" ? window.location.pathname : "");
+  if (!currentPath) return false;
+  if (currentPath.startsWith("/statystyki") || currentPath.startsWith("/api")) return true;
+  if (/\.(js|css|png|jpg|jpeg|svg|webp|ico|json|woff2?|map)$/i.test(currentPath)) return true;
+  return false;
+}
+
 /** Krajowe poparcie (średnia ważona liczbą wyborców) zaokrąglone do 0.1 pkt. */
 export function nationalSharesOf(scenario: Scenario): Record<string, number> {
   const weight = DISTRICTS.reduce((total, district) => {
@@ -40,17 +75,46 @@ type TrackInput = {
 
 /** Anonimowe, zbiorcze zdarzenie statystyczne. Bez ciasteczek, bez IP, bez identyfikatorów. */
 export function track(input: TrackInput) {
-  const partyLabels = { ...Object.fromEntries(PARTIES.filter((party) => /^(cp|ml)/.test(party.id)).map((party) => [party.id, party.name])), ...input.partyLabels };
+  if (shouldIgnoreTracking()) return;
+  const partyLabels = {
+    ...Object.fromEntries(PARTIES.filter((party) => /^(cp|ml)/.test(party.id)).map((party) => [party.id, party.name])),
+    ...input.partyLabels,
+  };
   void trackEvent({ data: { ...input, partyLabels } }).catch(() => {
     // Statystyki nigdy nie mogą przerywać korzystania ze strony.
   });
 }
 
-function detectTrafficSource(): string {
+function sanitizeUtmValue(val: string | null): string | null {
+  if (!val) return null;
+  const clean = val.trim().toLowerCase().slice(0, 64);
+  if (/^[a-z0-9._-]+$/.test(clean)) return clean;
+  return "other";
+}
+
+/** Pobiera i normalizuje dozwolone parametry UTM (źródło, medium, kampania). */
+export function extractSanitizedUtm(): string | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const source = sanitizeUtmValue(params.get("utm_source"));
+    const medium = sanitizeUtmValue(params.get("utm_medium"));
+    const campaign = sanitizeUtmValue(params.get("utm_campaign"));
+    if (!source && !medium && !campaign) return null;
+    return [source ?? "-", medium ?? "-", campaign ?? "-"].join("|");
+  } catch {
+    return null;
+  }
+}
+
+export function detectTrafficSource(): string {
   try {
     const referrer = document.referrer;
     if (!referrer) return "bezpośrednie";
-    const host = new URL(referrer).hostname.toLowerCase();
+    const refUrl = new URL(referrer);
+    // Przejścia z panelu statystyk nie są liczone jako źródło zewnętrzne
+    if (refUrl.pathname.startsWith("/statystyki")) return "bezpośrednie";
+    const host = refUrl.hostname.toLowerCase();
     if (host.includes("google")) return "google";
     if (host.includes("twitter") || host.includes("t.co") || host.includes("x.com"))
       return "twitter/x";
@@ -58,7 +122,7 @@ function detectTrafficSource(): string {
     if (host.includes("wykop")) return "wykop";
     if (host.includes("reddit")) return "reddit";
     if (host.includes("sejmsim")) return "wewnętrzne";
-    return host.replace(/^www\./, "").slice(0, 30);
+    return host.replace(/^www\./, "").slice(0, 64);
   } catch {
     return "inne";
   }
@@ -88,11 +152,8 @@ export function detectDevice(): "telefon" | "tablet" | "komputer" {
   const ua = (navigator.userAgent || "").toLowerCase();
   const maxTouchPoints = navigator.maxTouchPoints || 0;
 
-  // Tablety (w tym iPad na nowym iOS, który zgłasza się jako Macintosh z touch screenem)
   const isIPad = /ipad/i.test(ua) || (maxTouchPoints > 1 && /macintosh/i.test(ua));
   const isTabletUA = isIPad || (/android/i.test(ua) && !/mobile/i.test(ua)) || /tablet/i.test(ua);
-
-  // Smartfony / urządzenia mobilne
   const isMobileUA =
     /mobile|iphone|ipod|android.*mobile|blackberry|iemobile|opera mini|webos|windows phone/i.test(
       ua,
@@ -104,27 +165,74 @@ export function detectDevice(): "telefon" | "tablet" | "komputer" {
   if (isTabletUA) return "tablet";
   if (isMobileUA) return "telefon";
 
-  // Rezerwa na podstawie rozdzielczości i punktów dotyku
   if (w > 0 && w < 768) return "telefon";
   if ((w >= 768 && w < 1024) || (maxTouchPoints > 0 && w < 1180)) return "tablet";
   return "komputer";
 }
 
-let pageViewSent = false;
+const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 minut bezczynności
 
-export function trackPageViewOncePerSession() {
-  if (pageViewSent) return;
+/**
+ * Zapewnia rejestrację nowej sesji, gdy użytkownik otwiera stronę lub wraca po >30 min bezczynności.
+ * Nowa sesja wysyła zdarzenie 'session_start' z informacją o urządzeniu, źródle i UTM.
+ */
+export function ensureSessionAndTrack(): void {
+  if (shouldIgnoreTracking()) return;
   try {
-    if (window.sessionStorage.getItem("sejmsim.pv") === "1") return;
-    window.sessionStorage.setItem("sejmsim.pv", "1");
-  } catch {
-    // Pamięć sesji zablokowana — i tak wysyłamy jedno zdarzenie na załadowanie strony.
-  }
-  pageViewSent = true;
+    const now = Date.now();
+    const lastActiveStr = window.sessionStorage.getItem("sejmsim.last_active");
+    const lastActive = lastActiveStr ? Number(lastActiveStr) : 0;
+    const isNewSession = !lastActive || now - lastActive > SESSION_IDLE_TIMEOUT_MS;
+
+    window.sessionStorage.setItem("sejmsim.last_active", String(now));
+
+    if (isNewSession) {
+      window.sessionStorage.setItem("sejmsim.session_id", String(now));
+      window.sessionStorage.removeItem("sejmsim.funnel_step"); // reset lejka dla nowej sesji
+      const utm = extractSanitizedUtm();
+      const meta = `${detectDevice()}|${detectTrafficSource()}${utm ? `|utm:${utm}` : ""}`;
+      track({
+        event: "session_start",
+        meta,
+      });
+    }
+  } catch {}
+}
+
+/** Rejestruje odsłonę podstrony (pageview) przy każdej zmianie trasy. */
+export function trackPageView(path?: string): void {
+  const currentPath = path ?? (typeof window !== "undefined" ? window.location.pathname : "");
+  if (shouldIgnoreTracking(currentPath)) return;
+  ensureSessionAndTrack();
   track({
     event: "page_view",
-    meta: `${detectDevice()}|${detectTrafficSource()}`,
+    meta: currentPath.slice(0, 100),
   });
+}
+
+/** Rejestruje bezpieczny lejek aktywacji w ramach bieżącej sesji użytkownika. */
+export function trackFunnelStep(step: "interaction" | "export"): void {
+  if (shouldIgnoreTracking()) return;
+  try {
+    const currentStep = window.sessionStorage.getItem("sejmsim.funnel_step");
+    if (step === "interaction" && !currentStep) {
+      window.sessionStorage.setItem("sejmsim.funnel_step", "interaction");
+      track({ event: "funnel_step", meta: "interaction" });
+    } else if (step === "export" && currentStep !== "export") {
+      window.sessionStorage.setItem("sejmsim.funnel_step", "export");
+      track({ event: "funnel_step", meta: "export" });
+    }
+  } catch {}
+}
+
+let pageViewLegacySent = false;
+
+/** Zachowane dla wstecznej kompatybilności komponentów. */
+export function trackPageViewOncePerSession() {
+  if (pageViewLegacySent) return;
+  pageViewLegacySent = true;
+  ensureSessionAndTrack();
+  trackPageView();
 }
 
 /** Anonimowe cechy scenariusza (bez treści opisu ani autora). */

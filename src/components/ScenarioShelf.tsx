@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
 import { savePrivateScenario } from "@/lib/private-scenarios.functions";
-import { isScenarioModified, scenarioTraits, nationalSharesOf, track } from "@/lib/analytics";
+import { isScenarioModified, scenarioTraits, nationalSharesOf, track, trackFunnelStep } from "@/lib/analytics";
 import { PARTIES, PARTY_MAP } from "@/data/parties";
 import { CommunityScenariosDialog } from "@/components/CommunityScenariosDialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -206,6 +206,7 @@ export function ScenarioShelf({
   };
 
   const shareLink = async (item: SavedScenario) => {
+    trackFunnelStep("export");
     if (shareLock.current) return;
     shareLock.current = true;
     setSharingId(item.id);

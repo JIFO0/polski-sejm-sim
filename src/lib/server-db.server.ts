@@ -1,17 +1,48 @@
-export const SEED_SECURITY_KEYS = [
-  "ccdcabbacd0f0e97aff69a30d3e525001ae83514534176e3cde1c7b048af926c",
-  "93f343225c7a854ffb06a75b38e943420d067df5882ce4d0dc9e07d87198f90f",
-  "4e5a00de7e4a9931566f1867035c483c52b4403851bf35d1dd6734b468006458",
-  "395b0954f4598774cb56668f551b90d65a4f96dcad478190ab3462807bd4cc52",
-  "22c3dd59452cfb783112200b9325a9491722f5a047cd884f8a15b8c1e5f8f8e6",
-  "14e2d962766a1d629dcc8bd4f8f43c729c19bc2dd75cf7be411e1c6dbfe5450c",
-  "b634f97db690f04cec79384df021a8e7efff0630272c09e832f487bad4d5fc49",
-  "dc94ffde69afe261fe16ca833d847b924b9647aff5530afba80caa2f4fa857a5",
-];
-
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
+
+const DEFAULT_RECOVERY_PASSWORD = "placeholderPLACEHOLDERplaceholder";
+
+export function getRecoveryPassword(): string {
+  return process.env["RECOVERY_KEY_PASSWORD"] || DEFAULT_RECOVERY_PASSWORD;
+}
+
+export function hashRecoveryKey(plainKey: string): string {
+  return crypto.createHash("sha256").update(plainKey.trim().toLowerCase()).digest("hex");
+}
+
+function getCipherKey(password: string): Buffer {
+  return crypto.scryptSync(password, "sejmsim_recovery_salt_v1", 32);
+}
+
+export function encryptRecoveryKey(plainKey: string, password = getRecoveryPassword()): string {
+  const key = getCipherKey(password);
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  let encrypted = cipher.update(plainKey.trim().toLowerCase(), "utf8", "hex");
+  encrypted += cipher.final("hex");
+  const tag = cipher.getAuthTag();
+  return iv.toString("hex") + ":" + tag.toString("hex") + ":" + encrypted;
+}
+
+export function decryptRecoveryKey(encryptedBlob: string, password = getRecoveryPassword()): string | null {
+  try {
+    const parts = encryptedBlob.split(":");
+    if (parts.length !== 3) return null;
+    const [ivHex, tagHex, cipherHex] = parts;
+    if (!ivHex || !tagHex || !cipherHex) return null;
+    const key = getCipherKey(password);
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(ivHex, "hex"));
+    decipher.setAuthTag(Buffer.from(tagHex, "hex"));
+    let decrypted = decipher.update(cipherHex, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+  } catch {
+    return null;
+  }
+}
 
 let dbInstance: DatabaseSync | null = null;
 let dbPathCached = "";
@@ -97,10 +128,16 @@ export function getDb(): DatabaseSync {
     CREATE INDEX IF NOT EXISTS idx_failed_login_ip_created ON failed_login_attempts(ip, created_at);
 
     CREATE TABLE IF NOT EXISTS security_override_keys (
-      key TEXT PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      key TEXT,
+      key_hash TEXT UNIQUE,
+      encrypted_key TEXT,
+      label TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
       used INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
-      used_at TEXT
+      used_at TEXT,
+      revoked_at TEXT
     );
   `);
 
@@ -118,13 +155,51 @@ export function getDb(): DatabaseSync {
     WHERE active = 1;
   `);
 
-  
+  const secCols = db.prepare("PRAGMA table_info(security_override_keys)").all() as { name: string }[];
+  const secColNames = new Set(secCols.map((col) => col.name));
+  if (!secColNames.has("key_hash")) {
+    db.exec("ALTER TABLE security_override_keys ADD COLUMN key_hash TEXT");
+  }
+  if (!secColNames.has("encrypted_key")) {
+    db.exec("ALTER TABLE security_override_keys ADD COLUMN encrypted_key TEXT");
+  }
+  if (!secColNames.has("label")) {
+    db.exec("ALTER TABLE security_override_keys ADD COLUMN label TEXT");
+  }
+  if (!secColNames.has("status")) {
+    db.exec("ALTER TABLE security_override_keys ADD COLUMN status TEXT DEFAULT 'active'");
+  }
+  if (!secColNames.has("revoked_at")) {
+    db.exec("ALTER TABLE security_override_keys ADD COLUMN revoked_at TEXT");
+  }
+
+  // Migrate existing rows if any have plaintext key but no key_hash
+  const unmigrated = db
+    .prepare("SELECT rowid, key, used FROM security_override_keys WHERE key_hash IS NULL AND key IS NOT NULL AND length(key) = 64")
+    .all() as Array<{ rowid: number; key: string; used: number }>;
+  if (unmigrated.length > 0) {
+    const updateStmt = db.prepare("UPDATE security_override_keys SET key_hash = ?, encrypted_key = ?, label = ?, status = ?, key = ? WHERE rowid = ?");
+    const pwd = getRecoveryPassword();
+    for (let idx = 0; idx < unmigrated.length; idx++) {
+      const row = unmigrated[idx]!;
+      const h = hashRecoveryKey(row.key);
+      const enc = encryptRecoveryKey(row.key, pwd);
+      const status = row.used === 1 ? "used" : "active";
+      const lbl = `Klucz awaryjny #${idx + 1}`;
+      updateStmt.run(h, enc, lbl, status, `migrated_${row.rowid}`, row.rowid);
+    }
+  }
+
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_sec_keys_hash ON security_override_keys(key_hash)");
+
   const countKeys = db.prepare("SELECT COUNT(*) as count FROM security_override_keys").get() as { count: number };
   if (!countKeys || countKeys.count === 0) {
-    const insertKey = db.prepare("INSERT OR IGNORE INTO security_override_keys (key, used, created_at) VALUES (?, 0, ?)");
+    const insertKey = db.prepare("INSERT INTO security_override_keys (key, key_hash, encrypted_key, label, status, used, created_at) VALUES (?, ?, ?, ?, 'active', 0, ?)");
     const now = new Date().toISOString();
-    for (const k of SEED_SECURITY_KEYS) {
-      insertKey.run(k, now);
+    const pwd = getRecoveryPassword();
+    for (let i = 1; i <= 3; i++) {
+      const raw = crypto.randomBytes(32).toString("hex");
+      insertKey.run(`init_${i}_${Date.now()}`, hashRecoveryKey(raw), encryptRecoveryKey(raw, pwd), `Klucz początkowy #${i}`, now);
     }
   }
   dbInstance = db;
@@ -640,19 +715,115 @@ export function clearFailedAttemptsForIp(ip: string): void {
 export function useSecurityOverrideKey(key: string): boolean {
   const clean = key.trim().toLowerCase();
   if (clean.length !== 64) return false;
+  const hash = hashRecoveryKey(clean);
   const db = getDb();
-  const row = db.prepare("SELECT key, used FROM security_override_keys WHERE key = ?").get(clean) as { key: string; used: number } | undefined;
-  if (!row || row.used === 1) return false;
-  db.prepare("UPDATE security_override_keys SET used = 1, used_at = ? WHERE key = ?").run(new Date().toISOString(), clean);
-  return true;
+  const now = new Date().toISOString();
+
+  // Atomic update: only marks active key as used
+  const stmt = db.prepare(`
+    UPDATE security_override_keys
+    SET used = 1, status = 'used', used_at = ?
+    WHERE (key_hash = ? OR key = ?)
+      AND status = 'active'
+  `);
+  const result = stmt.run(now, hash, clean);
+  return result.changes > 0;
 }
 
-export function listSecurityOverrideKeys(): Array<{ key: string; used: boolean; created_at: string; used_at: string | null }> {
-  const rows = getDb().prepare("SELECT key, used, created_at, used_at FROM security_override_keys ORDER BY created_at ASC, key ASC").all() as Array<{ key: string; used: number; created_at: string; used_at: string | null }>;
-  return rows.map((r) => ({
-    key: r.key,
-    used: Boolean(r.used),
+export interface SecurityOverrideKeySummary {
+  id: number;
+  label: string;
+  status: "active" | "used" | "revoked";
+  created_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+}
+
+export function listSecurityOverrideKeys(): SecurityOverrideKeySummary[] {
+  const rows = getDb()
+    .prepare("SELECT rowid as id, label, status, created_at, used_at, revoked_at FROM security_override_keys ORDER BY created_at ASC, rowid ASC")
+    .all() as Array<{ id: number; label: string | null; status: string | null; created_at: string; used_at: string | null; revoked_at: string | null }>;
+  return rows.map((r, idx) => ({
+    id: r.id,
+    label: r.label || `Klucz #${idx + 1}`,
+    status: (r.status as "active" | "used" | "revoked") || "active",
     created_at: r.created_at,
     used_at: r.used_at,
+    revoked_at: r.revoked_at,
   }));
+}
+
+export function revealSecurityOverrideKeys(password: string): {
+  ok: boolean;
+  error?: string;
+  keys?: Array<{ id: number; label: string; status: string; key: string | null; created_at: string; used_at: string | null }>;
+} {
+  if (password !== getRecoveryPassword()) {
+    return { ok: false, error: "Nieprawidłowe hasło dostępu do kluczy awaryjnych." };
+  }
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT rowid as id, label, status, encrypted_key, key, created_at, used_at FROM security_override_keys ORDER BY created_at ASC, rowid ASC")
+    .all() as Array<{ id: number; label: string | null; status: string | null; encrypted_key: string | null; key: string | null; created_at: string; used_at: string | null }>;
+
+  const keys = rows.map((r, idx) => {
+    let plain: string | null = null;
+    if (r.encrypted_key) {
+      plain = decryptRecoveryKey(r.encrypted_key, password);
+    } else if (r.key && r.key.length === 64) {
+      plain = r.key;
+    }
+    return {
+      id: r.id,
+      label: r.label || `Klucz #${idx + 1}`,
+      status: r.status || "active",
+      key: plain,
+      created_at: r.created_at,
+      used_at: r.used_at,
+    };
+  });
+  return { ok: true, keys };
+}
+
+export function generateSecurityOverrideKey(
+  label: string,
+  password: string,
+): { ok: boolean; error?: string; key?: string; label?: string; id?: number } {
+  if (password !== getRecoveryPassword()) {
+    return { ok: false, error: "Nieprawidłowe hasło autoryzacji do dodania klucza." };
+  }
+  const cleanLabel = (label || "").trim().slice(0, 80) || `Klucz ${new Date().toLocaleDateString("pl-PL")}`;
+  const rawKey = crypto.randomBytes(32).toString("hex");
+  const hash = hashRecoveryKey(rawKey);
+  const encrypted = encryptRecoveryKey(rawKey, password);
+  const now = new Date().toISOString();
+
+  const db = getDb();
+  const legacyKey = `gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const stmt = db.prepare(
+    "INSERT INTO security_override_keys (key, key_hash, encrypted_key, label, status, used, created_at) VALUES (?, ?, ?, ?, 'active', 0, ?)",
+  );
+  const res = stmt.run(legacyKey, hash, encrypted, cleanLabel, now);
+  return { ok: true, key: rawKey, label: cleanLabel, id: Number(res.lastInsertRowid) };
+}
+
+export function revokeSecurityOverrideKey(id: number, password: string): { ok: boolean; error?: string } {
+  if (password !== getRecoveryPassword()) {
+    return { ok: false, error: "Nieprawidłowe hasło autoryzacji." };
+  }
+  const db = getDb();
+  const activeCount = db.prepare("SELECT COUNT(*) as count FROM security_override_keys WHERE status = 'active'").get() as { count: number };
+  if (!activeCount || activeCount.count <= 1) {
+    return {
+      ok: false,
+      error: "Nie można unieważnić ostatniego aktywnego klucza awaryjnego (ochrona przed samozablokowaniem).",
+    };
+  }
+  const now = new Date().toISOString();
+  const stmt = db.prepare("UPDATE security_override_keys SET status = 'revoked', revoked_at = ? WHERE rowid = ? AND status = 'active'");
+  const res = stmt.run(now, id);
+  if (res.changes === 0) {
+    return { ok: false, error: "Klucz nie istnieje lub nie jest aktywny." };
+  }
+  return { ok: true };
 }

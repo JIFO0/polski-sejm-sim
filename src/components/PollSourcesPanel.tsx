@@ -100,8 +100,16 @@ export function PollSourcesPanel() {
               <Clock className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 {en ? "Last polling update" : "Ostatnia aktualizacja sondaży"}
-                <time dateTime="2026-10-28" className="mt-1 block font-semibold text-ink">
-                  {en ? "28 October 2026" : "28 października 2026"}
+                <time dateTime={polls[0]?.publishedAt ?? "2026-11-06"} className="mt-1 block font-semibold text-ink">
+                  {en
+                    ? (polls[0]?.publishedAt
+                        ? new Date(polls[0].publishedAt).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        : "6 November 2026")
+                    : formatPolishDate(polls[0]?.publishedAt ?? "2026-11-06")}
                 </time>
               </div>
             </div>

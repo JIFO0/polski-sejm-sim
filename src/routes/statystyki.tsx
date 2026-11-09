@@ -35,7 +35,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { getAnalyticsSummary, clearAllAnalyticsData, testFeedbackWebhook } from "@/lib/analytics.functions";
+import {
+  getAnalyticsSummary,
+  clearAllAnalyticsData,
+  testFeedbackWebhook,
+  revealRecoveryKeysFn,
+  generateRecoveryKeyFn,
+  revokeRecoveryKeyFn,
+} from "@/lib/analytics.functions";
+import { isAdminOptedOut, setAdminOptedOut } from "@/lib/analytics";
 import { deletePrivateScenarioFn, listPrivateScenariosFn } from "@/lib/private-scenarios.functions";
 import { listGeneratedGraphicsFn, deleteGeneratedGraphicFn } from "@/lib/generated-images.functions";
 import { Copy, Image as ImageIcon, Key } from "lucide-react";
@@ -103,6 +111,108 @@ function StatsPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fetchGraphics = useServerFn(listGeneratedGraphicsFn);
   const deleteGraphicFn = useServerFn(deleteGeneratedGraphicFn);
+  const revealKeysServerFn = useServerFn(revealRecoveryKeysFn);
+  const generateKeyServerFn = useServerFn(generateRecoveryKeyFn);
+  const revokeKeyServerFn = useServerFn(revokeRecoveryKeyFn);
+
+  const [adminOptedOut, setAdminOptedOutState] = useState(isAdminOptedOut());
+
+  const [revealDialogOpen, setRevealDialogOpen] = useState(false);
+  const [revealPassword, setRevealPassword] = useState("");
+  const [revealedKeys, setRevealedKeys] = useState<Array<{ id: number; label: string; status: string; key: string | null; created_at: string; used_at: string | null }> | null>(null);
+  const [revealLoading, setRevealLoading] = useState(false);
+
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [generateLabel, setGenerateLabel] = useState("");
+  const [generatePassword, setGeneratePassword] = useState("");
+  const [generatedKey, setGeneratedKey] = useState<{ key: string; label: string } | null>(null);
+  const [generateLoading, setGenerateLoading] = useState(false);
+
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
+  const [revokingKeyId, setRevokingKeyId] = useState<number | null>(null);
+  const [revokePassword, setRevokePassword] = useState("");
+  const [revokeLoading, setRevokeLoading] = useState(false);
+
+  const handleRevealKeys = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!revealPassword.trim()) return;
+    setRevealLoading(true);
+    try {
+      const res = await revealKeysServerFn({
+        data: {
+          login: login.trim(),
+          key: key.trim(),
+          recoveryPassword: revealPassword.trim(),
+        },
+      });
+      if (res.ok && res.keys) {
+        setRevealedKeys(res.keys);
+        toast.success("Klucze zostały pomyślnie odszyfrowane.");
+      } else {
+        toast.error((res as any).error || "Nie udało się odkryć kluczy.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Błąd połączenia.");
+    } finally {
+      setRevealLoading(false);
+    }
+  };
+
+  const handleGenerateKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!generatePassword.trim()) return;
+    setGenerateLoading(true);
+    try {
+      const res = await generateKeyServerFn({
+        data: {
+          login: login.trim(),
+          key: key.trim(),
+          recoveryPassword: generatePassword.trim(),
+          label: generateLabel.trim(),
+        },
+      });
+      if (res.ok && res.key) {
+        setGeneratedKey({ key: res.key, label: res.label || "Klucz" });
+        toast.success("Wygenerowano nowy klucz bezpieczeństwa!");
+        void load();
+      } else {
+        toast.error((res as any).error || "Błąd generowania klucza.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Błąd połączenia.");
+    } finally {
+      setGenerateLoading(false);
+    }
+  };
+
+  const handleRevokeKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (revokingKeyId === null || !revokePassword.trim()) return;
+    setRevokeLoading(true);
+    try {
+      const res = await revokeKeyServerFn({
+        data: {
+          login: login.trim(),
+          key: key.trim(),
+          recoveryPassword: revokePassword.trim(),
+          id: revokingKeyId,
+        },
+      });
+      if (res.ok) {
+        toast.success("Klucz został unieważniony.");
+        setRevokeDialogOpen(false);
+        setRevokingKeyId(null);
+        setRevokePassword("");
+        void load();
+      } else {
+        toast.error((res as any).error || "Nie udało się unieważnić klucza.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Błąd połączenia.");
+    } finally {
+      setRevokeLoading(false);
+    }
+  };
 
   const copyKey = (val: string) => {
     navigator.clipboard.writeText(val);
@@ -334,12 +444,54 @@ function StatsPage() {
           </form>
         ) : (
           <div className="flex flex-col gap-6">
+            {/* Definicja i kontrola administratora */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="font-semibold text-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-primary" /> Definicja ruchu i zasady prywatności
+                </p>
+                <p className="mt-1">
+                  <strong>Sesja</strong> = wejście lub powrót po &ge;30 min bezczynności. <strong>Odsłona</strong> = każde wyświetlenie podstrony w SPA. <strong>Unikalni użytkownicy</strong>: niedostępni (zgodnie z polityką prywatności serwis nie używa cookies śledzących, nie rejestruje adresów IP ani fingerprintingu).
+                </p>
+              </div>
+              <div className="shrink-0 flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer font-medium text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={adminOptedOut}
+                    onChange={(e) => {
+                      const val = e.target.checked;
+                      setAdminOptedOutState(val);
+                      setAdminOptedOut(val);
+                      toast.success(val ? "Włączono wykluczenie Twoich wejść z analityki." : "Wyłączono wykluczenie Twoich wejść.");
+                    }}
+                    className="rounded border-border"
+                  />
+                  <span>Nie licz moich wizyt (admin)</span>
+                </label>
+              </div>
+            </div>
+
             {/* Główne karty podsumowania */}
             <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
               <div className="panel p-4">
-                <p className="text-xs text-muted-foreground">Wejścia na stronę</p>
+                <p className="text-xs text-muted-foreground">Sesje (Wizyty)</p>
+                <p className="num text-2xl font-bold text-ink mt-1">{summary.sessions ?? summary.pageViews}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Timeout 30 min bezczynności</p>
+              </div>
+
+              <div className="panel p-4">
+                <p className="text-xs text-muted-foreground">Odsłony (Pageviews)</p>
                 <p className="num text-2xl font-bold text-ink mt-1">{summary.pageViews}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Wszystkie sesje</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Wyświetlenia stron SPA</p>
+              </div>
+
+              <div className="panel p-4 border-muted">
+                <p className="text-xs text-muted-foreground">Unikalni użytkownicy</p>
+                <p className="num text-xl font-bold text-muted-foreground mt-1">Brak danych</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5" title={summary.uniqueUsersStatus}>
+                  Niedostępni (ochrona prywatności)
+                </p>
               </div>
 
               <div className="panel p-4 border-amber-500/30 bg-amber-500/5">
@@ -420,6 +572,48 @@ function StatsPage() {
                   <ShieldCheck className="h-3.5 w-3.5" /> Limit 4 GB aktywny: {summary.dbStats.sizeFormatted}
                 </div>
               </div>
+            </section>
+
+            {/* LEJEK AKTYWACJI */}
+            <section className="panel p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-display text-base font-bold text-ink flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" /> Lejek aktywacji użytkowników
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Konwersja w ramach pojedynczej sesji: Wejście &rarr; Interakcja (suwaki, partia, mapa) &rarr; Eksport / Udostępnienie.
+                  </p>
+                </div>
+              </div>
+
+              {summary.funnel ? (
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-3 rounded-lg border bg-card">
+                    <p className="text-xs text-muted-foreground">1. Sesje (Wejścia)</p>
+                    <p className="num text-xl font-bold text-ink mt-1">{summary.funnel.sessions}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Punkt wyjściowy (100%)</p>
+                  </div>
+                  <div className="p-3 rounded-lg border bg-card">
+                    <p className="text-xs text-muted-foreground">2. Interakcja z symulatorem</p>
+                    <p className="num text-xl font-bold text-primary mt-1">{summary.funnel.interactions}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {summary.funnel.sessions > 0 ? `${Math.round((summary.funnel.interactions / summary.funnel.sessions) * 100)}% sesji` : "-"}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg border bg-card">
+                    <p className="text-xs text-muted-foreground">3. Eksport / Udostępnienie</p>
+                    <p className="num text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{summary.funnel.exports}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {summary.funnel.sessions > 0 ? `${Math.round((summary.funnel.exports / summary.funnel.sessions) * 100)}% sesji` : "-"}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
+                  Brak danych historycznych dla lejka aktywacji w wybranym okresie (metryka wdrożona w listopadzie 2026).
+                </div>
+              )}
             </section>
 
             {/* WYKRES: WEJŚCIA WG GODZINY (CZAS POLSKI) */}
@@ -999,47 +1193,243 @@ function StatsPage() {
               )}
             </section>
 
-            {/* Jednorazowe klucze bezpieczeństwa */}
+            {/* Bezpieczne zarządzanie kluczami awaryjnymi */}
             <section className="panel p-5">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
-                    <Key className="h-5 w-5 text-primary" /> Jednorazowe klucze bezpieczeństwa (64 znaki)
+                    <Key className="h-5 w-5 text-primary" /> Klucze awaryjne dostępu (Recovery Keys)
                   </h2>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Ochrona przed brute-force: IP spoza sieci lokalnej mają limit 5 prób na 12h. Klucze poniżej pozwalają zdjąć blokadę.
+                    Zabezpieczenie przed brute-force (IP zewnętrzne: max 5 prób/12h). Klucze są przechowywane wyłącznie jako hashe SHA-256 oraz w zaszyfrowanym sejfie AES-256-GCM.
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                    Dostępne: {summary.securityKeys?.filter((k: any) => !k.used).length ?? 0} / {summary.securityKeys?.length ?? 0}
-                  </span>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => { setRevealedKeys(null); setRevealPassword(""); setRevealDialogOpen(true); }}>
+                    Odkryj klucze
+                  </Button>
+                  <Button size="sm" onClick={() => { setGeneratedKey(null); setGeneratePassword(""); setGenerateLabel(""); setGenerateDialogOpen(true); }}>
+                    + Dodaj nowy klucz
+                  </Button>
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {(summary.securityKeys ?? []).map((k: any, idx: number) => (
-                  <div key={k.key} className={`flex items-center justify-between gap-2 p-2.5 rounded-md border text-xs ${k.used ? "bg-muted/50 border-muted text-muted-foreground" : "bg-card border-border"}`}>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="font-semibold text-foreground">Klucz #{idx + 1}</span>
-                        {k.used ? (
-                          <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">Zużyty ({k.used_at ? new Date(k.used_at).toLocaleDateString("pl-PL") : "tak"})</span>
-                        ) : (
-                          <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-medium px-1.5 py-0.5 rounded">Aktywny</span>
-                        )}
-                      </div>
-                      <code className="block truncate font-mono text-[11px] text-muted-foreground" title={k.key}>{k.key}</code>
-                    </div>
-                    {!k.used && (
-                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => copyKey(k.key)} title="Kopiuj 64-znakowy klucz">
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
+              <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50 border-b border-border">
+                    <tr className="text-left font-semibold text-muted-foreground">
+                      <th className="py-2.5 px-3">Etykieta</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3">Utworzono</th>
+                      <th className="py-2.5 px-3">Użycie / Zmiana</th>
+                      <th className="py-2.5 px-3 text-right">Akcje</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {(summary.securityKeys ?? []).map((k: any) => (
+                      <tr key={k.id} className="hover:bg-muted/20">
+                        <td className="py-2.5 px-3 font-medium text-foreground">{k.label}</td>
+                        <td className="py-2.5 px-3">
+                          {k.status === "active" ? (
+                            <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                              Aktywny
+                            </span>
+                          ) : k.status === "used" ? (
+                            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              Zużyty
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-medium text-destructive">
+                              Unieważniony
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-muted-foreground">
+                          {k.created_at ? new Date(k.created_at).toLocaleDateString("pl-PL") : "-"}
+                        </td>
+                        <td className="py-2.5 px-3 text-muted-foreground">
+                          {k.used_at ? `Zużyty: ${new Date(k.used_at).toLocaleDateString("pl-PL")}` : k.revoked_at ? `Unieważniony: ${new Date(k.revoked_at).toLocaleDateString("pl-PL")}` : "-"}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          {k.status === "active" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                              onClick={() => {
+                                setRevokingKeyId(k.id);
+                                setRevokePassword("");
+                                setRevokeDialogOpen(true);
+                              }}
+                            >
+                              Unieważnij
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {(summary.securityKeys ?? []).length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-4 text-center text-muted-foreground">Brak zarejestrowanych kluczy.</td>
+                      </tr>
                     )}
-                  </div>
-                ))}
+                  </tbody>
+                </table>
               </div>
             </section>
+
+            {/* Modal: Odkryj klucze */}
+            <Dialog open={revealDialogOpen} onOpenChange={setRevealDialogOpen}>
+              <DialogContent className="max-w-md bg-card">
+                <DialogHeader>
+                  <DialogTitle className="font-display text-lg font-bold">Odkryj klucze awaryjne</DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Podaj osobne hasło odzyskiwania, aby odszyfrować istniejące klucze.
+                  </DialogDescription>
+                </DialogHeader>
+                {!revealedKeys ? (
+                  <form onSubmit={handleRevealKeys} className="space-y-3 pt-2">
+                    <div>
+                      <label className="text-xs font-semibold text-foreground">Hasło odzyskiwania</label>
+                      <Input
+                        type="password"
+                        value={revealPassword}
+                        onChange={(e) => setRevealPassword(e.target.value)}
+                        placeholder="Wpisz hasło..."
+                        autoFocus
+                        className="mt-1"
+                      />
+                    </div>
+                    <DialogFooter className="pt-2">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setRevealDialogOpen(false)}>Anuluj</Button>
+                      <Button type="submit" size="sm" disabled={revealLoading || !revealPassword.trim()}>
+                        {revealLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                        Odszyfruj klucze
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                ) : (
+                  <div className="space-y-3 pt-2">
+                    <p className="text-xs text-muted-foreground">Odszyfrowane klucze:</p>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {revealedKeys.map((k) => (
+                        <div key={k.id} className="p-2.5 rounded border border-border bg-muted/30 text-xs">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold text-foreground">{k.label}</span>
+                            <span className="text-[10px] text-muted-foreground">{k.status}</span>
+                          </div>
+                          {k.key ? (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <code className="block flex-1 truncate font-mono text-[11px] bg-background p-1.5 rounded border">{k.key}</code>
+                              <Button size="icon" variant="outline" className="h-7 w-7 shrink-0" onClick={() => copyKey(k.key!)} title="Kopiuj">
+                                <Copy className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-destructive italic">Nie udało się odszyfrować (inne hasło)</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <DialogFooter className="pt-2">
+                      <Button type="button" size="sm" onClick={() => setRevealDialogOpen(false)}>Zamknij</Button>
+                    </DialogFooter>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Modal: Generuj nowy klucz */}
+            <Dialog open={generateDialogOpen} onOpenChange={setGenerateDialogOpen}>
+              <DialogContent className="max-w-md bg-card">
+                <DialogHeader>
+                  <DialogTitle className="font-display text-lg font-bold">Generuj nowy klucz awaryjny</DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Zostanie wygenerowany 256-bitowy losowy klucz kryptograficzny.
+                  </DialogDescription>
+                </DialogHeader>
+                {!generatedKey ? (
+                  <form onSubmit={handleGenerateKey} className="space-y-3 pt-2">
+                    <div>
+                      <label className="text-xs font-semibold text-foreground">Etykieta (opcjonalnie)</label>
+                      <Input
+                        type="text"
+                        value={generateLabel}
+                        onChange={(e) => setGenerateLabel(e.target.value)}
+                        placeholder="np. Laptop zapasowy, Grudzień 2026..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-foreground">Hasło autoryzacji odzyskiwania</label>
+                      <Input
+                        type="password"
+                        value={generatePassword}
+                        onChange={(e) => setGeneratePassword(e.target.value)}
+                        placeholder="Wpisz hasło..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <DialogFooter className="pt-2">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setGenerateDialogOpen(false)}>Anuluj</Button>
+                      <Button type="submit" size="sm" disabled={generateLoading || !generatePassword.trim()}>
+                        {generateLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                        Generuj klucz
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                ) : (
+                  <div className="space-y-3 pt-2">
+                    <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+                      <strong>Ważne:</strong> Zapisz ten klucz w bezpiecznym menedżerze haseł. Jest wyświetlany tylko teraz!
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-1">{generatedKey.label}</p>
+                      <code className="block break-all font-mono text-xs bg-muted p-2 rounded border border-border select-all">
+                        {generatedKey.key}
+                      </code>
+                    </div>
+                    <DialogFooter className="pt-2 flex items-center justify-between">
+                      <Button type="button" variant="outline" size="sm" onClick={() => copyKey(generatedKey.key)}>
+                        <Copy className="h-3.5 w-3.5 mr-1.5" /> Kopiuj klucz
+                      </Button>
+                      <Button type="button" size="sm" onClick={() => setGenerateDialogOpen(false)}>Gotowe</Button>
+                    </DialogFooter>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Modal: Unieważnij klucz */}
+            <Dialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
+              <DialogContent className="max-w-md bg-card">
+                <DialogHeader>
+                  <DialogTitle className="font-display text-lg font-bold text-destructive">Unieważnij klucz awaryjny</DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Czy na pewno chcesz unieważnić ten klucz? Ta operacja jest nieodwracalna.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleRevokeKey} className="space-y-3 pt-2">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground">Potwierdź hasłem odzyskiwania</label>
+                    <Input
+                      type="password"
+                      value={revokePassword}
+                      onChange={(e) => setRevokePassword(e.target.value)}
+                      placeholder="Wpisz hasło..."
+                      className="mt-1"
+                    />
+                  </div>
+                  <DialogFooter className="pt-2">
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setRevokeDialogOpen(false)}>Anuluj</Button>
+                    <Button type="submit" variant="destructive" size="sm" disabled={revokeLoading || !revokePassword.trim()}>
+                      {revokeLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
+                      Unieważnij klucz
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
 
             <Dialog open={Boolean(previewImage)} onOpenChange={(o) => !o && setPreviewImage(null)}>
               <DialogContent className="max-w-4xl p-4 bg-card">
