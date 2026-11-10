@@ -192,7 +192,7 @@ export function ensureSessionAndTrack(): void {
       const utm = extractSanitizedUtm();
       const meta = `${detectDevice()}|${detectTrafficSource()}${utm ? `|utm:${utm}` : ""}`;
       track({
-        event: "session_start",
+        event: "page_view",
         meta,
       });
     }

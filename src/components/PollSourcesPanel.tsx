@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Clock, ExternalLink, Search } from "lucide-react";
+import { track } from "@/lib/analytics";
 import { PARTIES } from "@/data/parties";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { OwnWorkNotice } from "@/components/OwnWorkNotice";
@@ -79,7 +80,13 @@ export function PollSourcesPanel() {
 
   return (
     <div className="space-y-3">
-      <CollapsibleSection title={en ? "Opinion polls" : "Sondaże"} defaultOpen={false}>
+      <CollapsibleSection
+        title={en ? "Opinion polls" : "Sondaże"}
+        defaultOpen={false}
+        onOpenChange={(open) => {
+          if (open) track({ event: "poll_section_view" });
+        }}
+      >
         <section
           className="border-x border-b border-border bg-surface/80 px-4 py-5 backdrop-blur-sm md:px-6"
           aria-labelledby="polls-heading"
@@ -121,7 +128,11 @@ export function PollSourcesPanel() {
                 : "Trwa cisza wyborcza. Aktualizacje sondaży są wstrzymane."}
             </p>
           )}
-          <Tabs defaultValue="average" className="mt-6">
+          <Tabs
+            defaultValue="average"
+            className="mt-6"
+            onValueChange={(val) => track({ event: "poll_tab_change", meta: val })}
+          >
             <TabsList className="h-auto max-w-full flex-wrap">
               <TabsTrigger value="average">{en ? "Average" : "Średnia"}</TabsTrigger>
               <TabsTrigger value="trend">{en ? "Trends" : "Trendy"}</TabsTrigger>
@@ -336,6 +347,7 @@ export function PollSourcesPanel() {
                                   href={poll.sourceUrl}
                                   target="_blank"
                                   rel="noreferrer"
+                                  onClick={() => track({ event: "poll_source_click", meta: poll.institute ?? "nieznany" })}
                                   className="inline-flex items-center gap-1 whitespace-nowrap text-primary hover:underline"
                                   aria-label={`${en ? "Source" : "Źródło"}: ${poll.institute}, ${formatPolishDate(poll.publishedAt)}`}
                                 >
@@ -407,6 +419,7 @@ export function PollSourcesPanel() {
                           href={poll.sourceUrl}
                           target="_blank"
                           rel="noreferrer"
+                          onClick={() => track({ event: "poll_source_click", meta: poll.institute ?? "nieznany" })}
                           className="inline-flex items-center gap-1 text-primary hover:underline"
                         >
                           {sourceLabel(poll, en)}

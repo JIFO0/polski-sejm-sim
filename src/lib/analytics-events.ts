@@ -34,6 +34,11 @@ export const EVENTS = [
   "share_copy",
   "demographic_adjustment_toggle",
   "social_image_download",
+  "sources_view",
+  "pkw_correction_view",
+  "poll_section_view",
+  "poll_tab_change",
+  "poll_source_click",
 ] as const;
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
@@ -64,7 +69,12 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   support_click: "Kliknięcia wsparcia (Buy Me a Coffee)",
   contact_click: "Kliknięcia w kontakt (jifo.dev/#kontakt)",
   about_view: "Wejścia na stronę o projekcie (/o-projekcie)",
-  dhondt_guide_view: "Wejścia na stronę metody D'Hondta",
+  dhondt_guide_view: "Wejścia na stronę metody D'Hondta (/metoda-dhondta)",
+  sources_view: "Wejścia na stronę źródeł (/zrodla)",
+  pkw_correction_view: "Wejścia na stronę korekty PKW (/korekta-okregow)",
+  poll_section_view: "Otworzenia sekcji sondaży",
+  poll_tab_change: "Przełączenia zakładek sondaży",
+  poll_source_click: "Kliknięcia w źródła badań sondażowych",
   custom_party_add: "Dodane własne partie",
   merger_create: "Utworzone wspólne listy",
   theme_toggle: "Przełączenia motywu",

@@ -208,7 +208,7 @@ function Index() {
         const kept = Math.round(joint * (m.retention / 100) * 10) / 10;
         const lost = Math.round((joint - kept) * 10) / 10;
         shares[m.id] = kept;
-        if (!s.independentSupport && shares["inne"] != null) {
+        if (!(s.independentSupport ?? true) && shares["inne"] != null) {
           shares["inne"] = Math.round((shares["inne"] + lost) * 10) / 10;
         }
       }
@@ -258,7 +258,7 @@ function Index() {
         const targetHere = Math.min(100, Math.max(0, currentParty + delta));
         const available = Math.max(0, 100 - otherTotal);
         const snapped = Math.abs(targetHere - available) <= 0.35 ? available : targetHere;
-        const shares: Record<string, number> = s.independentSupport
+        const shares: Record<string, number> = (s.independentSupport ?? true)
           ? { ...st.shares, [pid]: Math.min(snapped, available) }
           : Object.fromEntries(
               Object.entries(st.shares).map(([id, share]) => [
@@ -797,7 +797,7 @@ function Index() {
                   onChange={(next) => setDistrict(selected, next)}
                   onReset={() => resetDistrict(selected)}
                   onClose={() => setSelected(null)}
-                  independentSupport={scenario.independentSupport ?? false}
+                  independentSupport={scenario.independentSupport ?? true}
                   mergers={scenario.mergers}
                 />
               ) : (
@@ -854,7 +854,7 @@ function Index() {
 
                   <label className="mt-3 flex min-h-12 cursor-pointer items-start gap-3 rounded-md border border-border bg-surface/70 p-3">
                     <Checkbox
-                      checked={scenario.independentSupport ?? false}
+                      checked={scenario.independentSupport ?? true}
                       onCheckedChange={(checked) => {
                         track({
                           event: "independent_mode",
@@ -882,7 +882,7 @@ function Index() {
                   </div>
                   <div className="mt-4 space-y-3">
                     {displayedParties.map((p) => {
-                      const share = scenario.independentSupport
+                      const share = (scenario.independentSupport ?? true)
                         ? (nationalRawShares[p.id] ?? 0)
                         : (result.nationalShares[p.id] ?? 0);
                       const seats = result.seatsByParty[p.id] ?? 0;
@@ -914,7 +914,7 @@ function Index() {
                               value={share}
                               onChange={(next) => nationalSwing(p.id, next)}
                               label={`Krajowe poparcie ${p.name}`}
-                              max={scenario.independentSupport ? share + unassignedShare : 100}
+                              max={(scenario.independentSupport ?? true) ? share + unassignedShare : 100}
                             />
                             <span
                               className="num w-10 rounded bg-ink/5 py-0.5 text-center text-sm font-bold"
@@ -936,7 +936,7 @@ function Index() {
                             aria-label={`Poparcie ${p.name} w kraju`}
                             min={0}
                             max={
-                              scenario.independentSupport
+                              (scenario.independentSupport ?? true)
                                 ? Math.max(55, share + unassignedShare)
                                 : 100
                             }

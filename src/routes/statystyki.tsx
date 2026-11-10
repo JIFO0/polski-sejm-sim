@@ -9,15 +9,19 @@ import {
   Clock,
   Coffee,
   Database,
+  ExternalLink,
+  FileText,
   HardDrive,
   Info,
   Laptop,
+  Layers,
   Link2,
   Loader2,
   Mail,
   MapPin,
   Pin,
   RotateCcw,
+  Scale,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -451,7 +455,7 @@ function StatsPage() {
                   <ShieldCheck className="h-4 w-4 text-primary" /> Definicja ruchu i zasady prywatności
                 </p>
                 <p className="mt-1">
-                  <strong>Sesja</strong> = wejście lub powrót po &ge;30 min bezczynności. <strong>Odsłona</strong> = każde wyświetlenie podstrony w SPA. <strong>Unikalni użytkownicy</strong>: niedostępni (zgodnie z polityką prywatności serwis nie używa cookies śledzących, nie rejestruje adresów IP ani fingerprintingu).
+                  <strong>Sesja</strong> = wejście lub powrót po &ge;30 min bezczynności. <strong>Odsłona</strong> = wyświetlenie podstrony w SPA. Zgodnie z polityką prywatności serwis nie używa ciasteczek śledzących, nie profiluje użytkowników, nie zapisuje adresów IP ani fingerprintingu.
                 </p>
               </div>
               <div className="shrink-0 flex items-center gap-2">
@@ -473,27 +477,74 @@ function StatsPage() {
             </div>
 
             {/* Główne karty podsumowania */}
-            <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+            <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               <div className="panel p-4">
                 <p className="text-xs text-muted-foreground">Sesje (Wizyty)</p>
                 <p className="num text-2xl font-bold text-ink mt-1">{summary.sessions ?? summary.pageViews}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Timeout 30 min bezczynności</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Wszystkie unikalne sesje</p>
               </div>
 
               <div className="panel p-4">
                 <p className="text-xs text-muted-foreground">Odsłony (Pageviews)</p>
                 <p className="num text-2xl font-bold text-ink mt-1">{summary.pageViews}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Wyświetlenia stron SPA</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Wszystkie podstrony SPA</p>
               </div>
 
-              <div className="panel p-4 border-muted">
-                <p className="text-xs text-muted-foreground">Unikalni użytkownicy</p>
-                <p className="num text-xl font-bold text-muted-foreground mt-1">Brak danych</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5" title={summary.uniqueUsersStatus}>
-                  Niedostępni (ochrona prywatności)
+              <div className="panel p-4 border-emerald-500/30 bg-emerald-500/5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">Źródła badań</p>
+                  <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <p className="num text-2xl font-bold text-emerald-950 dark:text-emerald-100 mt-1">
+                  {summary.sourcesViews}
+                </p>
+                <p className="text-[11px] text-emerald-700/80 dark:text-emerald-300/80 mt-0.5">
+                  /zrodla & kliknięcia ({summary.pollStats.sourceClicks} do badań)
                 </p>
               </div>
 
+              <div className="panel p-4 border-violet-500/30 bg-violet-500/5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-violet-800 dark:text-violet-300">Korekta PKW</p>
+                  <Scale className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                </div>
+                <p className="num text-2xl font-bold text-violet-950 dark:text-violet-100 mt-1">
+                  {summary.pkwCorrectionViews}
+                </p>
+                <p className="text-[11px] text-violet-700/80 dark:text-violet-300/80 mt-0.5">
+                  Odsłony ({summary.pkwCorrectionToggles} włączeń)
+                </p>
+              </div>
+
+              <div className="panel p-4 border-cyan-500/30 bg-cyan-500/5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-cyan-800 dark:text-cyan-300">Metoda D'Hondta</p>
+                  <BarChart3 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <p className="num text-2xl font-bold text-cyan-950 dark:text-cyan-100 mt-1">
+                  {summary.dhondtViews}
+                </p>
+                <p className="text-[11px] text-cyan-700/80 dark:text-cyan-300/80 mt-0.5">
+                  Odwiedziny /metoda-dhondta
+                </p>
+              </div>
+
+              <div className="panel p-4 border-indigo-500/30 bg-indigo-500/5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300">O projekcie</p>
+                  <Info className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <p className="num text-2xl font-bold text-indigo-950 dark:text-indigo-100 mt-1">
+                  {summary.aboutViews}
+                </p>
+                <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
+                  Odwiedziny /o-projekcie
+                </p>
+              </div>
+            </section>
+
+            {/* Druga linia podsumowania */}
+            <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               <div className="panel p-4 border-amber-500/30 bg-amber-500/5">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Buy Me a Coffee</p>
@@ -503,7 +554,7 @@ function StatsPage() {
                   {summary.supportClicks}
                 </p>
                 <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80 mt-0.5">
-                  Kliknięcia w link wsparcia
+                  Kliknięcia wsparcia
                 </p>
               </div>
 
@@ -520,41 +571,173 @@ function StatsPage() {
                 </p>
               </div>
 
-              <div className="panel p-4 border-indigo-500/30 bg-indigo-500/5">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300">O projekcie</p>
-                  <Info className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <p className="num text-2xl font-bold text-indigo-950 dark:text-indigo-100 mt-1">
-                  {summary.aboutViews}
-                </p>
-                <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
-                  Odwiedziny podstrony
-                </p>
-              </div>
-            </section>
-
-            {/* Druga linia podsumowania */}
-            <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="panel p-4">
                 <p className="text-xs text-muted-foreground">Zapisane warianty</p>
                 <p className="num text-2xl font-bold text-ink mt-1">{summary.scenarioSaves}</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">W bibliotece</p>
               </div>
+
               <div className="panel p-4">
                 <p className="text-xs text-muted-foreground">Pobrane pliki</p>
                 <p className="num text-2xl font-bold text-ink mt-1">{summary.scenarioDownloads}</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Eksporty JSON</p>
               </div>
+
               <div className="panel p-4">
                 <p className="text-xs text-muted-foreground">Aktywne linki (max 5/IP)</p>
                 <p className="num text-2xl font-bold text-ink mt-1">{summary.activeShares}</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Ważność 7 dni</p>
               </div>
+
               <div className="panel p-4">
                 <p className="text-xs text-muted-foreground">Wszystkie akcje w bazie</p>
                 <p className="num text-2xl font-bold text-ink mt-1">{summary.totalEvents}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Zapisane bezterminowo</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Zdarzenia w SQLite</p>
+              </div>
+            </section>
+
+            {/* ODSŁONY WEDŁUG PODSTRON */}
+            <section className="panel p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-primary" /> Odsłony według podstron (ruch w serwisie)
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Zestawienie liczby wejść na poszczególne podstrony i widoki w SejmSim.
+                  </p>
+                </div>
+                <div className="text-xs font-semibold text-muted-foreground">
+                  Łącznie odsłon podstron: <span className="num font-bold text-ink text-sm">{summary.pageViews}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50 border-b border-border">
+                    <tr className="text-left font-semibold text-muted-foreground">
+                      <th className="py-2.5 px-3">Ścieżka (URL)</th>
+                      <th className="py-2.5 px-3">Nazwa podstrony</th>
+                      <th className="py-2.5 px-3">Wizualizacja</th>
+                      <th className="py-2.5 px-3 text-right">Odsłony</th>
+                      <th className="py-2.5 px-3 text-right">Udział</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {summary.pageViewsByPath.map((item) => {
+                      const maxViews = Math.max(1, ...summary.pageViewsByPath.map((p) => p.count));
+                      const sharePct = summary.pageViews > 0 ? ((item.count / summary.pageViews) * 100).toFixed(1) : "0.0";
+                      return (
+                        <tr key={item.path} className="hover:bg-muted/20">
+                          <td className="py-2.5 px-3 font-mono font-medium text-primary">
+                            <a href={item.path} target="_blank" rel="noreferrer" className="hover:underline">
+                              {item.path}
+                            </a>
+                          </td>
+                          <td className="py-2.5 px-3 font-medium text-foreground">{item.label}</td>
+                          <td className="py-2.5 px-3">
+                            <div className="h-2.5 w-36 max-w-full overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-primary"
+                                style={{ width: `${(item.count / maxViews) * 100}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-bold text-ink num">{item.count}</td>
+                          <td className="py-2.5 px-3 text-right text-muted-foreground num">{sharePct}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* ZAINTERESOWANIE SONDAŻAMI I ŹRÓDŁAMI */}
+            <section className="panel p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" /> Zainteresowanie sondażami i weryfikacja źródeł
+                  </h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Jak często odwiedzający sprawdzają sondaże na stronie głównej oraz przechodzą do oryginalnych publikacji ośrodków badawczych.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3.5 rounded-lg border bg-card">
+                  <p className="text-xs text-muted-foreground">Rozwinięcia sekcji sondaży</p>
+                  <p className="num text-2xl font-bold text-ink mt-1">{summary.pollStats.sectionViews}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Przeglądanie bloku sondażowego</p>
+                </div>
+
+                <div className="p-3.5 rounded-lg border bg-card">
+                  <p className="text-xs text-muted-foreground">Kliknięcia w publikacje źródłowe</p>
+                  <p className="num text-2xl font-bold text-primary mt-1">{summary.pollStats.sourceClicks}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Przejścia do artykułów źródłowych</p>
+                </div>
+
+                <div className="p-3.5 rounded-lg border bg-card">
+                  <p className="text-xs text-muted-foreground">Przełączenia zakładek sondaży</p>
+                  <p className="num text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                    {summary.pollStats.tabChanges.reduce((a, b) => a + b.count, 0)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Średnia / Trendy / Badania i źródła</p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                {/* Źródła ośrodków badawczych */}
+                <div className="rounded-lg border border-border p-3.5 bg-surface/50">
+                  <h3 className="text-xs font-bold text-ink uppercase tracking-wider mb-2">
+                    Przejścia do źródeł według ośrodka
+                  </h3>
+                  {summary.pollStats.topInstitutes.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic py-2">Brak zarejestrowanych kliknięć w publikacje źródłowe.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {summary.pollStats.topInstitutes.map(({ institute, count }) => {
+                        const maxInst = Math.max(1, ...summary.pollStats.topInstitutes.map((i) => i.count));
+                        return (
+                          <div key={institute} className="flex items-center gap-2 text-xs">
+                            <span className="w-44 shrink-0 truncate font-medium text-foreground">{institute}</span>
+                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                              <div className="h-full rounded-full bg-primary" style={{ width: `${(count / maxInst) * 100}%` }} />
+                            </div>
+                            <span className="num font-bold text-ink w-8 text-right">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Popularność zakładek w panelu sondaży */}
+                <div className="rounded-lg border border-border p-3.5 bg-surface/50">
+                  <h3 className="text-xs font-bold text-ink uppercase tracking-wider mb-2">
+                    Przeglądane widoki sondaży
+                  </h3>
+                  {summary.pollStats.tabChanges.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic py-2">Brak przełączeń zakładek w panelu sondaży.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {summary.pollStats.tabChanges.map(({ tab, count }) => {
+                        const maxTab = Math.max(1, ...summary.pollStats.tabChanges.map((t) => t.count));
+                        return (
+                          <div key={tab} className="flex items-center gap-2 text-xs">
+                            <span className="w-36 shrink-0 truncate font-medium text-foreground">{tab}</span>
+                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                              <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(count / maxTab) * 100}%` }} />
+                            </div>
+                            <span className="num font-bold text-ink w-8 text-right">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
 
@@ -671,7 +854,7 @@ function StatsPage() {
                     className="text-xs h-8"
                     onClick={() => setSelectedMonth("all")}
                   >
-                    Wszystkie miesiące ({summary.pageViews})
+                    Wszystkie miesiące ({summary.sessions ?? summary.pageViews})
                   </Button>
                 </div>
               </div>

@@ -82,7 +82,7 @@ export function defaultScenario(): Scenario {
     name: currentPollAverage() ? "Średnia sondaży SejmSim" : "Profil okręgowy SejmSim",
     createdAt: new Date().toISOString(),
     turnoutEffect: 1,
-    independentSupport: false,
+    independentSupport: true,
     districts,
     parties,
     coalitions: [
@@ -103,7 +103,7 @@ export function effectiveShares(
   state: DistrictState,
   turnoutEffect: number,
   parties: Record<string, PartySettings>,
-  independentSupport = false,
+  independentSupport = true,
   mergers: MergerDef[] = [],
 ): Record<string, number> {
   const delta = (state.turnout - BASE_TURNOUT) / BASE_TURNOUT;
@@ -238,7 +238,7 @@ export function simulate(scenario: Scenario): SimulationResult {
       state,
       scenario.turnoutEffect,
       scenario.parties,
-      scenario.independentSupport ?? false,
+      scenario.independentSupport ?? true,
       scenario.mergers ?? [],
     );
     const valid = (electorate * state.turnout) / 100;

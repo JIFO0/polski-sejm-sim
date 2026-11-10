@@ -10,7 +10,7 @@ import { ParticleField } from "@/components/ParticleField";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { OwnWorkNotice } from "@/components/OwnWorkNotice";
 import { Button } from "@/components/ui/button";
-import { trackPageViewOncePerSession } from "@/lib/analytics";
+import { track, trackPageViewOncePerSession } from "@/lib/analytics";
 import {
   POLL_HALF_LIFE_DAYS,
   POLL_MAX_COUNT,
@@ -46,6 +46,7 @@ function SourcesPage() {
   const tr = useTranslation();
   useEffect(() => {
     trackPageViewOncePerSession();
+    track({ event: "sources_view" });
   }, []);
 
   return (

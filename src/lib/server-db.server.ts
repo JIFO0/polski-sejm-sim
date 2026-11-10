@@ -163,6 +163,11 @@ export function getDb(): DatabaseSync {
   if (!secColNames.has("encrypted_key")) {
     db.exec("ALTER TABLE security_override_keys ADD COLUMN encrypted_key TEXT");
   }
+
+  // Bezpieczna migracja: ujednolicenie zdarzeń sesji do page_view z poprzedniej wersji systemu
+  try {
+    db.exec("UPDATE analytics_events SET event = 'page_view' WHERE event = 'session_start';");
+  } catch {}
   if (!secColNames.has("label")) {
     db.exec("ALTER TABLE security_override_keys ADD COLUMN label TEXT");
   }

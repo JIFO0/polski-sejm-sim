@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -27,6 +27,7 @@ import { SupportButton } from "@/components/SupportButton";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { Button } from "@/components/ui/button";
 import { DISTRICTS } from "@/data/districts";
+import { track } from "@/lib/analytics";
 import {
   CRW_2026_DELTA,
   DISTRICT_DEMOGRAPHIC_NOTES,
@@ -118,6 +119,9 @@ export const Route = createFileRoute("/korekta-okregow")({
 
 function KorektaOkregowPage() {
   const tr = useTranslation();
+  useEffect(() => {
+    track({ event: "pkw_correction_view" });
+  }, []);
   const [filter, setFilter] = useState<"all" | "gain" | "loss" | "neutral">("all");
   const [variant, setVariant] = useState<"pkw" | "crw">("pkw");
 

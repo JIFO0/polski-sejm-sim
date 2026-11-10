@@ -157,36 +157,134 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       .map(([party, { sum, n }]) => ({ party, avg: sum / n, count: n }))
       .sort((a, b) => b.avg - a.avg);
 
-    const sessionRows = rows.filter((r) => r.event === "session_start");
-    const totalSessions = sessionRows.length > 0 ? sessionRows.length : countBy("page_view");
-    const totalPageViews = countBy("page_view");
+    const isVisitRow = (event: string, meta: string | null | undefined): boolean => {
+      if (event === "session_start") return true;
+      if (event === "page_view") {
+        if (meta && (meta.startsWith("/") || meta.startsWith("http"))) {
+          return false;
+        }
+        return true;
+      }
+      return false;
+    };
+
+    const PATH_NAMES: Record<string, string> = {
+      "/": "Kalkulator główny (Strona domowa)",
+      "/zrodla": "Źródła i metodologia badań",
+      "/korekta-okregow": "Korekta okręgów wyborczych PKW",
+      "/metoda-dhondta": "Metoda D'Hondta – przewodnik",
+      "/o-projekcie": "O projekcie i autorze",
+      "/preview": "Nowy interfejs 2.0 (Preview)",
+      "/statystyki": "Panel administratora",
+    };
 
     const byDay = new Map<string, number>();
-    for (const r of rows) {
-      const isSession = sessionRows.length > 0 ? r.event === "session_start" : r.event === "page_view";
-      if (!isSession) continue;
-      const day = getPolishDay(r.created_at);
-      byDay.set(day, (byDay.get(day) ?? 0) + 1);
-    }
+    let totalSessions = 0;
+    let totalPageViews = 0;
+    const pagePathCounts = new Map<string, number>();
 
-    const funnelSessions = sessionRows.length;
-    const funnelInteractions = rows.filter((r) => r.event === "funnel_step" && (r.payload as any)?.meta === "interaction").length;
-    const funnelExports = rows.filter((r) => r.event === "funnel_step" && (r.payload as any)?.meta === "export").length;
-    const hasFunnel = funnelSessions > 0 || funnelInteractions > 0 || funnelExports > 0;
+    const eventCounts = new Map<string, number>();
+    const metaCounts = new Map<string, number>();
+    const hours = Array.from({ length: 24 }, () => 0);
+    const hoursPolish = Array.from({ length: 24 }, () => 0);
+    const weekdayVisits = [0, 0, 0, 0, 0, 0, 0];
+
+    const districtViews = new Map<string, number>();
+    const coalitionTests = new Map<string, { count: number; majorityHits: number }>();
+    const partyAdjustments = new Map<string, number>();
+    const mapModeCounts = new Map<string, number>();
+    const historyYearCounts = new Map<string, number>();
+    const turnoutGroupCounts = new Map<string, number>();
+    const deviceCounts = new Map<string, number>();
+    const trafficSources = new Map<string, number>();
 
     const utmCampaignCounts = new Map<string, number>();
     const utmSourceCounts = new Map<string, number>();
+    const pollInstituteClicks = new Map<string, number>();
+    const pollTabChanges = new Map<string, number>();
+
     for (const r of rows) {
-      if (r.event === "session_start") {
-        const metaStr = (r.payload as { meta?: string | null })?.meta;
-        if (metaStr && metaStr.includes("|utm:")) {
-          const utmPart = metaStr.split("|utm:")[1] || "";
-          const [uSrc, , uCamp] = utmPart.split("|");
-          if (uSrc && uSrc !== "-") utmSourceCounts.set(uSrc, (utmSourceCounts.get(uSrc) ?? 0) + 1);
-          if (uCamp && uCamp !== "-") utmCampaignCounts.set(uCamp, (utmCampaignCounts.get(uCamp) ?? 0) + 1);
+      eventCounts.set(r.event, (eventCounts.get(r.event) ?? 0) + 1);
+      const meta = (r.payload as { meta?: string | null })?.meta;
+      if (meta) {
+        const k = `${r.event}:${meta}`;
+        metaCounts.set(k, (metaCounts.get(k) ?? 0) + 1);
+      }
+
+      // 1. Zliczanie odsłon stron (pageviews)
+      if (r.event === "page_view") {
+        totalPageViews += 1;
+        let p = "/";
+        if (meta && meta.startsWith("/")) {
+          p = meta.split("?")[0].replace(/\/+$/, "") || "/";
+        }
+        pagePathCounts.set(p, (pagePathCounts.get(p) ?? 0) + 1);
+      }
+
+      // 2. Zliczanie sesji / wizyt (czas, urządzenie, źródło)
+      if (isVisitRow(r.event, meta)) {
+        totalSessions += 1;
+        const day = getPolishDay(r.created_at);
+        byDay.set(day, (byDay.get(day) ?? 0) + 1);
+
+        const utcHour = new Date(r.created_at).getUTCHours();
+        const polishHour = getPolishHour(r.created_at);
+        const weekday = getPolishWeekdayIndex(r.created_at);
+        hours[utcHour] = (hours[utcHour] ?? 0) + 1;
+        hoursPolish[polishHour] = (hoursPolish[polishHour] ?? 0) + 1;
+        weekdayVisits[weekday] = (weekdayVisits[weekday] ?? 0) + 1;
+
+        if (meta && !meta.startsWith("/")) {
+          const parts = meta.split("|");
+          const rawDev = (parts[0] || "").trim().toLowerCase();
+          const rawSrc = (parts[1] || "bezpośrednie").trim().toLowerCase();
+
+          let dev = "inne / nieznane";
+          if (rawDev === "telefon") dev = "telefon";
+          else if (rawDev === "tablet") dev = "tablet";
+          else if (rawDev === "komputer") dev = "komputer";
+
+          deviceCounts.set(dev, (deviceCounts.get(dev) ?? 0) + 1);
+          trafficSources.set(rawSrc || "bezpośrednie", (trafficSources.get(rawSrc || "bezpośrednie") ?? 0) + 1);
+
+          if (meta.includes("|utm:")) {
+            const utmPart = meta.split("|utm:")[1] || "";
+            const [uSrc, , uCamp] = utmPart.split("|");
+            if (uSrc && uSrc !== "-") utmSourceCounts.set(uSrc, (utmSourceCounts.get(uSrc) ?? 0) + 1);
+            if (uCamp && uCamp !== "-") utmCampaignCounts.set(uCamp, (utmCampaignCounts.get(uCamp) ?? 0) + 1);
+          }
         }
       }
+
+      // 3. Zaangażowanie w sondaże i edukację
+      if (r.event === "poll_source_click" && meta) {
+        pollInstituteClicks.set(meta, (pollInstituteClicks.get(meta) ?? 0) + 1);
+      } else if (r.event === "poll_tab_change" && meta) {
+        const tabLabel = meta === "average" ? "Średnia ważona" : meta === "trend" ? "Wykres trendów" : meta === "sources" ? "Badania i źródła" : meta;
+        pollTabChanges.set(tabLabel, (pollTabChanges.get(tabLabel) ?? 0) + 1);
+      } else if (r.event === "district_view" && meta) {
+        districtViews.set(meta, (districtViews.get(meta) ?? 0) + 1);
+      } else if (r.event === "coalition_test" && meta) {
+        const [coalitionName = meta, maj] = meta.split(":");
+        const entry = coalitionTests.get(coalitionName) ?? { count: 0, majorityHits: 0 };
+        entry.count += 1;
+        if (maj === "tak" || maj === "wiekszosc") entry.majorityHits += 1;
+        coalitionTests.set(coalitionName, entry);
+      } else if (r.event === "party_slider_adjust" && meta) {
+        partyAdjustments.set(meta, (partyAdjustments.get(meta) ?? 0) + 1);
+      } else if (r.event === "map_mode_change" && meta) {
+        mapModeCounts.set(meta, (mapModeCounts.get(meta) ?? 0) + 1);
+      } else if (r.event === "historical_view" && meta) {
+        historyYearCounts.set(meta, (historyYearCounts.get(meta) ?? 0) + 1);
+      } else if (r.event === "turnout_group_move" && meta) {
+        turnoutGroupCounts.set(meta, (turnoutGroupCounts.get(meta) ?? 0) + 1);
+      }
     }
+
+    const funnelSessions = totalSessions;
+    const funnelInteractions = rows.filter((r) => r.event === "funnel_step" && (r.payload as any)?.meta === "interaction").length;
+    const funnelExports = rows.filter((r) => r.event === "funnel_step" && (r.payload as any)?.meta === "export").length;
+    const hasFunnel = funnelSessions > 0 || funnelInteractions > 0 || funnelExports > 0;
     const visitsByDay = [...byDay.entries()]
       .map(([day, count]) => ({ day, count }))
       .sort((a, b) => b.day.localeCompare(a.day));
@@ -238,62 +336,21 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       if (meta && kind !== "images") for (const tag of meta.split(", ")) scenarioTraitCounts.set(tag, (scenarioTraitCounts.get(tag) ?? 0) + 1);
     }
 
-    const eventCounts = new Map<string, number>();
-    const metaCounts = new Map<string, number>();
-    const hours = Array.from({ length: 24 }, () => 0);
-    const hoursPolish = Array.from({ length: 24 }, () => 0);
+    const pageViewsByPath = [...pagePathCounts.entries()]
+      .map(([path, count]) => ({
+        path,
+        label: PATH_NAMES[path] ?? path,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
 
-    // New enriched insights
-    const districtViews = new Map<string, number>();
-    const coalitionTests = new Map<string, { count: number; majorityHits: number }>();
-    const weekdayVisits = [0, 0, 0, 0, 0, 0, 0];
-    const partyAdjustments = new Map<string, number>();
-    const mapModeCounts = new Map<string, number>();
-    const historyYearCounts = new Map<string, number>();
-    const turnoutGroupCounts = new Map<string, number>();
-    const deviceCounts = new Map<string, number>();
-    const trafficSources = new Map<string, number>();
-
-    for (const r of rows) {
-      eventCounts.set(r.event, (eventCounts.get(r.event) ?? 0) + 1);
-      const meta = (r.payload as { meta?: string | null })?.meta;
-      if (meta) {
-        const k = `${r.event}:${meta}`;
-        metaCounts.set(k, (metaCounts.get(k) ?? 0) + 1);
-      }
-
-      if (r.event === "page_view") {
-        const utcHour = new Date(r.created_at).getUTCHours();
-        const polishHour = getPolishHour(r.created_at);
-        const weekday = getPolishWeekdayIndex(r.created_at);
-        hours[utcHour] = (hours[utcHour] ?? 0) + 1;
-        hoursPolish[polishHour] = (hoursPolish[polishHour] ?? 0) + 1;
-        weekdayVisits[weekday] = (weekdayVisits[weekday] ?? 0) + 1;
-        if (meta) {
-          const parts = meta.split("|");
-          const dev = parts[0] || "nieznane";
-          const src = parts[1] || "bezpośrednie";
-          deviceCounts.set(dev, (deviceCounts.get(dev) ?? 0) + 1);
-          trafficSources.set(src, (trafficSources.get(src) ?? 0) + 1);
-        }
-      } else if (r.event === "district_view" && meta) {
-        districtViews.set(meta, (districtViews.get(meta) ?? 0) + 1);
-      } else if (r.event === "coalition_test" && meta) {
-        const [coalitionName = meta, maj] = meta.split(":");
-        const entry = coalitionTests.get(coalitionName) ?? { count: 0, majorityHits: 0 };
-        entry.count += 1;
-        if (maj === "tak" || maj === "wiekszosc") entry.majorityHits += 1;
-        coalitionTests.set(coalitionName, entry);
-      } else if (r.event === "party_slider_adjust" && meta) {
-        partyAdjustments.set(meta, (partyAdjustments.get(meta) ?? 0) + 1);
-      } else if (r.event === "map_mode_change" && meta) {
-        mapModeCounts.set(meta, (mapModeCounts.get(meta) ?? 0) + 1);
-      } else if (r.event === "historical_view" && meta) {
-        historyYearCounts.set(meta, (historyYearCounts.get(meta) ?? 0) + 1);
-      } else if (r.event === "turnout_group_move" && meta) {
-        turnoutGroupCounts.set(meta, (turnoutGroupCounts.get(meta) ?? 0) + 1);
-      }
-    }
+    const sourcesViews = countBy("sources_view") + (pagePathCounts.get("/zrodla") ?? 0);
+    const pkwCorrectionViews = countBy("pkw_correction_view") + (pagePathCounts.get("/korekta-okregow") ?? 0);
+    const pkwCorrectionToggles = countBy("demographic_adjustment_toggle") + (mapModeCounts.get("korekta_okregow") ?? 0);
+    const dhondtViews = countBy("dhondt_guide_view") + (pagePathCounts.get("/metoda-dhondta") ?? 0);
+    const aboutViews = countBy("about_view") + (pagePathCounts.get("/o-projekcie") ?? 0);
+    const pollSectionViews = countBy("poll_section_view");
+    const pollSourceClicks = countBy("poll_source_click");
 
     const turnoutBuckets = new Map<string, number>();
     for (const t of turnoutValues) {
@@ -321,7 +378,18 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       totalEvents: totalEventsInDb,
       sessions: totalSessions,
       pageViews: totalPageViews,
-      uniqueUsersStatus: "niedostępni (brak identyfikatora zgodnie z polityką prywatności)",
+      pageViewsByPath,
+      sourcesViews,
+      pkwCorrectionViews,
+      pkwCorrectionToggles,
+      dhondtViews,
+      aboutViews,
+      pollStats: {
+        sectionViews: pollSectionViews,
+        sourceClicks: pollSourceClicks,
+        topInstitutes: [...pollInstituteClicks.entries()].map(([institute, count]) => ({ institute, count })).sort((a, b) => b.count - a.count),
+        tabChanges: [...pollTabChanges.entries()].map(([tab, count]) => ({ tab, count })).sort((a, b) => b.count - a.count),
+      },
       funnel: hasFunnel ? {
         sessions: funnelSessions,
         interactions: funnelInteractions,

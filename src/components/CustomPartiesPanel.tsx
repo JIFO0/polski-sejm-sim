@@ -237,7 +237,7 @@ export function CustomPartiesPanel({
         for (const mid of draft) {
           delete nextShares[mid];
         }
-        if (!s.independentSupport && nextShares["inne"] != null) {
+        if (!(s.independentSupport ?? true) && nextShares["inne"] != null) {
           nextShares["inne"] = Math.round((nextShares["inne"] + lost) * 10) / 10;
         }
         nextDistricts[d.id] = { ...currentSt, shares: nextShares };
@@ -289,7 +289,7 @@ export function CustomPartiesPanel({
             const newVal = Math.round(currentVal * factor * 10) / 10;
             const diff = newVal - currentVal;
             const nextShares = { ...dst.shares, [id]: newVal };
-            if (!s.independentSupport && nextShares["inne"] != null) {
+            if (!(s.independentSupport ?? true) && nextShares["inne"] != null) {
               nextShares["inne"] = Math.max(0, Math.round((nextShares["inne"] - diff) * 10) / 10);
             }
             return [did, { ...dst, shares: nextShares }];

@@ -9,11 +9,13 @@ export function CollapsibleSection({
   children,
   defaultOpen = true,
   className = "",
+  onOpenChange,
 }: {
   title: string;
   children: ReactNode;
   defaultOpen?: boolean;
   className?: string;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const tr = useTranslation();
   const [open, setOpen] = useState(defaultOpen);
@@ -24,6 +26,7 @@ export function CollapsibleSection({
       setMounted(true);
     }
     setOpen(nextOpen);
+    onOpenChange?.(nextOpen);
   };
 
   return (

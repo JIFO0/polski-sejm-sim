@@ -238,7 +238,7 @@ function PreviewIndex() {
         const kept = Math.round(joint * (m.retention / 100) * 10) / 10;
         const lost = Math.round((joint - kept) * 10) / 10;
         shares[m.id] = kept;
-        if (!s.independentSupport && shares["inne"] != null) {
+        if (!(s.independentSupport ?? true) && shares["inne"] != null) {
           shares["inne"] = Math.round((shares["inne"] + lost) * 10) / 10;
         }
       }
@@ -287,7 +287,7 @@ function PreviewIndex() {
         const targetHere = Math.min(100, Math.max(0, currentParty + delta));
         const available = Math.max(0, 100 - otherTotal);
         const snapped = Math.abs(targetHere - available) <= 0.35 ? available : targetHere;
-        const shares: Record<string, number> = s.independentSupport
+        const shares: Record<string, number> = (s.independentSupport ?? true)
           ? { ...st.shares, [pid]: Math.min(snapped, available) }
           : Object.fromEntries(
               Object.entries(st.shares).map(([id, share]) => [
@@ -631,7 +631,7 @@ function PreviewIndex() {
 
               <label className="flex items-center gap-2 cursor-pointer text-xs rounded-md border border-border bg-surface px-2.5 py-1">
                 <Checkbox
-                  checked={scenario.independentSupport ?? false}
+                  checked={scenario.independentSupport ?? true}
                   onCheckedChange={(checked) => {
                     track({
                       event: "independent_mode",
@@ -644,12 +644,12 @@ function PreviewIndex() {
                   }}
                   className="h-4 w-4"
                 />
-                <span className="font-semibold text-ink">Tryb niezależny</span>
+                <span className="font-semibold text-ink">Tryb proporcjonalny</span>
               </label>
             </div>
           </div>
 
-          {scenario.independentSupport && (
+          {(scenario.independentSupport ?? true) && (
             <div className="mt-3 flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2 text-xs">
               <span className="font-medium text-ink">Głosy nieprzypisane w kraju:</span>
               <span className="font-mono text-sm font-bold text-primary">
@@ -661,7 +661,7 @@ function PreviewIndex() {
           {/* Siatka suwaków partii */}
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {(showAllParties ? displayedParties : primaryParties).map((p) => {
-              const share = scenario.independentSupport
+              const share = (scenario.independentSupport ?? true)
                 ? (nationalRawShares[p.id] ?? 0)
                 : (result.nationalShares[p.id] ?? 0);
               const seats = result.seatsByParty[p.id] ?? 0;
@@ -701,7 +701,7 @@ function PreviewIndex() {
                       value={share}
                       onChange={(next) => nationalSwing(p.id, next)}
                       label={`Poparcie ${p.name}`}
-                      max={scenario.independentSupport ? share + unassignedShare : 100}
+                      max={(scenario.independentSupport ?? true) ? share + unassignedShare : 100}
                     />
 
                     <span
@@ -716,7 +716,7 @@ function PreviewIndex() {
                     className="mt-2.5"
                     aria-label={`Poparcie ${p.name} w kraju`}
                     min={0}
-                    max={scenario.independentSupport ? Math.max(55, share + unassignedShare) : 100}
+                    max={(scenario.independentSupport ?? true) ? Math.max(55, share + unassignedShare) : 100}
                     step={0.1}
                     value={[share]}
                     onValueChange={([v = 0]) => nationalSwing(p.id, v)}
