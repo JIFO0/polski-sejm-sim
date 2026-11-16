@@ -281,8 +281,9 @@ export function ScenarioShelf({
 
   const handleFileUpload = async (file: File) => {
     try {
-      const parsed = JSON.parse(await file.text()) as Scenario;
-      if (parsed?.version !== 1 || !parsed.districts) throw new Error("zły format");
+      const raw = JSON.parse(await file.text()) as unknown;
+      if (!validScenario(raw)) throw new Error("zły format");
+      const parsed = raw;
       const title = parsed.name || file.name.replace(/\.json$/i, "");
       const newId = createId();
       const entry: SavedScenario = {
@@ -295,7 +296,15 @@ export function ScenarioShelf({
       onLoad(parsed);
       track({ event: "scenario_upload" });
       setActiveScenarioId(newId);
-      toast.success(`Wczytano i dodano do biblioteki: ${title}`);
+      const shares = nationalSharesOf(parsed);
+      const nonInneTotal = Object.entries(shares)
+        .filter(([k]) => k !== "inne")
+        .reduce((sum, [, v]) => sum + (v ?? 0), 0);
+      if (nonInneTotal <= 0.5) {
+        toast.warning(`Wczytano „${title}”, ale ten plik ma wyzerowane poparcie partii w okręgach (0 mandatów).`);
+      } else {
+        toast.success(`Wczytano i dodano do biblioteki: ${title}`);
+      }
     } catch {
       toast.error("Nieprawidłowy plik scenariusza JSON.");
     }
@@ -339,7 +348,7 @@ export function ScenarioShelf({
           <input
             ref={fileInputRef}
             type="file"
-            accept="application/json"
+            accept=".json,application/json"
             className="hidden"
             aria-label="Wczytaj plik scenariusza JSON"
             onChange={(e) => {

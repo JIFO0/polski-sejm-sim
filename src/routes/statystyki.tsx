@@ -87,9 +87,9 @@ const PARTY_NAMES = Object.fromEntries(PARTIES.map((p) => [p.id, p.name]));
 const PARTY_SHORTS = Object.fromEntries(PARTIES.map((p) => [p.id, p.short]));
 const PARTY_COLORS = Object.fromEntries(PARTIES.map((p) => [p.id, p.color]));
 
-function formatCoalition(membersStr: string) {
+function formatCoalition(membersStr: string, partyLabels: Record<string, string> = {}) {
   const pids = membersStr.split("+");
-  return pids.map((pid) => PARTY_SHORTS[pid] ?? pid).join(" + ");
+  return pids.map((pid) => PARTY_SHORTS[pid] ?? analyticsPartyName(pid, partyLabels, PARTY_NAMES)).join(" + ");
 }
 
 function getPolishWeekday(dateStr: string): string {
@@ -107,7 +107,7 @@ function StatsPage() {
   const [key, setKey] = useState("");
   const [shares, setShares] = useState<ShareRow[]>([]);
   const fetchShares = useServerFn(listShares);
-  const [privateScenarios, setPrivateScenarios] = useState<{ id: number; name: string; created_at: string; author: string; description: string; json: string }[]>([]);
+  const [privateScenarios, setPrivateScenarios] = useState<{ id: number; name: string; created_at: string; author: string; description: string; filledDistricts: number; json: string }[]>([]);
   const fetchPrivate = useServerFn(listPrivateScenariosFn);
   const removePrivate = useServerFn(deletePrivateScenarioFn);
   const [securityKey, setSecurityKey] = useState("");
@@ -954,8 +954,8 @@ function StatsPage() {
                     <p className="text-sm text-muted-foreground">Brak zarejestrowanych testów koalicji.</p>
                   ) : (
                     summary.topCoalitions.map(({ members, count, majorityHits }) => (
-                      <div key={members} className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 text-xs">
-                        <span className="font-semibold text-foreground truncate">{formatCoalition(members)}</span>
+                      <div key={members} className="flex items-start justify-between gap-2 border-b border-border/40 pb-2 text-xs">
+                        <span className="font-semibold text-foreground break-words">{formatCoalition(members, summary?.partyLabels ?? {})}</span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${majorityHits > 0 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-muted text-muted-foreground"}`}>
                             większość {majorityHits}/{count}
@@ -982,7 +982,7 @@ function StatsPage() {
                       const max = Math.max(1, ...summary.partyAdjustments.map((p) => p.count));
                       return (
                         <div key={party} className="flex items-center gap-3 text-xs">
-                          <span className="w-28 shrink-0 truncate font-medium text-foreground">{partyName(party)}</span>
+                          <span className="min-w-28 max-w-[45%] shrink-0 break-words font-medium text-foreground">{partyName(party)}</span>
                           <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
                             <div className="h-full rounded-full" style={{ width: `${(count / max) * 100}%`, backgroundColor: PARTY_COLORS[party] ?? "var(--primary)" }} />
                           </div>
@@ -1047,7 +1047,7 @@ function StatsPage() {
                 ) : (
                   summary.avgShares.map(({ party, avg, count }) => (
                     <div key={party} className="flex items-center gap-3">
-                      <span className="w-40 shrink-0 truncate text-sm text-foreground">
+                      <span className="min-w-40 max-w-[45%] shrink-0 break-words text-sm text-foreground">
                         {partyName(party)}
                       </span>
                       <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
@@ -1293,13 +1293,20 @@ function StatsPage() {
               {privateScenarios.length === 0 ? <p className="mt-3 text-xs text-muted-foreground">Nikt jeszcze nie zapisał scenariusza.</p> : (
                 <div className="mt-3 max-h-[480px] overflow-auto">
                   <table className="w-full text-xs">
-                    <thead><tr className="text-left text-muted-foreground"><th className="py-1">Nazwa</th><th>Autor</th><th>Opis</th><th>Data</th><th /></tr></thead>
+                    <thead><tr className="text-left text-muted-foreground"><th className="py-1">Nazwa</th><th>Stan</th><th>Autor</th><th>Opis</th><th>Data</th><th /></tr></thead>
                     <tbody>
                       {privateScenarios.map((p) => {
-                        const { author, description } = p;
+                        const { author, description, filledDistricts } = p;
+                        const statusLabel = filledDistricts === 0 ? "Pusty (0/41)" : filledDistricts < 41 ? `Niepełny (${filledDistricts}/41)` : "41/41 okr.";
+                        const statusClass = filledDistricts === 0
+                          ? "bg-destructive/15 text-destructive"
+                          : filledDistricts < 41
+                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                            : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
                         return (
                           <tr key={p.id} className="border-t align-top">
                             <td className="py-2 pr-2 font-semibold text-ink">{p.name}</td>
+                            <td className="whitespace-nowrap py-2 pr-2"><span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${statusClass}`}>{statusLabel}</span></td>
                             <td className="py-2 pr-2">{author || "-"}</td>
                             <td className="max-w-[320px] py-2 pr-2 text-muted-foreground"><span className="line-clamp-3" title={description}>{description || "-"}</span></td>
                             <td className="whitespace-nowrap py-2 pr-2">{new Date(p.created_at).toLocaleString("pl-PL")}</td>
@@ -1351,7 +1358,7 @@ function StatsPage() {
                       </div>
                       <div className="flex flex-1 flex-col justify-between p-3">
                         <div>
-                          <h3 className="line-clamp-1 text-sm font-semibold text-ink" title={g.scenario_name}>{g.scenario_name}</h3>
+                          <h3 className="break-words text-sm font-semibold text-ink" title={g.scenario_name}>{g.scenario_name}</h3>
                           <p className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
                             <Clock className="h-3 w-3" /> {new Date(g.created_at).toLocaleString("pl-PL")}
                           </p>

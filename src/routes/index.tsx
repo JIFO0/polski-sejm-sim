@@ -177,7 +177,7 @@ function Index() {
         }, 0) / (weight > 0 ? weight : 1),
       ]),
     );
-  }, [scenario.districts]);
+  }, [scenario.districts, registryVersion]);
 
   useEffect(() => {
     if (MERGED_INTO[focusParty]) {
@@ -409,8 +409,14 @@ function Index() {
 
   const loadScenario = useCallback((next: Scenario) => {
     const base = defaultScenario();
+    const validIds = new Set([
+      ...Object.keys(base.parties),
+      ...(next.customParties ?? []).map((p) => p.id),
+      ...(next.mergers ?? []).map((m) => m.id),
+    ]);
     const mergedParties: Record<string, PartySettings> = {};
     for (const [k, v] of Object.entries({ ...base.parties, ...next.parties })) {
+      if (!validIds.has(k) || !v) continue;
       mergedParties[k] = {
         ...v,
         turnoutSensitivity:

@@ -56,7 +56,7 @@ export const trackEvent = createServerFn({ method: "POST" })
         shares: null,
         turnout: null,
         meta,
-        partyLabels: {},
+        partyLabels: data.partyLabels ?? {},
       });
       return { ok: true };
     } catch (err) {
@@ -124,7 +124,28 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       await import("./server-db.server");
     const totalEventsInDb = countAnalyticsEvents();
     const rows = getAllAnalytics(Math.max(totalEventsInDb, 1));
+    const {
+      listPrivateScenarios,
+      listSharedScenariosForOwner,
+    } = await import("./server-db.server");
     const partyLabels: Record<string, string> = {};
+    const collectScenarioLabels = (scenario: Record<string, unknown> | undefined) => {
+      if (!scenario) return;
+      for (const listKey of ["customParties", "mergers"] as const) {
+        const list = scenario[listKey];
+        if (!Array.isArray(list)) continue;
+        for (const item of list) {
+          if (!item || typeof item !== "object") continue;
+          const id = (item as Record<string, unknown>)["id"];
+          const name = (item as Record<string, unknown>)["name"];
+          if (typeof id === "string" && typeof name === "string" && name.trim()) {
+            partyLabels[id] = name.trim();
+          }
+        }
+      }
+    };
+    for (const priv of listPrivateScenarios(500)) collectScenarioLabels(priv.scenario);
+    for (const sh of listSharedScenariosForOwner(500)) collectScenarioLabels(sh.scenario);
     for (const row of [...rows].reverse()) {
       const labels = (row.payload as { partyLabels?: Record<string, string> })?.partyLabels;
       for (const [id, name] of Object.entries(labels ?? {})) {
