@@ -1,52 +1,70 @@
 # Polski Sejm Sim
 
-Stwórz stronę internetową która ma symulować wybory do sejmu w Polsce 2027. Bedzie można zaznaczać okręgi wyborcze na interaktywnej mapie dla każdej z partii i patrzeć ilu poslów by to dało. Będzie można łączyć partie w grupy żeby ocenić kto jakie ma możliwości i z kim. Weź z internetu loga wszystkich partii w Polsce, oraz mapę. Pomyśl to tak, żeby można było tworzyć własne scenariusze i predykcje. W każdym okręgu wyborczym będzie można ustalić frekwencję wyborczą która będzie wpływała na wynik i dzięki temu stworzyć bardzo kompleksową symulację, a nawet ją zapisać by potem wgrać. Domyślnym punktem wyjścia powinna być obecna sytuacja według ewybory.eu na dzisiaj
+An interactive simulator for the Polish Sejm elections (460 seats across 41 constituencies) using the D'Hondt method.
 
-This project was built with [Lovable](https://lovable.dev).
+## Features
 
-## Build with Lovable
+- **41-Constituency Interactive Map**: Inspect and adjust party support and voter turnout sensitivity (`lower`, `neutral`, `higher`) per constituency.
+- **D'Hondt Seat Allocation**: Calculates seat distributions with statutory 5% party and 8% coalition thresholds, plus minority exemptions.
+- **Poll-Driven Baseline**: Computes a weighted national polling average from primary polls in `src/data/polls.json` and projects it onto the 41 constituencies.
+- **Coalition & Group Builder**: Combine parties into parliamentary groups or joint lists (`mergers`) to test majority thresholds (231+ seats).
+- **Custom Parties & Scenarios**: Create custom parties, switch between standard (100% normalized) and independent-support modes, and compare against read-only historical PKW election results.
+- **Save, Share & Export**:
+  - Save scenarios locally in `localStorage` or export/import as JSON.
+  - Share scenarios via URL hashes or short links.
+  - Generate deterministic social media graphics of simulation results and coalition majorities directly in the browser.
+- **Bilingual UI & Theming**: Full Polish and English interface with light/dark theme support.
+- **Dedicated Reference Pages**: Poll sources and methodology (`/zrodla`), D'Hondt method guide (`/metoda-dhondta`), and project background (`/o-projekcie`).
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/328b0072-f5db-477f-9811-7eb7af31c731).
+## Tech Stack
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- **Framework**: React 19, TypeScript, Vite, TanStack Router & TanStack Start
+- **Styling & UI**: Tailwind CSS, Radix UI, Lucide Icons
+- **Maps & Charts**: MapLibre GL, Recharts
+- **Server & Storage**: Nitro, local SQLite (`src/lib/server-db.server.ts`) for short links and anonymous, cookie-free analytics
 
-## Development
+## Local Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requires Node.js and npm.
 
 ```sh
 git clone <this-repository-url>
 cd <repository-name>
-npm i
+npm install
 npm run dev
 ```
 
-## Sondaże i średnia SejmSim
+Useful scripts:
 
-SejmSim jest niekomercyjnym serwisem obywatelskim. Nie kopiuje gotowych średnich innych serwisów. Krajowe poparcie, od którego startuje symulator, liczy `src/lib/poll-average.ts` z pierwotnych badań w `src/data/polls.json`.
+- `npm run dev` — start the development server
+- `npm run build` — build for production
+- `npm run lint` — run ESLint
+- `npm run format` — format code with Prettier
 
-Metoda (skrót, pełny opis jest w komentarzu w kodzie i na stronie `/zrodla`):
+## Polls and the SejmSim Average
 
-- do średniej wchodzą badania z datą publikacji i wynikami;
-- domyślnie są to sondaże z ostatnich 30 dni, a gdy jest ich mniej niż 4, dokładane są starsze, do maksymalnie 12;
-- waga = świeżość (spadek o połowę co 14 dni) × liczebność próby / 1000;
-- brak próby daje wagę próby 1, bez dopisywania liczby respondentów;
-- partia nieobecna w badaniu nie jest liczona jako 0%;
-- w ciszy wyborczej (`src/data/election-silence.json`) nie publikujemy nowych wyników.
+SejmSim is a non-commercial civic project and does not copy third-party polling averages. The national baseline used by the simulator is calculated in `src/lib/poll-average.ts` from primary poll entries in `src/data/polls.json`.
 
-W repozytorium nie było pojedynczych sondaży, tylko odesłanie do średniej ewybory.eu z 30 września 2026 rozpisanej na okręgi. Tych liczb nie wpisano do zbioru jako badania. Plik `polls.json` startuje pusty. Profil okręgowy w `src/data/districts.ts` służy do rozłożenia krajowej średniej na 41 okręgów, gdy średnia już powstanie.
+Methodology summary (full details are available in the source code and on `/zrodla`):
 
-### Jak dodać nowy sondaż
+- Only polls with a publication date and results are included.
+- By default, polls from the last 30 days are used; if fewer than 4 are available, older polls are included up to a maximum of 12.
+- Weight = recency (halves every 14 days) x (sample size / 1000).
+- Missing sample size defaults to a sample weight of 1 without fabricating respondent counts.
+- A party omitted from a poll is not treated as 0%.
+- During election silence (`src/data/election-silence.json`), new poll results are not published or included in the average.
 
-Dopisz jeden obiekt do tablicy w `src/data/polls.json`. Nie zgaduj brakujących danych: zostaw `null`.
+District profiles in `src/data/districts.ts` distribute the national average across the 41 constituencies.
+
+### Adding a New Poll
+
+Append an object to the array in `src/data/polls.json`. Leave unknown fields as `null` rather than guessing.
 
 ```json
 {
-  "id": "przyklad-osrodek-2026-10-01",
-  "institute": "Nazwa ośrodka badawczego",
-  "commissioner": "Zleceniodawca albo null",
+  "id": "example-institute-2026-10-01",
+  "institute": "Polling Institute Name",
+  "commissioner": "Commissioner or null",
   "fieldworkFrom": "2026-09-28",
   "fieldworkTo": "2026-09-30",
   "publishedAt": "2026-10-01",
@@ -55,16 +73,18 @@ Dopisz jeden obiekt do tablicy w `src/data/polls.json`. Nie zgaduj brakujących 
   "methodDetail": null,
   "publicationTitle": null,
   "results": { "ko": 32.0, "pis": 28.0, "konf": 12.0 },
-  "sourceUrl": "https://przyklad.pl/publikacja-sondazu"
+  "sourceUrl": "https://example.com/poll-publication"
 }
 ```
 
-- `method` to `CATI`, `CAWI`, `mix` albo `null`. Opcjonalne `methodDetail` podaje pełniejszy opis metody, a `publicationTitle` tytuł i numer publikacji. Oba pola można pominąć.
-- Klucze w `results` są identyfikatorami partii z `src/data/parties.ts` (`ko`, `pis`, `konf`, `kkp`, `nl`, `razem`, `rp`, `psl`, `pl2050`, `inne`). Wartości to procenty.
-- `sourceUrl` prowadzi do publikacji źródłowej, nie do cudzej średniej.
-- `id` ma być unikalne i stałe.
+- `method`: `CATI`, `CAWI`, `mix`, or `null`. Optional `methodDetail` and `publicationTitle` fields may be omitted.
+- `results`: Keys are party IDs from `src/data/parties.ts` (`ko`, `pis`, `konf`, `kkp`, `nl`, `razem`, `rp`, `psl`, `pl2050`, `inne`) with percentage values.
+- `sourceUrl`: Must link to the original source publication, not a third-party aggregator.
+- `id`: Must be unique and stable.
 
-Ciszę wyborczą dopisuje się osobno, na przykład:
+### Election Silence
+
+Election silence windows are configured in `src/data/election-silence.json`:
 
 ```json
 {
@@ -74,4 +94,4 @@ Ciszę wyborczą dopisuje się osobno, na przykład:
 }
 ```
 
-`from` to początek ciszy (24 godziny przed dniem głosowania), `until` to zakończenie głosowania. W tym przedziale strona nie pokazuje sondaży opublikowanych po `from` i nie przelicza nimi średniej.
+`from` marks the start of election silence (24 hours before election day) and `until` marks the close of voting. Within this window, the site hides polls published after `from` and excludes them from the average.
