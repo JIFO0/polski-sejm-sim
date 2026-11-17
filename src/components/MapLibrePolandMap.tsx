@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { DISTRICTS } from "@/data/districts";
 import { DISTRICT_CENTROIDS } from "@/data/demographicAdjustment";
@@ -120,6 +121,8 @@ export function MapLibrePolandMap({
   // Initialize MapLibre GL map once
   useEffect(() => {
     if (!containerRef.current) return;
+
+    maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
     const map = new maplibregl.Map({
       container: containerRef.current,

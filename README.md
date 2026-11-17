@@ -95,3 +95,7 @@ Election silence windows are configured in `src/data/election-silence.json`:
 ```
 
 `from` marks the start of election silence (24 hours before election day) and `until` marks the close of voting. Within this window, the site hides polls published after `from` and excludes them from the average.
+
+## License
+
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
