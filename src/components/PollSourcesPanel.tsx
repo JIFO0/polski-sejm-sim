@@ -14,6 +14,7 @@ import {
   electoralThreshold,
   formatPolishDate,
   pollsVisibleAt,
+  LAST_POLLS_UPDATE,
   type Poll,
 } from "@/lib/poll-average";
 import { useLanguage } from "@/lib/i18n";
@@ -107,16 +108,14 @@ export function PollSourcesPanel() {
               <Clock className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 {en ? "Last polling update" : "Ostatnia aktualizacja sondaży"}
-                <time dateTime={polls[0]?.publishedAt ?? "2026-11-06"} className="mt-1 block font-semibold text-ink">
+                <time dateTime={LAST_POLLS_UPDATE} className="mt-1 block font-semibold text-ink">
                   {en
-                    ? (polls[0]?.publishedAt
-                        ? new Date(polls[0].publishedAt).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })
-                        : "6 November 2026")
-                    : formatPolishDate(polls[0]?.publishedAt ?? "2026-11-06")}
+                    ? new Date(`${LAST_POLLS_UPDATE}T12:00:00Z`).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : formatPolishDate(LAST_POLLS_UPDATE)}
                 </time>
               </div>
             </div>

@@ -1,5 +1,30 @@
 [
   {
+    "id": "pollster-se-2026-11-09",
+    "institute": "Instytut Badań Pollster dla Super Expressu",
+    "commissioner": "Super Express",
+    "fieldworkFrom": "2026-11-09",
+    "fieldworkTo": "2026-11-10",
+    "publishedAt": "2026-11-13",
+    "sampleSize": 1052,
+    "method": "CAWI",
+    "methodDetail": "badanie zrealizowane metodą CAWI na próbie 1052 dorosłych Polaków",
+    "publicationTitle": "Sondaż Instytutu Badań Pollster dla Super Expressu, 9–10 listopada 2026",
+    "results": {
+      "ko": 34.06,
+      "pis": 22.09,
+      "konf": 13.15,
+      "kkp": 8.52,
+      "nl": 7.01,
+      "razem": 4.46,
+      "rp": 4.42,
+      "psl": 3.34,
+      "pl2050": 1.59,
+      "inne": 1.36
+    },
+    "sourceUrl": "https://polityka.se.pl/wiadomosci/nowy-sondaz-nie-spodoba-sie-morawieckiemu-czy-warto-bylo-odchodzic-z-pis-aa-vcpK-pMvt-YyWp.html"
+  },
+  {
     "id": "united-surveys-wp-2026-11-06",
     "institute": "United Surveys by IBRiS",
     "commissioner": "Wirtualna Polska",
@@ -22,6 +47,31 @@
       "pl2050": 0.8
     },
     "sourceUrl": "https://wiadomosci.wp.pl/tak-slabych-notowan-pis-nie-mial-nigdy-jest-nowy-sondaz-wp-7349542969047488a"
+  },
+  {
+    "id": "ibris-rp-2026-11-06",
+    "institute": "IBRiS",
+    "commissioner": "Rzeczpospolita",
+    "fieldworkFrom": "2026-11-06",
+    "fieldworkTo": "2026-11-07",
+    "publishedAt": "2026-11-09",
+    "sampleSize": 1069,
+    "method": "CATI",
+    "methodDetail": "badanie zrealizowane metodą CATI na ogólnopolskiej próbie 1069 dorosłych Polaków",
+    "publicationTitle": "Sondaż IBRiS dla Rzeczpospolitej, 6–7 listopada 2026",
+    "results": {
+      "ko": 29.0,
+      "pis": 16.5,
+      "konf": 13.2,
+      "kkp": 10.5,
+      "nl": 7.6,
+      "rp": 6.0,
+      "psl": 4.2,
+      "razem": 4.1,
+      "pl2050": 0.4,
+      "inne": 8.5
+    },
+    "sourceUrl": "https://www.rp.pl/polityka/art45473451-sondaz-ko-na-czele-ale-traci-najwiecej-zyskuje-partia-ktorej-nie-ma"
   },
   {
     "id": "ogb-stan360-2026-10-26",

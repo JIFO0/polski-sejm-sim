@@ -43,6 +43,7 @@ export const POLL_MAX_COUNT = 12;
 export const POLL_HALF_LIFE_DAYS = 14;
 export const POLL_SAMPLE_REFERENCE = 1000;
 export const RECENT_POLLS_LIMIT = 5;
+export const LAST_POLLS_UPDATE = "2026-11-18";
 
 export type PollMethod = "CATI" | "CAWI" | "mix";
 
