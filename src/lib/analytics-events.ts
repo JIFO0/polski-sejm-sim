@@ -39,6 +39,11 @@ export const EVENTS = [
   "poll_section_view",
   "poll_tab_change",
   "poll_source_click",
+  "support_prompt_shown",
+  "support_prompt_support",
+  "support_prompt_feedback",
+  "support_prompt_later",
+  "support_prompt_never",
 ] as const;
 export type AnalyticsEvent = (typeof EVENTS)[number];
 
@@ -83,4 +88,9 @@ export const EVENT_LABELS: Record<AnalyticsEvent, string> = {
   share_copy: "Skopiowane linki społeczności",
   demographic_adjustment_toggle: "Przełączenia korekty demograficznej PKW",
   social_image_download: "Pobrane grafiki do posta",
+  support_prompt_shown: "Okno wsparcia: wyświetlenia",
+  support_prompt_support: "Okno wsparcia: kliknięcie wsparcia",
+  support_prompt_feedback: "Okno wsparcia: kliknięcie opinii/błędu",
+  support_prompt_later: "Okno wsparcia: może później / zamknięcie",
+  support_prompt_never: "Okno wsparcia: już wsparłem / nie pytaj",
 };

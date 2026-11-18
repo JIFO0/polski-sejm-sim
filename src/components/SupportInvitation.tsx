@@ -96,6 +96,7 @@ export function SupportInvitation() {
       }
       shownThisSession = true;
       setOpen(true);
+      track({ event: "support_prompt_shown" });
     }, SUPPORT_PROMPT_DELAY_MS);
 
     return () => clearTimeout(timer);
@@ -103,6 +104,7 @@ export function SupportInvitation() {
 
   const handleSupportClick = () => {
     track({ event: "support_click", meta: "support_invitation_modal" });
+    track({ event: "support_prompt_support" });
     try {
       localStorage.setItem(SUPPORT_DISMISSED_KEY, "permanent");
     } catch {
@@ -113,6 +115,7 @@ export function SupportInvitation() {
   };
 
   const handleFeedbackClick = () => {
+    track({ event: "support_prompt_feedback" });
     try {
       // Don't disturb with support prompt again for 14 days when submitting feedback
       localStorage.setItem(SUPPORT_DISMISSED_KEY, String(Date.now()));
@@ -124,6 +127,7 @@ export function SupportInvitation() {
   };
 
   const handleLater = () => {
+    track({ event: "support_prompt_later" });
     try {
       localStorage.setItem(SUPPORT_DISMISSED_KEY, String(Date.now()));
     } catch {
@@ -133,6 +137,7 @@ export function SupportInvitation() {
   };
 
   const handleNever = () => {
+    track({ event: "support_prompt_never" });
     try {
       localStorage.setItem(SUPPORT_DISMISSED_KEY, "permanent");
     } catch {
@@ -157,8 +162,8 @@ export function SupportInvitation() {
           onInteractOutside={(e) => e.preventDefault()}
           className="max-w-[calc(100%-2rem)] sm:max-w-md border-border/80 bg-card p-0 shadow-2xl overflow-hidden rounded-2xl"
         >
-          {/* Subtle warm accent bar at the top */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600" />
+          {/* Subtle SejmSim accent bar at the top */}
+          <div className="h-1 w-full bg-primary" />
 
           <div className="p-6 sm:p-7 space-y-5">
             {/* Header: Author info with JIFO logo and pill */}
@@ -191,54 +196,54 @@ export function SupportInvitation() {
               </div>
 
               {/* Tea badge */}
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 shrink-0">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary shrink-0">
                 <TeaIcon className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline">{en ? "Tea break" : "Ciepła herbata"}</span>
+                <span className="hidden xs:inline">{en ? "Tea break" : "Wsparcie"}</span>
               </div>
             </div>
 
             {/* Dialog Content */}
-            <DialogHeader className="text-left space-y-2.5">
-              <DialogTitle className="font-display text-xl sm:text-2xl font-bold tracking-tight text-ink flex items-center gap-2">
-                <span>{en ? "You visit SejmSim often! 🍵" : "Często tu zaglądasz! 🍵"}</span>
+            <DialogHeader className="text-left space-y-2">
+              <DialogTitle className="font-display text-xl sm:text-2xl font-bold tracking-tight text-ink">
+                {en ? "You visit SejmSim often" : "Często tu zaglądasz"}
               </DialogTitle>
               <DialogDescription asChild>
                 <div className="text-sm leading-relaxed text-muted-foreground space-y-2">
                   <p>
                     {en
-                      ? "I see you return to SejmSim regularly. I build and maintain this simulator solo as an independent, free and completely ad-free civic tool for everyone interested in Polish politics."
-                      : "Zauważyłem, że regularnie wracasz do SejmSim. Tworzę ten symulator samemu jako niezależne, darmowe i całkowicie wolne od reklam narzędzie dla każdego, kto interesuje się polską sceną polityczną."}
+                      ? "SejmSim is an independent, free and ad-free civic tool. Maintaining the server and updating polls takes daily work."
+                      : "SejmSim to niezależne, darmowe i wolne od reklam narzędzie. Utrzymanie serwera i codzienne aktualizowanie sondaży wymaga stałej pracy."}
                   </p>
                   <p>
                     {en
-                      ? "Hosting servers and updating the poll database daily takes real work and costs. If you enjoy the simulator, consider buying me a cup of tea 🍵 — every contribution helps me keep the project running up to the 2027 elections (and beyond!)."
-                      : "Utrzymanie serwera i codzienne aktualizowanie bazy sondaży wymagają jednak stałych nakładów pracy i kosztów. Jeśli narzędzie Ci się przydaje, możesz postawić mi ciepłą herbatę 🍵 — każde wsparcie dodaje energii i pomaga rozwijać projekt aż do wyborów w 2027 roku (i dłużej!)."}
+                      ? "If you find it useful, consider buying me a cup of tea — every contribution helps keep the project running."
+                      : "Jeśli symulator Ci się przydaje, możesz postawić mi herbatę — każde wsparcie pomaga rozwijać projekt."}
                   </p>
                 </div>
               </DialogDescription>
             </DialogHeader>
 
             {/* Feedback & Bug Reporting Box */}
-            <div className="rounded-xl border border-sky-500/25 bg-sky-500/5 p-3.5 text-left transition-colors hover:border-sky-500/40">
+            <div className="rounded-xl border border-border/80 bg-surface/60 p-3.5 text-left">
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400">
+                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <MessageSquareText className="h-4 w-4" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <p className="text-xs font-semibold text-ink">
-                    {en ? "Found a bug or have an idea?" : "Natknąłeś się na błąd lub problem?"}
+                    {en ? "Found a bug or have an idea?" : "Masz uwagę lub pomysł?"}
                   </p>
                   <p className="text-[12px] leading-relaxed text-muted-foreground">
                     {en
-                      ? "If you encountered any issue or miss a feature, share your feedback. I will 100% take it into account and let you know what I did with it (just leave your email)."
-                      : "Jeśli cokolwiek nie działa lub masz pomysł na ulepszenie — koniecznie dodaj opinię. Na 100% wezmę to pod uwagę i dam Ci znać co z tym zrobiłem (wystarczy, że podasz e-mail)."}
+                      ? "Share your feedback — I read every message and reply if you leave your email."
+                      : "Napisz opinię lub zgłoś błąd — czytam każdą wiadomość."}
                   </p>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleFeedbackClick}
-                    className="mt-1 h-7 text-xs border-sky-500/30 text-sky-700 dark:text-sky-300 hover:bg-sky-500/10 gap-1.5"
+                    className="mt-1 h-7 text-xs gap-1.5"
                   >
                     <MessageSquareText className="h-3.5 w-3.5" />
                     <span>{en ? "Share feedback / report bug" : "Napisz opinię / zgłoś uwagę"}</span>
@@ -251,7 +256,7 @@ export function SupportInvitation() {
             <div className="space-y-2 pt-1">
               <Button
                 onClick={handleSupportClick}
-                className="w-full gap-2 bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 text-white font-semibold shadow-md hover:from-amber-700 hover:via-amber-600 hover:to-orange-600 active:scale-[0.98] transition-all"
+                className="w-full gap-2 font-semibold shadow-sm"
               >
                 <TeaIcon className="h-4 w-4" />
                 <span>{en ? "Support with a tea (Buy Me a Coffee)" : "Postaw herbatę (Buy Me a Coffee)"}</span>

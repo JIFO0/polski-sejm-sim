@@ -1,5 +1,53 @@
 [
-    {
+  {
+    "id": "united-surveys-wp-2026-11-06",
+    "institute": "United Surveys by IBRiS",
+    "commissioner": "Wirtualna Polska",
+    "fieldworkFrom": "2026-11-06",
+    "fieldworkTo": "2026-11-09",
+    "publishedAt": "2026-11-10",
+    "sampleSize": 1000,
+    "method": "mix",
+    "methodDetail": "wywiady telefoniczne wspomagane komputerowo (CATI) oraz wywiady internetowe (CAWI)",
+    "publicationTitle": "Sondaż United Surveys by IBRiS dla Wirtualnej Polski, 6–9 listopada 2026",
+    "results": {
+      "ko": 30.0,
+      "pis": 15.5,
+      "konf": 14.0,
+      "kkp": 9.1,
+      "nl": 6.8,
+      "rp": 6.1,
+      "psl": 4.5,
+      "razem": 3.1,
+      "pl2050": 0.8
+    },
+    "sourceUrl": "https://wiadomosci.wp.pl/tak-slabych-notowan-pis-nie-mial-nigdy-jest-nowy-sondaz-wp-7349542969047488a"
+  },
+  {
+    "id": "ogb-stan360-2026-10-26",
+    "institute": "Ogólnopolska Grupa Badawcza (OGB)",
+    "commissioner": "Stan360",
+    "fieldworkFrom": "2026-10-26",
+    "fieldworkTo": "2026-11-05",
+    "publishedAt": "2026-11-06",
+    "sampleSize": 2000,
+    "method": "CATI",
+    "methodDetail": "wywiady telefoniczne wspomagane komputerowo (CATI)",
+    "publicationTitle": "Sondaż parlamentarny OGB dla Stan360, 26 października – 5 listopada 2026",
+    "results": {
+      "ko": 37.07,
+      "pis": 23.15,
+      "konf": 13.34,
+      "kkp": 8.7,
+      "rp": 4.93,
+      "nl": 4.84,
+      "psl": 3.25,
+      "razem": 3.06,
+      "pl2050": 1.66
+    },
+    "sourceUrl": "https://stan360.pl/sondaz-parlamentarny-ogb-11-26/"
+  },
+  {
     "id": "cbos-2026-11-02",
     "institute": "Centrum Badania Opinii Społecznej (CBOS)",
     "commissioner": null,

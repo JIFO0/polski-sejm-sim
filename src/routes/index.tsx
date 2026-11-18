@@ -1,7 +1,9 @@
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, useLanguage } from "@/lib/i18n";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ArrowRight, Calculator, Download, Info, RotateCcw, Scale, Upload, Users } from "lucide-react";
+import { ArrowRight, Calculator, ChevronDown, Download, FileJson, ImageDown, Info, Loader2, RotateCcw, Scale, Upload, Users } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { downloadSocialImage } from "@/lib/social-export";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { toast } from "sonner";
@@ -35,6 +37,7 @@ import {
 import {
   isScenarioModified,
   nationalSharesOf,
+  scenarioTraits,
   track,
   trackPageViewOncePerSession,
   trackFunnelStep,
@@ -96,6 +99,8 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const tr = useTranslation();
+  const lang = useLanguage();
+  const [downloadingImage, setDownloadingImage] = useState(false);
   const [scenario, setScenario] = useState<Scenario>(() => defaultScenario());
   const [initialScenarioKey] = useState(() => {
     const { name: _n, author: _a, description: _d, ...rest } = defaultScenario();
@@ -508,8 +513,38 @@ function Index() {
               <p className="mt-4 max-w-xl text-base text-muted-foreground md:text-lg">
                 {tr("Narzędzie do analizy poparcia, frekwencji i możliwych koalicji. Gdy w zbiorze są opublikowane sondaże, punktem wyjścia jest średnia liczona przez SejmSim.")}</p>
               <div className="mt-6 flex flex-wrap gap-2">
-                <Button onClick={save}>
-                  <Download className="mr-1.5 h-4 w-4" /> {tr("Pobierz scenariusz")}</Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button disabled={downloadingImage}>
+                      {downloadingImage ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Download className="mr-1.5 h-4 w-4" />}
+                      {tr("Pobierz")}
+                      <ChevronDown className="ml-1.5 h-4 w-4 opacity-70" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        setDownloadingImage(true);
+                        try {
+                          await downloadSocialImage(scenario, lang === "en");
+                          track({ event: "social_image_download", meta: scenarioTraits(scenario) });
+                          trackFunnelStep("export");
+                        } catch {
+                          toast.error(lang === "en" ? "Image download failed" : "Nie udało się pobrać grafiki.");
+                        } finally {
+                          setDownloadingImage(false);
+                        }
+                      }}
+                    >
+                      <ImageDown className="mr-2 h-4 w-4" />
+                      {tr("Grafikę do posta (PNG)")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={save}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      {tr("Scenariusz do wczytania (JSON)")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button variant="outline" onClick={() => fileRef.current?.click()}>
                   <Upload className="mr-1.5 h-4 w-4" /> {tr("Wczytaj plik")}</Button>
                 <Button
