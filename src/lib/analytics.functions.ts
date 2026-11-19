@@ -23,6 +23,7 @@ const trackSchema = z.object({
   shares: z.record(z.string(), z.number()).optional(),
   turnout: z.number().optional(),
   partyLabels: z.record(z.string().max(50), z.string().max(80)).optional(),
+  visitorId: z.string().max(60).optional(),
 });
 
 export const trackEvent = createServerFn({ method: "POST" })
@@ -35,7 +36,11 @@ export const trackEvent = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     if (!data?.event || data.event === "unknown") return { ok: false };
-    const ip = getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
+    const ip =
+      getRequestHeader("cf-connecting-ip") ??
+      getRequestHeader("x-real-ip") ??
+      getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim() ??
+      "127.0.0.1";
     if (isTrackRateLimited(ip)) return { ok: false };
 
     // Wykluczenia backendowe: odrzucamy ruch ze statystyk, api i assetów
@@ -60,8 +65,10 @@ export const trackEvent = createServerFn({ method: "POST" })
           meta,
           partyLabels: data.partyLabels ?? {},
           ip,
+          visitorId: data.visitorId ?? null,
         },
         ip,
+        data.visitorId ?? null,
       );
       return { ok: true };
     } catch (err) {
@@ -420,6 +427,12 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
         .filter((ip): ip is string => typeof ip === "string" && ip.trim().length > 0 && ip !== "127.0.0.1" && ip !== "::1")
     ).size;
 
+    const uniqueVisitors = new Set(
+      rows
+        .map((r) => r.visitor_id || (r.payload as { visitorId?: string })?.visitorId)
+        .filter((vid): vid is string => typeof vid === "string" && vid.trim().length > 0 && vid !== "anon")
+    ).size;
+
     return {
       ok: true as const,
       eventCounts: [...eventCounts.entries()].map(([event, count]) => ({ event, count })).sort((a, b) => b.count - a.count),
@@ -431,6 +444,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       totalEvents: totalEventsInDb,
       sessions: totalSessions,
       uniqueIpsCount: uniqueIps,
+      uniqueVisitorsCount: uniqueVisitors,
       pageViews: totalPageViews,
       pageViewsByPath,
       sourcesViews,

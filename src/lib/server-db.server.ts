@@ -160,6 +160,10 @@ export function getDb(): DatabaseSync {
     db.exec("ALTER TABLE analytics_events ADD COLUMN ip TEXT");
     db.exec("CREATE INDEX IF NOT EXISTS idx_analytics_events_ip ON analytics_events(ip)");
   }
+  if (!eventCols.some((col) => col.name === "visitor_id")) {
+    db.exec("ALTER TABLE analytics_events ADD COLUMN visitor_id TEXT");
+    db.exec("CREATE INDEX IF NOT EXISTS idx_analytics_events_visitor_id ON analytics_events(visitor_id)");
+  }
 
   const secCols = db.prepare("PRAGMA table_info(security_override_keys)").all() as { name: string }[];
   const secColNames = new Set(secCols.map((col) => col.name));
@@ -468,16 +472,22 @@ export function countTotalActiveShares(nowIso: string): number {
   return res?.count ?? 0;
 }
 
-export function insertAnalyticsEvent(event: string, payload: Record<string, unknown>, ip?: string | null): boolean {
+export function insertAnalyticsEvent(
+  event: string,
+  payload: Record<string, unknown>,
+  ip?: string | null,
+  visitorId?: string | null,
+): boolean {
   try {
     maybeRunMaintenance();
     const db = getDb();
     const nowIso = new Date().toISOString();
     const clientIp = ip ?? (payload?.ip as string) ?? null;
+    const clientVid = visitorId ?? (payload?.visitorId as string) ?? null;
     db.prepare(`
-      INSERT INTO analytics_events (event, payload, created_at, ip)
-      VALUES (?, ?, ?, ?)
-    `).run(event, JSON.stringify(payload), nowIso, clientIp);
+      INSERT INTO analytics_events (event, payload, created_at, ip, visitor_id)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(event, JSON.stringify(payload), nowIso, clientIp, clientVid);
     return true;
   } catch (err) {
     console.error("[server-db] insertAnalyticsEvent error:", err);
@@ -490,18 +500,19 @@ export interface AnalyticsRow {
   payload: Record<string, unknown>;
   created_at: string;
   ip?: string | null;
+  visitor_id?: string | null;
 }
 
 export function getAnalyticsSince(sinceIso: string, limit = 50000): AnalyticsRow[] {
   maybeRunMaintenance();
   const db = getDb();
   const rows = db.prepare(`
-    SELECT event, payload, created_at, ip
+    SELECT event, payload, created_at, ip, visitor_id
     FROM analytics_events
     WHERE created_at >= ?
     ORDER BY created_at DESC
     LIMIT ?
-  `).all(sinceIso, limit) as { event: string; payload: string; created_at: string; ip?: string | null }[];
+  `).all(sinceIso, limit) as { event: string; payload: string; created_at: string; ip?: string | null; visitor_id?: string | null }[];
 
   return rows.map((r) => {
     let payload = {};
@@ -515,6 +526,7 @@ export function getAnalyticsSince(sinceIso: string, limit = 50000): AnalyticsRow
       payload,
       created_at: r.created_at,
       ip: r.ip ?? (payload as { ip?: string }).ip ?? null,
+      visitor_id: r.visitor_id ?? (payload as { visitorId?: string }).visitorId ?? null,
     };
   });
 }
@@ -523,11 +535,11 @@ export function getAllAnalytics(limit = 1000000): AnalyticsRow[] {
   maybeRunMaintenance();
   const db = getDb();
   const rows = db.prepare(`
-    SELECT event, payload, created_at, ip
+    SELECT event, payload, created_at, ip, visitor_id
     FROM analytics_events
     ORDER BY created_at DESC
     LIMIT ?
-  `).all(limit) as { event: string; payload: string; created_at: string; ip?: string | null }[];
+  `).all(limit) as { event: string; payload: string; created_at: string; ip?: string | null; visitor_id?: string | null }[];
 
   return rows.map((r) => {
     let payload = {};
@@ -541,6 +553,7 @@ export function getAllAnalytics(limit = 1000000): AnalyticsRow[] {
       payload,
       created_at: r.created_at,
       ip: r.ip ?? (payload as { ip?: string }).ip ?? null,
+      visitor_id: r.visitor_id ?? (payload as { visitorId?: string }).visitorId ?? null,
     };
   });
 }

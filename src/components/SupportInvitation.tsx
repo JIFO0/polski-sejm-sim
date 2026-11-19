@@ -60,36 +60,43 @@ export function SupportInvitation() {
   useEffect(() => {
     if (typeof window === "undefined" || shownThisSession) return;
 
-    let visitCount = 1;
-    try {
-      const alreadyMarked = sessionStorage.getItem(SESSION_COUNTED_KEY);
-      const storedCount = parseInt(localStorage.getItem(VISITS_COUNT_KEY) || "0", 10);
-      if (!alreadyMarked) {
-        visitCount = storedCount + 1;
-        sessionStorage.setItem(SESSION_COUNTED_KEY, "1");
-        localStorage.setItem(VISITS_COUNT_KEY, String(visitCount));
-      } else {
-        visitCount = storedCount || 1;
-      }
-    } catch {
-      // Memory fallback
-    }
+    const isTesting =
+      typeof window !== "undefined" &&
+      (window.location.search.includes("test_support=1") || window.location.search.includes("test_support=true"));
 
-    if (visitCount < SUPPORT_PROMPT_MIN_VISITS) return;
-
-    try {
-      const dismissed = localStorage.getItem(SUPPORT_DISMISSED_KEY);
-      if (dismissed === "permanent") return;
-      if (dismissed) {
-        const dismissedAt = parseInt(dismissed, 10);
-        if (!isNaN(dismissedAt) && Date.now() - dismissedAt < COOLDOWN_DAYS_MS) {
-          return;
+    if (!isTesting) {
+      let visitCount = 1;
+      try {
+        const alreadyMarked = sessionStorage.getItem(SESSION_COUNTED_KEY);
+        const storedCount = parseInt(localStorage.getItem(VISITS_COUNT_KEY) || "0", 10);
+        if (!alreadyMarked) {
+          visitCount = storedCount + 1;
+          sessionStorage.setItem(SESSION_COUNTED_KEY, "1");
+          localStorage.setItem(VISITS_COUNT_KEY, String(visitCount));
+        } else {
+          visitCount = storedCount || 1;
         }
+      } catch {
+        // Memory fallback
       }
-    } catch {
-      // Memory fallback
+
+      if (visitCount < SUPPORT_PROMPT_MIN_VISITS) return;
+
+      try {
+        const dismissed = localStorage.getItem(SUPPORT_DISMISSED_KEY);
+        if (dismissed === "permanent") return;
+        if (dismissed) {
+          const dismissedAt = parseInt(dismissed, 10);
+          if (!isNaN(dismissedAt) && Date.now() - dismissedAt < COOLDOWN_DAYS_MS) {
+            return;
+          }
+        }
+      } catch {
+        // Memory fallback
+      }
     }
 
+    const delay = isTesting ? 400 : SUPPORT_PROMPT_DELAY_MS;
     const timer = window.setTimeout(() => {
       if (document.visibilityState !== "visible" || document.querySelector('[role="dialog"]')) {
         return;
@@ -97,7 +104,7 @@ export function SupportInvitation() {
       shownThisSession = true;
       setOpen(true);
       track({ event: "support_prompt_shown" });
-    }, SUPPORT_PROMPT_DELAY_MS);
+    }, delay);
 
     return () => clearTimeout(timer);
   }, []);

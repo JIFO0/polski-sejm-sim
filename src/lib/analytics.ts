@@ -65,22 +65,41 @@ export function nationalSharesOf(scenario: Scenario): Record<string, number> {
   );
 }
 
+export const VISITOR_ID_KEY = "sejmsim.visitor_id";
+
+/** Zwraca lub tworzy losowy, anonimowy identyfikator instalacji/przeglądarki do zliczania unikalnych użytkowników. */
+export function getOrCreateVisitorId(): string {
+  try {
+    if (typeof window === "undefined") return "anon";
+    let vid = localStorage.getItem(VISITOR_ID_KEY);
+    if (!vid || vid.length < 8) {
+      vid = "v_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      localStorage.setItem(VISITOR_ID_KEY, vid);
+    }
+    return vid;
+  } catch {
+    return "anon";
+  }
+}
+
 type TrackInput = {
   event: AnalyticsEvent;
   meta?: string;
   shares?: Record<string, number>;
   turnout?: number;
   partyLabels?: Record<string, string>;
+  visitorId?: string;
 };
 
-/** Anonimowe, zbiorcze zdarzenie statystyczne. Bez ciasteczek, bez IP, bez identyfikatorów. */
+/** Anonimowe zdarzenie statystyczne. Rejestruje anonimowy identyfikator sesji/użytkownika do unikalnych statystyk. */
 export function track(input: TrackInput) {
   if (shouldIgnoreTracking()) return;
   const partyLabels = {
     ...Object.fromEntries(PARTIES.filter((party) => /^(cp|ml)/.test(party.id)).map((party) => [party.id, party.name])),
     ...input.partyLabels,
   };
-  void trackEvent({ data: { ...input, partyLabels } }).catch(() => {
+  const visitorId = input.visitorId || getOrCreateVisitorId();
+  void trackEvent({ data: { ...input, partyLabels, visitorId } }).catch(() => {
     // Statystyki nigdy nie mogą przerywać korzystania ze strony.
   });
 }

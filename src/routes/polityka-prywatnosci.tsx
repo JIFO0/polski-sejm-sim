@@ -43,7 +43,7 @@ export const Route = createFileRoute("/polityka-prywatnosci")({
 });
 
 function PrivacyPolicyPage() {
-  const { tr } = useTranslation();
+  const tr = useTranslation();
 
   useEffect(() => {
     trackPageView("/polityka-prywatnosci");
