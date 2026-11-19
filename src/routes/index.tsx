@@ -1299,6 +1299,15 @@ function Index() {
             >
               {tr("O projekcie")}
             </Link>
+            <span className="text-border" aria-hidden="true">
+              •
+            </span>
+            <Link
+              to="/polityka-prywatnosci"
+              className="inline-flex items-center text-primary hover:underline"
+            >
+              {tr("Polityka prywatności")}
+            </Link>
           </div>
         </footer>
       </main>

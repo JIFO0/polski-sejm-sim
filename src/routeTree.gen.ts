@@ -14,6 +14,7 @@ import { Route as KorektaOkregowRouteImport } from './routes/korekta-okregow'
 import { Route as MapaTestRouteImport } from './routes/mapa-test'
 import { Route as MetodaDhondtaRouteImport } from './routes/metoda-dhondta'
 import { Route as OProjekcieRouteImport } from './routes/o-projekcie'
+import { Route as PolitykaPrywatnosciRouteImport } from './routes/polityka-prywatnosci'
 import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StatystykiRouteImport } from './routes/statystyki'
@@ -44,6 +45,11 @@ const OProjekcieRoute = OProjekcieRouteImport.update({
   path: '/o-projekcie',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PolitykaPrywatnosciRoute = PolitykaPrywatnosciRouteImport.update({
+  id: '/polityka-prywatnosci',
+  path: '/polityka-prywatnosci',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PreviewRoute = PreviewRouteImport.update({
   id: '/preview',
   path: '/preview',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/mapa-test': typeof MapaTestRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/polityka-prywatnosci': typeof PolitykaPrywatnosciRoute
   '/preview': typeof PreviewRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/mapa-test': typeof MapaTestRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/polityka-prywatnosci': typeof PolitykaPrywatnosciRoute
   '/preview': typeof PreviewRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/mapa-test': typeof MapaTestRoute
   '/metoda-dhondta': typeof MetodaDhondtaRoute
   '/o-projekcie': typeof OProjekcieRoute
+  '/polityka-prywatnosci': typeof PolitykaPrywatnosciRoute
   '/preview': typeof PreviewRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/statystyki': typeof StatystykiRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/mapa-test'
     | '/metoda-dhondta'
     | '/o-projekcie'
+    | '/polityka-prywatnosci'
     | '/preview'
     | '/sitemap.xml'
     | '/statystyki'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/mapa-test'
     | '/metoda-dhondta'
     | '/o-projekcie'
+    | '/polityka-prywatnosci'
     | '/preview'
     | '/sitemap.xml'
     | '/statystyki'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/mapa-test'
     | '/metoda-dhondta'
     | '/o-projekcie'
+    | '/polityka-prywatnosci'
     | '/preview'
     | '/sitemap.xml'
     | '/statystyki'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   MapaTestRoute: typeof MapaTestRoute
   MetodaDhondtaRoute: typeof MetodaDhondtaRoute
   OProjekcieRoute: typeof OProjekcieRoute
+  PolitykaPrywatnosciRoute: typeof PolitykaPrywatnosciRoute
   PreviewRoute: typeof PreviewRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StatystykiRoute: typeof StatystykiRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OProjekcieRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/polityka-prywatnosci': {
+      id: '/polityka-prywatnosci'
+      path: '/polityka-prywatnosci'
+      fullPath: '/polityka-prywatnosci'
+      preLoaderRoute: typeof PolitykaPrywatnosciRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/preview': {
       id: '/preview'
       path: '/preview'
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   MapaTestRoute: MapaTestRoute,
   MetodaDhondtaRoute: MetodaDhondtaRoute,
   OProjekcieRoute: OProjekcieRoute,
+  PolitykaPrywatnosciRoute: PolitykaPrywatnosciRoute,
   PreviewRoute: PreviewRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StatystykiRoute: StatystykiRoute,

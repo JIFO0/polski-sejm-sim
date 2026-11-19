@@ -155,6 +155,12 @@ export function getDb(): DatabaseSync {
     WHERE active = 1;
   `);
 
+  const eventCols = db.prepare("PRAGMA table_info(analytics_events)").all() as { name: string }[];
+  if (!eventCols.some((col) => col.name === "ip")) {
+    db.exec("ALTER TABLE analytics_events ADD COLUMN ip TEXT");
+    db.exec("CREATE INDEX IF NOT EXISTS idx_analytics_events_ip ON analytics_events(ip)");
+  }
+
   const secCols = db.prepare("PRAGMA table_info(security_override_keys)").all() as { name: string }[];
   const secColNames = new Set(secCols.map((col) => col.name));
   if (!secColNames.has("key_hash")) {
@@ -462,15 +468,16 @@ export function countTotalActiveShares(nowIso: string): number {
   return res?.count ?? 0;
 }
 
-export function insertAnalyticsEvent(event: string, payload: Record<string, unknown>): boolean {
+export function insertAnalyticsEvent(event: string, payload: Record<string, unknown>, ip?: string | null): boolean {
   try {
     maybeRunMaintenance();
     const db = getDb();
     const nowIso = new Date().toISOString();
+    const clientIp = ip ?? (payload?.ip as string) ?? null;
     db.prepare(`
-      INSERT INTO analytics_events (event, payload, created_at)
-      VALUES (?, ?, ?)
-    `).run(event, JSON.stringify(payload), nowIso);
+      INSERT INTO analytics_events (event, payload, created_at, ip)
+      VALUES (?, ?, ?, ?)
+    `).run(event, JSON.stringify(payload), nowIso, clientIp);
     return true;
   } catch (err) {
     console.error("[server-db] insertAnalyticsEvent error:", err);
@@ -482,18 +489,19 @@ export interface AnalyticsRow {
   event: string;
   payload: Record<string, unknown>;
   created_at: string;
+  ip?: string | null;
 }
 
 export function getAnalyticsSince(sinceIso: string, limit = 50000): AnalyticsRow[] {
   maybeRunMaintenance();
   const db = getDb();
   const rows = db.prepare(`
-    SELECT event, payload, created_at
+    SELECT event, payload, created_at, ip
     FROM analytics_events
     WHERE created_at >= ?
     ORDER BY created_at DESC
     LIMIT ?
-  `).all(sinceIso, limit) as { event: string; payload: string; created_at: string }[];
+  `).all(sinceIso, limit) as { event: string; payload: string; created_at: string; ip?: string | null }[];
 
   return rows.map((r) => {
     let payload = {};
@@ -506,6 +514,7 @@ export function getAnalyticsSince(sinceIso: string, limit = 50000): AnalyticsRow
       event: r.event,
       payload,
       created_at: r.created_at,
+      ip: r.ip ?? (payload as { ip?: string }).ip ?? null,
     };
   });
 }
@@ -514,11 +523,11 @@ export function getAllAnalytics(limit = 1000000): AnalyticsRow[] {
   maybeRunMaintenance();
   const db = getDb();
   const rows = db.prepare(`
-    SELECT event, payload, created_at
+    SELECT event, payload, created_at, ip
     FROM analytics_events
     ORDER BY created_at DESC
     LIMIT ?
-  `).all(limit) as { event: string; payload: string; created_at: string }[];
+  `).all(limit) as { event: string; payload: string; created_at: string; ip?: string | null }[];
 
   return rows.map((r) => {
     let payload = {};
@@ -531,6 +540,7 @@ export function getAllAnalytics(limit = 1000000): AnalyticsRow[] {
       event: r.event,
       payload,
       created_at: r.created_at,
+      ip: r.ip ?? (payload as { ip?: string }).ip ?? null,
     };
   });
 }

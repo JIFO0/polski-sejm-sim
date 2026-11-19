@@ -51,13 +51,18 @@ export const trackEvent = createServerFn({ method: "POST" })
 
     try {
       const { insertAnalyticsEvent } = await import("./server-db.server");
-      // Zgodnie z punktem 5b: nie zapisujemy preferencji politycznych powiązanych z sesją
-      insertAnalyticsEvent(data.event, {
-        shares: null,
-        turnout: null,
-        meta,
-        partyLabels: data.partyLabels ?? {},
-      });
+      // Zgodnie z polityką prywatności: nie zapisujemy preferencji politycznych powiązanych z sesją
+      insertAnalyticsEvent(
+        data.event,
+        {
+          shares: null,
+          turnout: null,
+          meta,
+          partyLabels: data.partyLabels ?? {},
+          ip,
+        },
+        ip,
+      );
       return { ok: true };
     } catch (err) {
       console.error("analytics insert error", err);
@@ -195,6 +200,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       "/korekta-okregow": "Korekta okręgów wyborczych PKW",
       "/metoda-dhondta": "Metoda D'Hondta – przewodnik",
       "/o-projekcie": "O projekcie i autorze",
+      "/polityka-prywatnosci": "Polityka prywatności",
       "/preview": "Nowy interfejs 2.0 (Preview)",
       "/statystyki": "Panel administratora",
     };
@@ -388,6 +394,32 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
     const coalitionMajorityHits = [...coalitionTests.values()].reduce((sum, item) => sum + item.majorityHits, 0);
     const weekdayLabels = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
 
+    const supportPromptShown = countBy("support_prompt_shown");
+    const supportPromptSupport = countBy("support_prompt_support");
+    const supportPromptFeedback = countBy("support_prompt_feedback");
+    const supportPromptLater = countBy("support_prompt_later");
+    const supportPromptNever = countBy("support_prompt_never");
+    const supportPromptInteractions = supportPromptSupport + supportPromptFeedback + supportPromptLater + supportPromptNever;
+    const supportPromptStats = {
+      shown: supportPromptShown,
+      support: supportPromptSupport,
+      feedback: supportPromptFeedback,
+      later: supportPromptLater,
+      never: supportPromptNever,
+      totalInteractions: supportPromptInteractions,
+      supportRate: supportPromptShown > 0 ? (supportPromptSupport / supportPromptShown) * 100 : 0,
+      feedbackRate: supportPromptShown > 0 ? (supportPromptFeedback / supportPromptShown) * 100 : 0,
+      laterRate: supportPromptShown > 0 ? (supportPromptLater / supportPromptShown) * 100 : 0,
+      neverRate: supportPromptShown > 0 ? (supportPromptNever / supportPromptShown) * 100 : 0,
+      interactionRate: supportPromptShown > 0 ? (supportPromptInteractions / supportPromptShown) * 100 : 0,
+    };
+
+    const uniqueIps = new Set(
+      rows
+        .map((r) => r.ip || (r.payload as { ip?: string })?.ip)
+        .filter((ip): ip is string => typeof ip === "string" && ip.trim().length > 0 && ip !== "127.0.0.1" && ip !== "::1")
+    ).size;
+
     return {
       ok: true as const,
       eventCounts: [...eventCounts.entries()].map(([event, count]) => ({ event, count })).sort((a, b) => b.count - a.count),
@@ -398,6 +430,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       activeShares,
       totalEvents: totalEventsInDb,
       sessions: totalSessions,
+      uniqueIpsCount: uniqueIps,
       pageViews: totalPageViews,
       pageViewsByPath,
       sourcesViews,
@@ -405,6 +438,7 @@ export const getAnalyticsSummary = createServerFn({ method: "POST" })
       pkwCorrectionToggles,
       dhondtViews,
       aboutViews,
+      supportPromptStats,
       pollStats: {
         sectionViews: pollSectionViews,
         sourceClicks: pollSourceClicks,

@@ -6,12 +6,14 @@ import {
   ArrowLeft,
   BarChart3,
   Calendar,
+  CheckCircle2,
   Clock,
   Coffee,
   Database,
   ExternalLink,
   FileText,
   HardDrive,
+  HeartHandshake,
   Info,
   Laptop,
   Layers,
@@ -19,6 +21,7 @@ import {
   Loader2,
   Mail,
   MapPin,
+  MessageSquareText,
   Pin,
   RotateCcw,
   Scale,
@@ -455,7 +458,7 @@ function StatsPage() {
                   <ShieldCheck className="h-4 w-4 text-primary" /> Definicja ruchu i zasady prywatności
                 </p>
                 <p className="mt-1">
-                  <strong>Sesja</strong> = wejście lub powrót po &ge;30 min bezczynności. <strong>Odsłona</strong> = wyświetlenie podstrony w SPA. Zgodnie z polityką prywatności serwis nie używa ciasteczek śledzących, nie profiluje użytkowników, nie zapisuje adresów IP ani fingerprintingu.
+                  <strong>Sesja</strong> = wejście lub powrót po &ge;30 min bezczynności. <strong>Odsłona</strong> = wyświetlenie podstrony w SPA. Zgodnie z <Link to="/polityka-prywatnosci" className="underline hover:text-foreground">Polityką prywatności</Link> serwis zbiera wyłącznie zbiorcze dane analityczne i techniczne (w tym adres IP do celów anty-spam i oceny powrotów) bez profilowania i bez kojarzenia wyborów z tożsamością fizyczną.
                 </p>
               </div>
               <div className="shrink-0 flex items-center gap-2">
@@ -477,11 +480,19 @@ function StatsPage() {
             </div>
 
             {/* Główne karty podsumowania */}
-            <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
               <div className="panel p-4">
                 <p className="text-xs text-muted-foreground">Sesje (Wizyty)</p>
                 <p className="num text-2xl font-bold text-ink mt-1">{summary.sessions ?? summary.pageViews}</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Wszystkie unikalne sesje</p>
+              </div>
+
+              <div className="panel p-4 border-primary/20 bg-primary/5">
+                <p className="text-xs font-semibold text-primary">Unikalne IP</p>
+                <p className="num text-2xl font-bold text-ink mt-1">
+                  {summary.uniqueIpsCount ? summary.uniqueIpsCount : "—"}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Zanotowane adresy IP</p>
               </div>
 
               <div className="panel p-4">
@@ -1684,6 +1695,163 @@ function StatsPage() {
                   );
                 })}
               </div>
+            </section>
+
+            {/* ZAPYTANIE O WSPARCIE (MODAL PO 3. WIZYCIE) */}
+            <section className="panel p-5 border-amber-500/30 bg-gradient-to-br from-card via-card to-amber-500/[0.04]">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                      <HeartHandshake className="h-4 w-4" />
+                    </span>
+                    <h2 className="font-display text-lg font-bold text-ink">
+                      Zapytanie o wsparcie (komunikat po 3. wizycie)
+                    </h2>
+                    <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+                      Modal konwersji
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground max-w-2xl leading-relaxed">
+                    Statystyki wyświetleń i wyborów w dedykowanym okienku z prośbą o wsparcie twórcy lub opinię. Komunikat pojawia się od 3. wizyty po 15 sekundach obecności, z 14-dniowym cooldownem lub trwałym wyciszeniem.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="rounded-lg border border-border/80 bg-background/60 px-3 py-1.5 text-right">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Skuteczność (CTR)</p>
+                    <p className="num text-base font-bold text-ink">
+                      {summary.supportPromptStats?.interactionRate?.toFixed(1) ?? "0.0"}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Karty metryk modala */}
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="rounded-xl border border-border/80 bg-background/50 p-3.5">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-xs font-medium">Wyświetlenia</span>
+                    <Layers className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="num mt-1 text-2xl font-bold text-ink">
+                    {summary.supportPromptStats?.shown ?? 0}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    Otwarte modale
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3.5">
+                  <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-300">
+                    <span className="text-xs font-semibold">Postaw herbatę</span>
+                    <Coffee className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="num mt-1 text-2xl font-bold text-emerald-950 dark:text-emerald-100">
+                    {summary.supportPromptStats?.support ?? 0}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-emerald-700/90 dark:text-emerald-300/90 font-medium">
+                    {summary.supportPromptStats?.supportRate?.toFixed(1) ?? "0.0"}% wyświetleń
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-3.5">
+                  <div className="flex items-center justify-between text-sky-700 dark:text-sky-300">
+                    <span className="text-xs font-semibold">Zgłoś błąd / opinię</span>
+                    <MessageSquareText className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="num mt-1 text-2xl font-bold text-sky-950 dark:text-sky-100">
+                    {summary.supportPromptStats?.feedback ?? 0}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-sky-700/90 dark:text-sky-300/90 font-medium">
+                    {summary.supportPromptStats?.feedbackRate?.toFixed(1) ?? "0.0"}% wyświetleń
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-slate-500/20 bg-slate-500/5 p-3.5">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-xs font-medium">Może później</span>
+                    <Clock className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="num mt-1 text-2xl font-bold text-ink">
+                    {summary.supportPromptStats?.later ?? 0}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {summary.supportPromptStats?.laterRate?.toFixed(1) ?? "0.0"}% (cooldown 14 dni)
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-zinc-500/20 bg-zinc-500/5 p-3.5">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-xs font-medium">Już wsparłem</span>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="num mt-1 text-2xl font-bold text-ink">
+                    {summary.supportPromptStats?.never ?? 0}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {summary.supportPromptStats?.neverRate?.toFixed(1) ?? "0.0"}% (wyciszone na stałe)
+                  </p>
+                </div>
+              </div>
+
+              {/* Wizualny pasek rozkładu wyborów */}
+              {summary.supportPromptStats && summary.supportPromptStats.totalInteractions > 0 ? (
+                <div className="mt-4 pt-3 border-t border-border/60">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                    <span>Struktura decyzji użytkowników ({summary.supportPromptStats.totalInteractions} akcji)</span>
+                    <span>100% podjętych decyzji</span>
+                  </div>
+                  <div className="h-3 w-full rounded-full overflow-hidden flex bg-muted/40 p-0.5 gap-0.5 border border-border/50">
+                    {summary.supportPromptStats.support > 0 && (
+                      <div
+                        style={{ width: `${(summary.supportPromptStats.support / summary.supportPromptStats.totalInteractions) * 100}%` }}
+                        className="bg-emerald-500 rounded-sm h-full"
+                        title={`Wsparcie: ${summary.supportPromptStats.support}`}
+                      />
+                    )}
+                    {summary.supportPromptStats.feedback > 0 && (
+                      <div
+                        style={{ width: `${(summary.supportPromptStats.feedback / summary.supportPromptStats.totalInteractions) * 100}%` }}
+                        className="bg-sky-500 rounded-sm h-full"
+                        title={`Opinia: ${summary.supportPromptStats.feedback}`}
+                      />
+                    )}
+                    {summary.supportPromptStats.later > 0 && (
+                      <div
+                        style={{ width: `${(summary.supportPromptStats.later / summary.supportPromptStats.totalInteractions) * 100}%` }}
+                        className="bg-amber-400 dark:bg-amber-500 rounded-sm h-full"
+                        title={`Później: ${summary.supportPromptStats.later}`}
+                      />
+                    )}
+                    {summary.supportPromptStats.never > 0 && (
+                      <div
+                        style={{ width: `${(summary.supportPromptStats.never / summary.supportPromptStats.totalInteractions) * 100}%` }}
+                        className="bg-slate-400 dark:bg-slate-600 rounded-sm h-full"
+                        title={`Już wsparłem / nie pytaj: ${summary.supportPromptStats.never}`}
+                      />
+                    )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      Postaw herbatę ({summary.supportPromptStats.support})
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-sky-500" />
+                      Opinia / błąd ({summary.supportPromptStats.feedback})
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-amber-400 dark:bg-amber-500" />
+                      Może później ({summary.supportPromptStats.later})
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-slate-600" />
+                      Już wsparłem ({summary.supportPromptStats.never})
+                    </span>
+                  </div>
+                </div>
+              ) : null}
             </section>
 
             <section className="panel p-5">
