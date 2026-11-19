@@ -1,6 +1,6 @@
 # Zasady publikowania sondaży na sejmsim.pl według ośrodków
 
-Zestawienie przygotowane na podstawie odpowiedzi mailowych na zapytania wysłane 19.10.2026 z iwo@laskowski.edu.pl. Stan na 3.11.2026. Godziny podane są w czasie polskim.
+Zestawienie przygotowane na podstawie odpowiedzi mailowych na zapytania wysłane 19.10.2026 z iwo@laskowski.edu.pl. Stan na 19.11.2026. Godziny podane są w czasie polskim.
 
 ## Zasady wspólne dla wszystkich ośrodków
 
@@ -14,7 +14,7 @@ Zestawienie przygotowane na podstawie odpowiedzi mailowych na zapytania wysłane
 
 ## CBOS (Centrum Badania Opinii Społecznej)
 
-**Status:** zgoda, odpowiedź z 20.10.2026, 15:14  
+**Status:** zgoda, odpowiedź z 20.10.2026, 15:14
 **Kontakt:** Marcin Kucharski, specjalista ds. informacji i komunikacji (info@cbos.pl, m.kucharski@cbos.pl)
 
 **Warunki obowiązkowe:**
@@ -40,7 +40,7 @@ Zestawienie przygotowane na podstawie odpowiedzi mailowych na zapytania wysłane
 
 ## Instytut Badań Pollster
 
-**Status:** zgoda, odpowiedź z 30.10.2026, 10:59  
+**Status:** zgoda, odpowiedź z 30.10.2026, 10:59
 **Kontakt:** Rafał Rybnik, ekspert ds. AI w dziale handlowym (rafal@pollster.pl), w kopii Ika Kamińska-Kohutnicka (iwona.kaminska@pollster.pl)
 
 **Warunki:**
@@ -58,7 +58,7 @@ Zestawienie przygotowane na podstawie odpowiedzi mailowych na zapytania wysłane
 
 ## OGB (Ogólnopolska Grupa Badawcza)
 
-**Status:** zgoda, odpowiedź z 30.10.2026, 11:44  
+**Status:** zgoda, odpowiedź z 30.10.2026, 11:44
 **Kontakt:** kontakt@ogb.pl
 
 **Warunki obowiązkowe:**
@@ -74,21 +74,36 @@ Zestawienie przygotowane na podstawie odpowiedzi mailowych na zapytania wysłane
 
 ## Opinia24
 
-**Status:** zgoda, odpowiedź z 30.10.2026, 11:11  
+**Status:** zgoda, odpowiedź z 30.10.2026, 11:11
 **Kontakt:** Anna Trząsalska, ekspertka badań społecznych (anna.trzasalska@opinia24.pl)
 
 **Warunki:**
 - Możemy wykorzystywać wyniki w obecnej formie, czyli z pełną nazwą ośrodka, terminem, próbą, metodą i linkiem do publikacji.
 - Dodatkowych wymogów co do oznaczania nie podano.
 
-**Do zrobienia:** Opinia24 uruchamia stronę z wynikami badań „Pulsu Opinii” (m.in. preferencje partyjne) i prześle jej adres. Wtedy trzeba podmienić linki źródłowe na ten adres. Do 3.11.2026 adres nie przyszedł.
+**Źródło Puls Opinii:** https://puls.opinia24.pl/ (mail Anny Trząsalskiej 5.11.2026, 10:47 Europe/Warsaw).
+
+**Do zrobienia:** podmienić `sourceUrl` sondażu `opinia24-2026-10-05` w `src/data/polls.json` z tvn24.pl na https://puls.opinia24.pl/ (i kolejne Opinia24 tak samo), potem krótko odpisać Annie.
 
 ---
 
 ## IBRiS (też sondaże United Surveys)
 
-**Status:** brak odpowiedzi  
-**Kontakt:** biuro@ibris.pl  
-**Wysłane:** zapytanie 19.10.2026 i przypomnienie 30.10.2026 w tym samym wątku.
+**Status:** wstępne wytyczne bez ostatecznego potwierdzenia, odpowiedź z 10.11.2026, 08:36
+**Kontakt:** Alicja Wysokińska, dział komunikacji IBRiS (alicja.wysokinska@ibris.pl)
+**Wcześniej:** zapytanie na biuro@ibris.pl 19.10.2026 i przypomnienie 30.10.2026, bez odpowiedzi.
 
-Brak zgody i brak warunków. Do czasu odpowiedzi warto przynajmniej podpisywać badania z zamawiającym (np. „IBRiS dla Polsat News”, „United Surveys dla Wirtualnej Polski”) i linkować do oryginalnej publikacji, tak jak przy innych ośrodkach.
+**Wskazane informacje przy cytowaniu:**
+- pracownia badawcza, która przeprowadziła badanie;
+- zleceniodawca;
+- wielkość próby;
+- data realizacji badania;
+- link do oryginalnej publikacji („jak najbardziej się przyda”);
+- najważniejsze informacje metodologiczne, które są publikowane razem z badaniem.
+
+**Preferowany opis:** IBRiS nie ma preferowanego wzoru opisu badań.
+
+**Otwarte:** Alicja Wysokińska napisała, że omówi sprawę z zespołem i wróci z potwierdzeniem. Na pytanie o ewentualne dodatkowe uzgodnienia ze zleceniodawcą lub wydawcą nie odpowiedziała wprost. Nie traktować tej wiadomości jako ostatecznej zgody IBRiS.
+
+**Przykładowy podpis:**
+> United Surveys by IBRiS dla Wirtualnej Polski, badanie 2.11.2026, N=1000, metoda CATI, [link do oryginalnej publikacji].
