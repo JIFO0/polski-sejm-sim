@@ -3,7 +3,8 @@ import { track } from "@/lib/analytics";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MessageSquareText, Star } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
+import { playSfx } from "@/lib/sfx";
 import { sendFeedback } from "@/lib/feedback.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +65,7 @@ export function FeedbackDialog({
       });
       if (r.ok) {
         toast.success("Dziękuję za opinię!");
+        playSfx("feedback.sent");
         setMessage("");
         setEmail("");
         setRating(null);

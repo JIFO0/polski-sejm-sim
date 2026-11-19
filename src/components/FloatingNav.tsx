@@ -4,6 +4,7 @@ import { ArrowLeft, Info, UserRound } from "lucide-react";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { SupportButton } from "@/components/SupportButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SfxToggle } from "@/components/SfxToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
@@ -124,6 +125,7 @@ export function FloatingNav({
       <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border/80 bg-surface/90 p-1.5 shadow-lg shadow-black/5 backdrop-blur-md shrink-0">
         <LanguageToggle className="h-8 px-2 text-[11px]" />
         <ThemeToggle className="scale-90" />
+        <SfxToggle className="h-8 w-8" />
         {mode === "about" ? (
           <Button
             variant="ghost"

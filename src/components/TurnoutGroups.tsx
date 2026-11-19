@@ -5,6 +5,7 @@ import { PartyLogo } from "@/components/PartyLogo";
 import { Button } from "@/components/ui/button";
 import type { PartySettings } from "@/lib/simulation";
 import { track } from "@/lib/analytics";
+import { playSfx } from "@/lib/sfx";
 
 type Side = "lower" | "neutral" | "higher";
 
@@ -25,6 +26,7 @@ export function TurnoutGroups({
 }) {
   const tr = useTranslation();
   const onMove = (partyId: string, side: Side) => {
+    if (side !== sideFor(settings[partyId]?.turnoutSensitivity ?? 0)) playSfx("turnout.group");
     track({ event: "turnout_group_move", meta: `${partyId}:${side}` });
     rawOnMove(partyId, side);
   };

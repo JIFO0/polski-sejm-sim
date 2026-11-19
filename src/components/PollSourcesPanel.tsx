@@ -18,6 +18,7 @@ import {
   type Poll,
 } from "@/lib/poll-average";
 import { useLanguage } from "@/lib/i18n";
+import { playSfx } from "@/lib/sfx";
 
 const label = (id: string) => PARTIES.find((party) => party.id === id)?.short ?? id;
 const color = (id: string) => PARTIES.find((party) => party.id === id)?.color ?? "var(--primary)";
@@ -85,7 +86,10 @@ export function PollSourcesPanel() {
         title={en ? "Opinion polls" : "Sondaże"}
         defaultOpen={false}
         onOpenChange={(open) => {
-          if (open) track({ event: "poll_section_view" });
+          if (open) {
+            track({ event: "poll_section_view" });
+            if (silence) playSfx("silence.show");
+          }
         }}
       >
         <section
