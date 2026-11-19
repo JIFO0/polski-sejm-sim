@@ -5,8 +5,10 @@ import { ArrowRight, Calculator, ChevronDown, Download, FileJson, ImageDown, Inf
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { downloadSocialImage } from "@/lib/social-export";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SfxToggle } from "@/components/SfxToggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
+import { playSfx } from "@/lib/sfx";
 
 import { LogoMark } from "@/components/Logos";
 import { FloatingNav } from "@/components/FloatingNav";
@@ -134,6 +136,21 @@ function Index() {
   }, [scenario.customParties, scenario.mergers, logoVersion]);
 
   const result = useMemo(() => simulate(scenario), [scenario]);
+  // Dźwięk tylko wtedy, gdy włączona partia realnie spadnie poniżej progu (nie przy wyłączeniu ani połączeniu list).
+  const prevQualifiedRef = useRef<string[] | null>(null);
+  useEffect(() => {
+    const previous = prevQualifiedRef.current;
+    prevQualifiedRef.current = result.qualified;
+    if (!previous) return;
+    const dropped = previous.some((id) => {
+      if (result.qualified.includes(id)) return false;
+      const settings = scenario.parties[id];
+      const share = result.nationalShares[id];
+      return Boolean(settings?.enabled) && share !== undefined && share < settings!.threshold;
+    });
+    if (dropped) playSfx("threshold.exit");
+  }, [result, scenario.parties]);
+
   const resultById = useMemo(
     () => Object.fromEntries(result.districts.map((d) => [d.id, d])),
     [result],
@@ -232,6 +249,7 @@ function Index() {
   /** Zmiana krajowego poparcia przy zachowaniu regionalnych różnic. */
   const nationalSwing = useCallback((pid: string, target: number) => {
     trackFunnelStep("interaction");
+    playSfx("slider.change");
     if (partyTrackRef.current[pid]) clearTimeout(partyTrackRef.current[pid]);
     partyTrackRef.current[pid] = setTimeout(
       () => track({ event: "party_slider_adjust", meta: pid }),
@@ -290,6 +308,7 @@ function Index() {
   const turnoutTrackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setGlobalTurnout = useCallback((value: number) => {
     trackFunnelStep("interaction");
+    playSfx("slider.change");
     if (turnoutTrackRef.current) clearTimeout(turnoutTrackRef.current);
     turnoutTrackRef.current = setTimeout(
       () => track({ event: "turnout_set", turnout: value }),
@@ -331,6 +350,7 @@ function Index() {
       return { ...s, districts };
     });
     setNationalElectorateInput(String(target));
+    playSfx("slider.change");
     toast.success(`Zaktualizowano liczbę uprawnionych w kraju: ${target.toLocaleString("pl-PL")}`);
   }, []);
 
@@ -364,6 +384,7 @@ function Index() {
       }
       return { ...s, districts };
     });
+    playSfx("scenario.reset");
     toast.info(
       `Przywrócono domyślną liczbę uprawnionych wyborców (${baseTotal.toLocaleString("pl-PL")})`,
     );
@@ -382,6 +403,7 @@ function Index() {
     a.download = `scenariusz-sejm-2027-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    playSfx("export.json");
     toast.success("Pobrano plik scenariusza");
   };
 
@@ -406,6 +428,7 @@ function Index() {
         districts: { ...base.districts, ...parsed.districts },
         parties: mergedParties,
       });
+      playSfx("scenario.load");
       toast.success(`Wczytano: ${parsed.name ?? "scenariusz"}`);
     } catch {
       toast.error("Nie udało się wczytać pliku. To nie jest scenariusz tej aplikacji.");
@@ -472,6 +495,7 @@ function Index() {
           >
             <LanguageToggle />
             <ThemeToggle />
+            <SfxToggle />
             <Button
               variant="ghost"
               size="sm"
@@ -527,6 +551,7 @@ function Index() {
                         setDownloadingImage(true);
                         try {
                           await downloadSocialImage(scenario, lang === "en");
+                          playSfx("export.graphic");
                           track({ event: "social_image_download", meta: scenarioTraits(scenario) });
                           trackFunnelStep("export");
                         } catch {
@@ -551,6 +576,7 @@ function Index() {
                   variant="ghost"
                   onClick={() => {
                     setScenario(defaultScenario());
+                    playSfx("scenario.reset");
                     toast.info("Przywrócono stan wyjściowy");
                   }}
                 >
@@ -695,6 +721,7 @@ function Index() {
                           ...s,
                           demographicAdjustment: checked ? "pkw" : undefined,
                         }));
+                        playSfx("demographic.toggle");
                         if (checked) {
                           toast.success("Włączono korektę demograficzną mandatów PKW (±11 mandatów)");
                         } else {
@@ -836,7 +863,10 @@ function Index() {
                   state={scenario.districts[selected] ?? blankState(selected)}
                   result={resultById[selected]}
                   onChange={(next) => setDistrict(selected, next)}
-                  onReset={() => resetDistrict(selected)}
+                  onReset={() => {
+                    playSfx("scenario.reset");
+                    resetDistrict(selected);
+                  }}
                   onClose={() => setSelected(null)}
                   independentSupport={scenario.independentSupport ?? true}
                   mergers={scenario.mergers}

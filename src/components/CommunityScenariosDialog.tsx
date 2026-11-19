@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Copy, Eye, Loader2, Play, Users } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { getFeaturedScenarios, recordShareView } from "@/lib/shares.functions";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
+import { playSfx } from "@/lib/sfx";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -92,6 +93,7 @@ export function CommunityScenariosDialog({
       prev.map((it) => (it.id === item.id ? { ...it, views: (it.views ?? 0) + 1 } : it))
     );
     toast.success(`Wczytano scenariusz społeczności: ${item.name}`);
+    playSfx("scenario.load");
     onOpenChange(false);
   };
 
@@ -101,6 +103,7 @@ export function CommunityScenariosDialog({
       await navigator.clipboard.writeText(url);
       track({ event: "share_copy" });
       toast.success(`Skopiowano link do scenariusza „${name}”`);
+      playSfx("scenario.share");
     } catch {
       toast.error("Nie udało się skopiować linku.");
     }

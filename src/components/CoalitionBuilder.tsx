@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { resultParties } from "@/data/parties";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,12 @@ import { Input } from "@/components/ui/input";
 import { PartyLogo } from "@/components/PartyLogo";
 import { MAJORITY, type Coalition } from "@/lib/simulation";
 import { track } from "@/lib/analytics";
+import { playSfx, type SfxEvent } from "@/lib/sfx";
 import { useLanguage, t } from "@/lib/i18n";
+
+const CONSTITUTIONAL = 307;
+/** 0 = brak większości, 1 = zwykła większość (231), 2 = większość konstytucyjna (307). */
+const majorityLevel = (seats: number) => (seats >= CONSTITUTIONAL ? 2 : seats >= MAJORITY ? 1 : 0);
 
 export function CoalitionBuilder({
   coalitions,
@@ -23,6 +28,34 @@ export function CoalitionBuilder({
 }) {
   const coalitionTrackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Dźwięk tylko przy faktycznym przekroczeniu progu 231 / 307 (w górę lub w dół), nigdy przy samym renderze.
+  const levelsRef = useRef<Map<string, number>>(new Map());
+  useEffect(() => {
+    const next = new Map<string, number>();
+    let event: SfxEvent | null = null;
+    let rank = 0;
+    for (const c of coalitions) {
+      const level = majorityLevel(c.members.reduce((s, m) => s + (seatsByParty[m] ?? 0), 0));
+      next.set(c.id, level);
+      const before = levelsRef.current.get(c.id);
+      if (before === undefined || before === level) continue;
+      const [candidate, weight]: [SfxEvent, number] =
+        level > before
+          ? level === 2
+            ? ["coalition.constitutional", 4]
+            : ["coalition.majority", 3]
+          : level === 0
+            ? ["coalition.majorityLost", 2]
+            : ["coalition.constitutionalLost", 1];
+      if (weight > rank) {
+        event = candidate;
+        rank = weight;
+      }
+    }
+    levelsRef.current = next;
+    if (event) playSfx(event);
+  }, [coalitions, seatsByParty]);
+
   const update = (id: string, patch: Partial<Coalition>) =>
     onChange(coalitions.map((c) => (c.id === id ? { ...c, ...patch } : c)));
 
@@ -31,6 +64,9 @@ export function CoalitionBuilder({
       ? c.members.filter((m) => m !== pid)
       : [...c.members, pid];
     update(c.id, { members: nextMembers });
+    const seatsOf = (members: string[]) => members.reduce((s, m) => s + (seatsByParty[m] ?? 0), 0);
+    // Przekroczenie progu ma własny dźwięk (efekt wyżej), więc sam "klik" wtedy pomijamy.
+    if (majorityLevel(seatsOf(nextMembers)) === majorityLevel(seatsOf(c.members))) playSfx("coalition.toggle");
 
     if (nextMembers.length > 0) {
       if (coalitionTrackRef.current) clearTimeout(coalitionTrackRef.current);
@@ -104,7 +140,10 @@ export function CoalitionBuilder({
                   size="icon"
                   className="h-8 w-8 shrink-0"
                   aria-label={`Usuń koalicję ${c.name}`}
-                  onClick={() => onChange(coalitions.filter((x) => x.id !== c.id))}
+                  onClick={() => {
+                    playSfx("entity.remove");
+                    onChange(coalitions.filter((x) => x.id !== c.id));
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Download, FolderOpen, Link2, Loader2, Maximize2, Play, Plus, Users, Trash2, Upload } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { createShare, getShare } from "@/lib/shares.functions";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
+import { playSfx } from "@/lib/sfx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { defaultScenario, type Scenario } from "@/lib/simulation";
@@ -142,6 +143,7 @@ export function ScenarioShelf({
           }
           if (res.ok && validScenario(parsed)) {
             onLoad(parsed);
+            playSfx("scenario.load");
             track({ event: "share_link_open" });
             toast.success(`Wczytano udostępniony scenariusz: ${res.name}`);
           } else {
@@ -158,6 +160,7 @@ export function ScenarioShelf({
     const shared = decodeScenario(encoded);
     if (shared) {
       onLoad(shared);
+      playSfx("scenario.load");
       toast.success("Wczytano scenariusz z udostępnionego linku");
     }
   }, [onLoad]);
@@ -198,6 +201,7 @@ export function ScenarioShelf({
         console.warn("Analytics track failed in saveLocal", trackErr);
       }
       void savePrivateScenario({ data: { name: title.slice(0, 60), scenario: entry.scenario as unknown as Record<string, unknown> } }).catch(() => undefined);
+      playSfx("scenario.save");
       toast.success(`Scenariusz "${title}" zapisany!`);
     } catch (err) {
       console.error("saveLocal error:", err);
@@ -232,6 +236,7 @@ export function ScenarioShelf({
         : `Link skopiowany (do 5 na IP). Ważny do ${expires}.`;
       try {
         await navigator.clipboard.writeText(url);
+        playSfx("scenario.share");
         toast.success(notice);
       } catch {
         window.prompt(`Link ważny do ${expires}:`, url);
@@ -248,6 +253,7 @@ export function ScenarioShelf({
     if (id !== "reset") track({ event: "scenario_load" });
     onLoad(target);
     setActiveScenarioId(id);
+    playSfx(id === "reset" ? "scenario.reset" : "scenario.load");
     toast.success(`Wczytano: ${label}`);
   };
 
@@ -261,6 +267,7 @@ export function ScenarioShelf({
 
     try {
       await navigator.clipboard.writeText(url.toString());
+      playSfx("scenario.share");
       toast.success("Link do scenariusza skopiowany do schowka");
     } catch {
       window.location.hash = url.hash;
@@ -276,6 +283,7 @@ export function ScenarioShelf({
     a.download = `${filename}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    playSfx("export.json");
     toast.success("Pobrano plik scenariusza");
   };
 
@@ -303,6 +311,7 @@ export function ScenarioShelf({
       if (nonInneTotal <= 0.5) {
         toast.warning(`Wczytano „${title}”, ale ten plik ma wyzerowane poparcie partii w okręgach (0 mandatów).`);
       } else {
+        playSfx("scenario.load");
         toast.success(`Wczytano i dodano do biblioteki: ${title}`);
       }
     } catch {
@@ -507,7 +516,10 @@ export function ScenarioShelf({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => persist(saved.filter((entry) => entry.id !== item.id))}
+                        onClick={() => {
+                          playSfx("entity.remove");
+                          persist(saved.filter((entry) => entry.id !== item.id));
+                        }}
                         title="Usuń z biblioteki"
                         aria-label={`Usuń ${item.name}`}
                       >
@@ -682,7 +694,10 @@ export function ScenarioShelf({
                             variant="outline"
                             size="icon"
                             className="min-h-9 min-w-9 text-muted-foreground hover:text-destructive"
-                            onClick={() => persist(saved.filter((entry) => entry.id !== item.id))}
+                            onClick={() => {
+                          playSfx("entity.remove");
+                          persist(saved.filter((entry) => entry.id !== item.id));
+                        }}
                             title="Usuń ten scenariusz"
                           >
                             <Trash2 className="h-3.5 w-3.5" />

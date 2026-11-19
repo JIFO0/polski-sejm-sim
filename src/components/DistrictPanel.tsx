@@ -10,6 +10,7 @@ import { PartyLogo } from "@/components/PartyLogo";
 import { ShareInput } from "@/components/ShareInput";
 import { BASE_TURNOUT, type DistrictResult, type DistrictState } from "@/lib/simulation";
 import { DISTRICT_DEMOGRAPHIC_NOTES } from "@/data/demographicAdjustment";
+import { playSfx } from "@/lib/sfx";
 
 export function DistrictPanel({
   districtId,
@@ -39,6 +40,7 @@ export function DistrictPanel({
   const validVotes = Math.round((currentElectorate * state.turnout) / 100);
 
   const setShare = (pid: string, value: number) => {
+    playSfx("slider.change");
     const otherTotal = Object.entries(state.shares).reduce(
       (total, [id, share]) => total + (id === pid || MERGED_INTO[id] ? 0 : share),
       0,
@@ -151,6 +153,7 @@ export function DistrictPanel({
               onChange={(e) => {
                 const val = parseInt(e.target.value, 10);
                 if (!isNaN(val) && val > 0) {
+                  playSfx("slider.change");
                   onChange({ ...state, electorate: val });
                 }
               }}
@@ -178,7 +181,10 @@ export function DistrictPanel({
             max={95}
             step={0.5}
             value={[state.turnout]}
-            onValueChange={([v = 0]) => onChange({ ...state, turnout: v })}
+            onValueChange={([v = 0]) => {
+              playSfx("slider.change");
+              onChange({ ...state, turnout: v });
+            }}
           />
           <p className="mt-2 text-xs text-muted-foreground">
             {tr("Baza")} {BASE_TURNOUT}{tr("%. Wyższa frekwencja zwiększa liczbę głosów. Mandaty zmieniają się tylko wtedy, gdy któraś partia jest wrażliwa na frekwencję.")} </p>

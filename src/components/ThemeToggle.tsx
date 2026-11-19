@@ -4,6 +4,7 @@ import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
 import { THEME_KEY } from "@/lib/theme-preference";
+import { playSfx } from "@/lib/sfx";
 
 const KEY = THEME_KEY;
 const listeners = new Set<() => void>();
@@ -51,6 +52,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={() => {
         const next = !isDark();
         setDarkTheme(next);
+        playSfx("theme.toggle");
         track({ event: "theme_toggle", meta: next ? "ciemny" : "jasny" });
       }}
       className={`relative grid h-9 w-[4.25rem] shrink-0 grid-cols-2 items-center justify-items-center gap-0 rounded-full border border-border bg-surface p-1 shadow-sm transition-colors hover:bg-surface-strong ${className}`}

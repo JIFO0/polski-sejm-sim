@@ -1,7 +1,8 @@
 import { useTranslation } from "@/lib/i18n";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { ImagePlus, Plus, Trash2, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
+import { playSfx } from "@/lib/sfx";
 import { DISTRICTS } from "@/data/districts";
 import {
   MERGED_INTO,
@@ -134,6 +135,7 @@ export function CustomPartiesPanel({
     const id = newId("cp");
     const n = custom.length + 1;
     track({ event: "custom_party_add" });
+    playSfx("party.add");
     setScenario((s) => ({
       ...s,
       customParties: [...(s.customParties ?? []), { id, name: `Nowa partia ${n}`, short: `NP${n}`, color: "#0EA5E9" }],
@@ -148,6 +150,7 @@ export function CustomPartiesPanel({
     }));
 
   const removeEntity = (id: string) => {
+    playSfx("entity.remove");
     writeCustomLogo(id, null);
     setScenario((s) => {
       const parties = { ...s.parties };
@@ -213,6 +216,7 @@ export function CustomPartiesPanel({
     const first = PARTY_MAP[draft[0]!];
     const name = draft.map((m) => PARTY_MAP[m]?.short ?? m).join(" + ");
     track({ event: "merger_create", meta: [...draft].sort().join("+").slice(0, 40) });
+    playSfx("list.merge");
 
     setScenario((s) => {
       const memberShares: Record<number, Record<string, number>> = {};
