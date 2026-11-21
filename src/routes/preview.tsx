@@ -677,8 +677,8 @@ function PreviewIndex() {
                   onMouseEnter={() => setHighlight(new Set([p.id]))}
                   onMouseLeave={() => setHighlight(null)}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <PartyLogo id={p.id} size={26} />
+                  <div className="flex items-center gap-2 sm:gap-2.5">
+                    <PartyLogo id={p.id} size={26} className="shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <p className="truncate text-sm font-bold">{p.short}</p>
@@ -705,7 +705,7 @@ function PreviewIndex() {
                     />
 
                     <span
-                      className="num w-11 rounded-md bg-ink/10 py-1 text-center text-sm font-bold text-ink shrink-0"
+                      className="num w-9 sm:w-11 rounded-md bg-ink/10 py-1 text-center text-xs sm:text-sm font-bold text-ink shrink-0"
                       title={`${seats} mandatów`}
                     >
                       {seats}

@@ -221,34 +221,159 @@ export function getDb(): DatabaseSync {
   return db;
 }
 
+function getBackupDir(): string {
+  const baseDir = dbPathCached ? path.dirname(dbPathCached) : (process.env["DATA_DIR"] || path.resolve(process.cwd(), "data"));
+  const backupDir = path.join(baseDir, "backups");
+  if (!fs.existsSync(backupDir)) {
+    fs.mkdirSync(backupDir, { recursive: true });
+  }
+  return backupDir;
+}
+
+export function createDatabaseBackup(
+  reason: "weekly" | "pre_cleanup" | "manual" | "manual_clear_all" | "emergency",
+): string | null {
+  try {
+    const db = getDb();
+    const backupDir = getBackupDir();
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const timeStr = new Date().toISOString().slice(11, 19).replace(/:/g, "");
+    const filename = `sejmsim_${reason}_${dateStr}_${timeStr}.db`;
+    const targetPath = path.join(backupDir, filename);
+
+    // Online consistent snapshot using SQLite VACUUM INTO
+    const safePath = targetPath.replace(/'/g, "''");
+    db.exec(`VACUUM INTO '${safePath}';`);
+    console.log(`[server-db] Backup created (${reason}): ${targetPath}`);
+
+    // Manage retention: keep at most 16 backups in data/backups/ to stay safely within disk limits
+    try {
+      const files = fs
+        .readdirSync(backupDir)
+        .filter((f) => f.startsWith("sejmsim_") && f.endsWith(".db"))
+        .map((f) => ({
+          name: f,
+          path: path.join(backupDir, f),
+          time: fs.statSync(path.join(backupDir, f)).mtimeMs,
+        }))
+        .sort((a, b) => b.time - a.time);
+
+      if (files.length > 16) {
+        for (const file of files.slice(16)) {
+          try {
+            fs.unlinkSync(file.path);
+          } catch {}
+        }
+      }
+    } catch (pruneErr) {
+      console.warn("[server-db] backup retention prune warning:", pruneErr);
+    }
+
+    return targetPath;
+  } catch (err) {
+    console.error(`[server-db] createDatabaseBackup (${reason}) failed:`, err);
+    return null;
+  }
+}
+
+let lastWeeklyBackupCheck = 0;
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function maybeRunWeeklyBackup(): void {
+  const now = Date.now();
+  if (now - lastWeeklyBackupCheck < 60 * 60 * 1000) {
+    return; // Don't scan disk more than once an hour
+  }
+  lastWeeklyBackupCheck = now;
+
+  try {
+    const backupDir = getBackupDir();
+    const files = fs.readdirSync(backupDir).filter((f) => f.includes("_weekly_"));
+    let newestWeeklyTime = 0;
+    for (const f of files) {
+      try {
+        const stat = fs.statSync(path.join(backupDir, f));
+        if (stat.mtimeMs > newestWeeklyTime) {
+          newestWeeklyTime = stat.mtimeMs;
+        }
+      } catch {}
+    }
+
+    if (now - newestWeeklyTime >= ONE_WEEK_MS) {
+      createDatabaseBackup("weekly");
+    }
+  } catch (err) {
+    console.error("[server-db] maybeRunWeeklyBackup error:", err);
+  }
+}
+
+let lastPreCleanupBackupTime = 0;
+const PRE_CLEANUP_BACKUP_MIN_INTERVAL = 24 * 60 * 60 * 1000; // at most 1 pre-cleanup backup per 24 hours during normal operations
+
 /**
  * Routine cleanup to prevent unbounded growth and ensure disk usage never approaches 4GB.
  * Prunes expired shares (> 7 days), analytics older than 90 days, and limits total event rows.
+ * ZGODNIE Z ZASADĄ: Zawsze najpierw wykonuje kopię zapasową przed jakimkolwiek czyszczeniem danych.
  */
 export function runMaintenance(): void {
   try {
     const db = getDb();
-    const nowIso = new Date().toISOString();
+    const now = Date.now();
+    const nowIso = new Date(now).toISOString();
 
-    
-    db.prepare("DELETE FROM failed_login_attempts WHERE created_at < ?").run(
-      new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-    );
-    // Wygasłe linki znikają same. Wyłączone i wyróżnione zostają, dopóki właściciel ich nie usunie.
-    db.prepare("DELETE FROM shared_scenarios WHERE active = 1 AND (featured IS NULL OR featured = 0) AND expires_at < ? AND expires_at < '9999-01-01'").run(nowIso);
+    // 1. Sprawdź i wykonaj automatyczny cotygodniowy backup
+    maybeRunWeeklyBackup();
 
-    // 2. Emergency disk check: only if file size approaches 3.8GB, prune oldest events to guarantee < 4GB
+    // 2. STREFA CZYSZCZENIA DANYCH:
+    // Sprawdź czy cokolwiek kwalifikuje się do wyczyszczenia
+    const expiredShares = db
+      .prepare(
+        "SELECT COUNT(*) as c FROM shared_scenarios WHERE active = 1 AND (featured IS NULL OR featured = 0) AND expires_at < ? AND expires_at < '9999-01-01'",
+      )
+      .get(nowIso) as { c: number } | undefined;
+    const expiredSharesCount = expiredShares?.c ?? 0;
+
+    const oldLogins = db
+      .prepare("SELECT COUNT(*) as c FROM failed_login_attempts WHERE created_at < ?")
+      .get(new Date(now - 48 * 60 * 60 * 1000).toISOString()) as { c: number } | undefined;
+    const oldLoginsCount = oldLogins?.c ?? 0;
+
+    let isEmergencyDiskPrune = false;
     if (dbPathCached && fs.existsSync(dbPathCached)) {
       const stat = fs.statSync(dbPathCached);
       if (stat.size > 3.8 * 1024 * 1024 * 1024) {
-        db.prepare(`
-          DELETE FROM analytics_events 
-          WHERE id NOT IN (
-            SELECT id FROM analytics_events ORDER BY id DESC LIMIT 100000
-          )
-        `).run();
-        db.exec("VACUUM;");
+        isEmergencyDiskPrune = true;
       }
+    }
+
+    // Jeśli cokolwiek ma zostać skasowane, NAJPIERW robimy backup:
+    if (isEmergencyDiskPrune) {
+      createDatabaseBackup("emergency");
+    } else if (expiredSharesCount > 0 || oldLoginsCount > 0) {
+      if (now - lastPreCleanupBackupTime >= PRE_CLEANUP_BACKUP_MIN_INTERVAL) {
+        createDatabaseBackup("pre_cleanup");
+        lastPreCleanupBackupTime = now;
+      }
+    }
+
+    // 3. Właściwe czyszczenie danych (dopiero po zabezpieczeniu backupu)
+    db.prepare("DELETE FROM failed_login_attempts WHERE created_at < ?").run(
+      new Date(now - 48 * 60 * 60 * 1000).toISOString(),
+    );
+    // Wygasłe linki znikają same. Wyłączone i wyróżnione zostają, dopóki właściciel ich nie usunie.
+    db.prepare(
+      "DELETE FROM shared_scenarios WHERE active = 1 AND (featured IS NULL OR featured = 0) AND expires_at < ? AND expires_at < '9999-01-01'",
+    ).run(nowIso);
+
+    // 2. Emergency disk check: only if file size approaches 3.8GB, prune oldest events to guarantee < 4GB
+    if (isEmergencyDiskPrune) {
+      db.prepare(`
+        DELETE FROM analytics_events 
+        WHERE id NOT IN (
+          SELECT id FROM analytics_events ORDER BY id DESC LIMIT 100000
+        )
+      `).run();
+      db.exec("VACUUM;");
     }
   } catch (err) {
     console.error("[server-db] maintenance error:", err);
@@ -611,6 +736,9 @@ export function deletePrivateScenario(id: number): boolean {
 }
 
 export function clearAllPlatformData(): { ok: boolean; deletedEvents: number; deletedShares: number } {
+  // Zawsze zrób pełny backup przed wyczyszczeniem bazy
+  createDatabaseBackup("manual_clear_all");
+
   const db = getDb();
   const resEvents = db.prepare("DELETE FROM analytics_events").run();
   const resShares = db.prepare("DELETE FROM shared_scenarios").run();

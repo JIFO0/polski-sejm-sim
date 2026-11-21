@@ -78,7 +78,7 @@ export function DistrictPanel({
 
   return (
     <div className="panel flex h-full flex-col overflow-hidden">
-      <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+      <div className="flex items-start justify-between gap-3 border-b border-border px-4 sm:px-5 py-3.5 sm:py-4">
         <div>
           <p className="eyebrow flex items-center gap-1.5 flex-wrap">
             <span>
@@ -116,7 +116,7 @@ export function DistrictPanel({
         </div>
       </div>
 
-      <div className="space-y-5 overflow-y-auto px-5 py-4">
+      <div className="space-y-4 sm:space-y-5 overflow-y-auto px-4 sm:px-5 py-3.5 sm:py-4">
         {result?.seatDelta !== 0 && DISTRICT_DEMOGRAPHIC_NOTES[district.id] ? (
           <div className="rounded-lg border border-border/70 bg-surface/60 p-2.5 text-xs text-muted-foreground">
             <span className="font-semibold text-ink">Demografia (PKW): </span>
@@ -207,12 +207,12 @@ export function DistrictPanel({
             const seats = result?.seatsByParty[p.id] ?? 0;
             const effDiffers = Math.abs(eff - value) >= 0.05;
             return (
-              <div key={p.id} className="rounded-lg border border-border/70 bg-surface-strong/60 p-3">
-                <div className="flex items-center gap-2.5">
-                  <PartyLogo id={p.id} size={26} />
-                  <span className="truncate text-sm font-medium">{p.short}</span>
+              <div key={p.id} className="rounded-lg border border-border/70 bg-surface-strong/60 p-2.5 sm:p-3">
+                <div className="flex items-center gap-2 sm:gap-2.5">
+                  <PartyLogo id={p.id} size={26} className="shrink-0" />
+                  <span className="truncate text-sm font-medium min-w-0 flex-1">{p.short}</span>
                   <ShareInput value={eff} onChange={(next) => setShare(p.id, next)} label={`Poparcie ${p.name} w okręgu`} max={independentSupport ? eff + unassigned : 100} />
-                  <span className="num w-9 rounded bg-ink/5 py-0.5 text-center text-xs font-bold">
+                  <span className="num w-8 sm:w-9 rounded bg-ink/5 py-0.5 text-center text-xs font-bold shrink-0">
                     {seats}
                   </span>
                 </div>

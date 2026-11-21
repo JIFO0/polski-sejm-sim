@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowLeftRight,
   BarChart3,
   Calendar,
   CheckCircle2,
@@ -103,6 +104,181 @@ function getPolishWeekday(dateStr: string): string {
   } catch {
     return "";
   }
+}
+
+type ColWidthChoice = number | "full";
+
+function usePartyColumnWidth(
+  storageKey: string,
+  defaultWidth: number,
+  maxPartyNameLength: number
+) {
+  const [choice, setChoice] = useState<ColWidthChoice>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === "full") return "full";
+      const n = Number(saved);
+      if (!isNaN(n) && n >= 110 && n <= 550) return n;
+    }
+    return defaultWidth;
+  });
+
+  const setWidth = (w: ColWidthChoice) => {
+    setChoice(w);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(storageKey, String(w));
+    }
+  };
+
+  const fullWidth = useMemo(() => {
+    return Math.min(520, Math.max(220, Math.ceil(maxPartyNameLength * 8.2 + 24)));
+  }, [maxPartyNameLength]);
+
+  const effectiveWidth = choice === "full" ? fullWidth : choice;
+
+  const handleMouseDownResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = effectiveWidth;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      const delta = ev.clientX - startX;
+      const next = Math.min(520, Math.max(110, Math.round(startWidth + delta)));
+      setChoice(next);
+    };
+
+    const onMouseUp = (ev: MouseEvent) => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      const delta = ev.clientX - startX;
+      const finalWidth = Math.min(520, Math.max(110, Math.round(startWidth + delta)));
+      setWidth(finalWidth);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  const handleTouchStartResize = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    const startX = touch.clientX;
+    const startWidth = effectiveWidth;
+
+    const onTouchMove = (ev: TouchEvent) => {
+      const t = ev.touches[0];
+      if (!t) return;
+      const delta = t.clientX - startX;
+      const next = Math.min(520, Math.max(110, Math.round(startWidth + delta)));
+      setChoice(next);
+    };
+
+    const onTouchEnd = () => {
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      if (typeof window !== "undefined") {
+        setChoice((curr) => {
+          if (typeof curr === "number") {
+            localStorage.setItem(storageKey, String(curr));
+          }
+          return curr;
+        });
+      }
+    };
+
+    window.addEventListener("touchmove", onTouchMove);
+    window.addEventListener("touchend", onTouchEnd);
+  };
+
+  return {
+    choice,
+    effectiveWidth,
+    fullWidth,
+    setWidth,
+    handleMouseDownResize,
+    handleTouchStartResize,
+  };
+}
+
+function ColumnWidthSelector({
+  choice,
+  effectiveWidth,
+  defaultWidth,
+  wideWidth,
+  onChange,
+}: {
+  choice: ColWidthChoice;
+  effectiveWidth: number;
+  defaultWidth: number;
+  wideWidth: number;
+  onChange: (w: ColWidthChoice) => void;
+}) {
+  const isCustom = typeof choice === "number" && choice !== 130 && choice !== defaultWidth && choice !== wideWidth;
+
+  return (
+    <div className="flex items-center gap-1 rounded-lg border border-border/80 bg-muted/40 p-0.5 text-xs shrink-0">
+      <span className="hidden sm:flex items-center gap-1 px-1.5 text-[11px] font-medium text-muted-foreground">
+        <ArrowLeftRight className="h-3 w-3 text-muted-foreground/70" />
+        Szerokość:
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(130)}
+        className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+          choice === 130
+            ? "bg-background text-ink shadow-xs font-semibold"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        title="Wąska kolumna (130px)"
+      >
+        Wąska
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(defaultWidth)}
+        className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+          choice === defaultWidth
+            ? "bg-background text-ink shadow-xs font-semibold"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        title={`Standardowa szerokość (${defaultWidth}px)`}
+      >
+        Standard
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(wideWidth)}
+        className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+          choice === wideWidth
+            ? "bg-background text-ink shadow-xs font-semibold"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        title={`Szeroka kolumna (${wideWidth}px) - czytelne nazwy partii i koalicji`}
+      >
+        Szeroka
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("full")}
+        className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+          choice === "full"
+            ? "bg-background text-ink shadow-xs font-semibold"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        title="Pełna szerokość (dopasowuje do najdłuższej nazwy partii)"
+      >
+        Pełna
+      </button>
+      {isCustom && (
+        <span
+          className="rounded bg-background px-1.5 py-0.5 text-[10px] font-bold text-primary shadow-xs"
+          title="Niestandardowa szerokość ustawiona przeciąganiem suwaka kolumny"
+        >
+          {effectiveWidth}px
+        </span>
+      )}
+    </div>
+  );
 }
 
 function StatsPage() {
@@ -363,6 +539,21 @@ function StatsPage() {
   }, [activeMonthObj, summary, selectedMonth]);
 
   const partyName = (id: string) => analyticsPartyName(id, summary?.partyLabels ?? {}, PARTY_NAMES);
+
+  const maxModPartyNameLength = useMemo(() => {
+    if (!summary?.partyAdjustments?.length) return 15;
+    const names = summary.partyAdjustments.map((p) => partyName(p.party));
+    return Math.max(15, ...names.map((n) => n.length));
+  }, [summary?.partyAdjustments, summary?.partyLabels]);
+
+  const maxAvgPartyNameLength = useMemo(() => {
+    if (!summary?.avgShares?.length) return 15;
+    const names = summary.avgShares.map((p) => partyName(p.party));
+    return Math.max(15, ...names.map((n) => n.length));
+  }, [summary?.avgShares, summary?.partyLabels]);
+
+  const modParties = usePartyColumnWidth("sejmsim.stats.colWidth.adjustments", 190, maxModPartyNameLength);
+  const avgShares = usePartyColumnWidth("sejmsim.stats.colWidth.shares", 220, maxAvgPartyNameLength);
 
   const maxDaily = useMemo(() => {
     if (!displayedDays.length) return 1;
@@ -894,12 +1085,12 @@ function StatsPage() {
                       {summary.pollStats.topInstitutes.map(({ institute, count }) => {
                         const maxInst = Math.max(1, ...summary.pollStats.topInstitutes.map((i) => i.count));
                         return (
-                          <div key={institute} className="flex items-center gap-2 text-xs">
-                            <span className="w-44 shrink-0 truncate font-medium text-foreground">{institute}</span>
+                          <div key={institute} className="flex items-center gap-2 text-xs py-1 px-1 rounded hover:bg-muted/30 transition-colors">
+                            <span className="w-52 sm:w-60 shrink-0 truncate font-medium text-foreground" title={institute}>{institute}</span>
                             <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                               <div className="h-full rounded-full bg-primary" style={{ width: `${(count / maxInst) * 100}%` }} />
                             </div>
-                            <span className="num font-bold text-ink w-8 text-right">{count}</span>
+                            <span className="num font-bold text-ink w-8 text-right shrink-0">{count}</span>
                           </div>
                         );
                       })}
@@ -919,12 +1110,12 @@ function StatsPage() {
                       {summary.pollStats.tabChanges.map(({ tab, count }) => {
                         const maxTab = Math.max(1, ...summary.pollStats.tabChanges.map((t) => t.count));
                         return (
-                          <div key={tab} className="flex items-center gap-2 text-xs">
-                            <span className="w-36 shrink-0 truncate font-medium text-foreground">{tab}</span>
+                          <div key={tab} className="flex items-center gap-2 text-xs py-1 px-1 rounded hover:bg-muted/30 transition-colors">
+                            <span className="w-40 shrink-0 truncate font-medium text-foreground" title={tab}>{tab}</span>
                             <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                               <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(count / maxTab) * 100}%` }} />
                             </div>
-                            <span className="num font-bold text-ink w-8 text-right">{count}</span>
+                            <span className="num font-bold text-ink w-8 text-right shrink-0">{count}</span>
                           </div>
                         );
                       })}
@@ -1118,12 +1309,12 @@ function StatsPage() {
                     summary.topDistricts.map(({ name, count }) => {
                       const max = Math.max(1, ...summary.topDistricts.map((d) => d.count));
                       return (
-                        <div key={name} className="flex items-center gap-3 text-xs">
-                          <span className="w-36 shrink-0 truncate font-medium text-foreground">{name}</span>
+                        <div key={name} className="flex items-center gap-3 text-xs py-1 px-1.5 rounded hover:bg-muted/30 transition-colors">
+                          <span className="w-48 sm:w-56 shrink-0 truncate font-medium text-foreground" title={name}>{name}</span>
                           <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
                             <div className="h-full rounded-full bg-primary" style={{ width: `${(count / max) * 100}%` }} />
                           </div>
-                          <span className="num w-10 text-right font-bold text-ink">{count}</span>
+                          <span className="num w-10 text-right font-bold text-ink shrink-0">{count}</span>
                         </div>
                       );
                     })
@@ -1146,17 +1337,20 @@ function StatsPage() {
                   {summary.topCoalitions.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Brak zarejestrowanych testów koalicji.</p>
                   ) : (
-                    summary.topCoalitions.map(({ members, count, majorityHits }) => (
-                      <div key={members} className="flex items-start justify-between gap-2 border-b border-border/40 pb-2 text-xs">
-                        <span className="font-semibold text-foreground break-words">{formatCoalition(members, summary?.partyLabels ?? {})}</span>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${majorityHits > 0 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-muted text-muted-foreground"}`}>
-                            większość {majorityHits}/{count}
-                          </span>
-                          <span className="num font-bold text-ink">×{count}</span>
+                    summary.topCoalitions.map(({ members, count, majorityHits }) => {
+                      const coalitionLabel = formatCoalition(members, summary?.partyLabels ?? {});
+                      return (
+                        <div key={members} className="flex items-start justify-between gap-2 border-b border-border/40 pb-2 text-xs hover:bg-muted/30 px-1 rounded transition-colors" title={coalitionLabel}>
+                          <span className="font-semibold text-foreground break-words">{coalitionLabel}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${majorityHits > 0 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-muted text-muted-foreground"}`}>
+                              większość {majorityHits}/{count}
+                            </span>
+                            <span className="num font-bold text-ink">×{count}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </section>
@@ -1165,26 +1359,81 @@ function StatsPage() {
             <div className="grid gap-6 md:grid-cols-2">
               {/* Najczęściej modyfikowane partie */}
               <section className="panel p-5">
-                <h2 className="font-display text-lg font-bold text-ink">Najczęściej modyfikowane partie</h2>
-                <p className="mt-1 text-xs text-muted-foreground">O których partiach użytkownicy najczęściej zmieniają poparcie.</p>
-                <div className="mt-4 flex flex-col gap-2">
-                  {summary.partyAdjustments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Brak odnotowanych zmian suwaków.</p>
-                  ) : (
-                    summary.partyAdjustments.map(({ party, count }) => {
-                      const max = Math.max(1, ...summary.partyAdjustments.map((p) => p.count));
-                      return (
-                        <div key={party} className="flex items-center gap-3 text-xs">
-                          <span className="min-w-28 max-w-[45%] shrink-0 break-words font-medium text-foreground">{partyName(party)}</span>
-                          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
-                            <div className="h-full rounded-full" style={{ width: `${(count / max) * 100}%`, backgroundColor: PARTY_COLORS[party] ?? "var(--primary)" }} />
-                          </div>
-                          <span className="num w-10 text-right font-bold text-ink">{count}</span>
-                        </div>
-                      );
-                    })
-                  )}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-ink">Najczęściej modyfikowane partie</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">O których partiach użytkownicy najczęściej zmieniają poparcie.</p>
+                  </div>
+                  <ColumnWidthSelector
+                    choice={modParties.choice}
+                    effectiveWidth={modParties.effectiveWidth}
+                    defaultWidth={190}
+                    wideWidth={290}
+                    onChange={modParties.setWidth}
+                  />
                 </div>
+                {summary.partyAdjustments.length === 0 ? (
+                  <p className="mt-4 text-sm text-muted-foreground">Brak odnotowanych zmian suwaków.</p>
+                ) : (
+                  <div className="mt-4 flex flex-col gap-1 overflow-x-auto -mx-1 px-1">
+                    <div className="min-w-fit">
+                      {/* Nagłówek z przeciąganym separatorem */}
+                      <div className="flex items-center gap-3 border-b border-border/50 pb-1.5 text-[11px] font-semibold text-muted-foreground px-1.5 select-none">
+                        <div
+                          style={{ width: `${modParties.effectiveWidth}px` }}
+                          className="relative shrink-0 flex items-center justify-between pr-2 group/resizer"
+                        >
+                          <span>Partia</span>
+                          <div
+                            onMouseDown={modParties.handleMouseDownResize}
+                            onTouchStart={modParties.handleTouchStartResize}
+                            onDoubleClick={() => modParties.setWidth(modParties.choice === "full" ? 190 : "full")}
+                            className="absolute -right-2 top-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-40 hover:opacity-100 group-hover/resizer:opacity-100 transition-opacity z-10"
+                            title="Przeciągnij, aby zmienić szerokość kolumny (podwójny klik: pełna szerokość)"
+                          >
+                            <div className="h-3 w-1 rounded-full bg-border group-hover/resizer:bg-primary transition-colors" />
+                          </div>
+                        </div>
+                        <div className="flex-1">Częstotliwość zmian</div>
+                        <div className="w-10 text-right shrink-0">Liczba</div>
+                      </div>
+
+                      {/* Wiersze */}
+                      <div className="mt-1 flex flex-col gap-1">
+                        {summary.partyAdjustments.map(({ party, count }) => {
+                          const max = Math.max(1, ...summary.partyAdjustments.map((p) => p.count));
+                          const name = partyName(party);
+                          return (
+                            <div
+                              key={party}
+                              className="flex items-center gap-3 text-xs py-1 px-1.5 rounded hover:bg-muted/30 transition-colors"
+                            >
+                              <span
+                                style={{ width: `${modParties.effectiveWidth}px` }}
+                                className={`shrink-0 font-medium text-foreground ${
+                                  modParties.choice === "full" ? "whitespace-nowrap pr-2" : "truncate"
+                                }`}
+                                title={name}
+                              >
+                                {name}
+                              </span>
+                              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className="h-full rounded-full transition-all duration-300"
+                                  style={{
+                                    width: `${(count / max) * 100}%`,
+                                    backgroundColor: PARTY_COLORS[party] ?? "var(--primary)",
+                                  }}
+                                />
+                              </div>
+                              <span className="num w-10 text-right font-bold text-ink shrink-0">{count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </section>
 
               {/* Urządzenia i źródła wejść */}
@@ -1230,33 +1479,88 @@ function StatsPage() {
 
             {/* Średnie poparcie w scenariuszach */}
             <section className="panel p-5">
-              <h2 className="font-display text-lg font-bold text-ink">Średnie poparcie w tworzonych scenariuszach</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Na podstawie zapisywanych, pobieranych i udostępnianych scenariuszy (z wyłączeniem scenariusza domyślnego).
-              </p>
-              <div className="mt-4 flex flex-col gap-2">
-                {summary.avgShares.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Brak zmodyfikowanych scenariuszy użytkowników.</p>
-                ) : (
-                  summary.avgShares.map(({ party, avg, count }) => (
-                    <div key={party} className="flex items-center gap-3">
-                      <span className="min-w-40 max-w-[45%] shrink-0 break-words text-sm text-foreground">
-                        {partyName(party)}
-                      </span>
-                      <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${Math.min(100, avg)}%`, backgroundColor: PARTY_COLORS[party] ?? "var(--primary)" }}
-                        />
-                      </div>
-                      <span className="num w-16 text-right text-sm font-semibold text-ink">
-                        {avg.toFixed(1)}%
-                      </span>
-                      <span className="w-10 text-right text-xs text-muted-foreground">×{count}</span>
-                    </div>
-                  ))
-                )}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink">Średnie poparcie w tworzonych scenariuszach</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Na podstawie zapisywanych, pobieranych i udostępnianych scenariuszy (z wyłączeniem scenariusza domyślnego).
+                  </p>
+                </div>
+                <ColumnWidthSelector
+                  choice={avgShares.choice}
+                  effectiveWidth={avgShares.effectiveWidth}
+                  defaultWidth={220}
+                  wideWidth={320}
+                  onChange={avgShares.setWidth}
+                />
               </div>
+              {summary.avgShares.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">Brak zmodyfikowanych scenariuszy użytkowników.</p>
+              ) : (
+                <div className="mt-4 flex flex-col gap-1 overflow-x-auto -mx-1 px-1">
+                  <div className="min-w-fit">
+                    {/* Nagłówek z przeciąganym separatorem */}
+                    <div className="flex items-center gap-3 border-b border-border/50 pb-1.5 text-[11px] font-semibold text-muted-foreground px-1.5 select-none">
+                      <div
+                        style={{ width: `${avgShares.effectiveWidth}px` }}
+                        className="relative shrink-0 flex items-center justify-between pr-2 group/resizer"
+                      >
+                        <span>Partia</span>
+                        <div
+                          onMouseDown={avgShares.handleMouseDownResize}
+                          onTouchStart={avgShares.handleTouchStartResize}
+                          onDoubleClick={() => avgShares.setWidth(avgShares.choice === "full" ? 220 : "full")}
+                          className="absolute -right-2 top-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-40 hover:opacity-100 group-hover/resizer:opacity-100 transition-opacity z-10"
+                          title="Przeciągnij, aby zmienić szerokość kolumny (podwójny klik: pełna szerokość)"
+                        >
+                          <div className="h-3 w-1 rounded-full bg-border group-hover/resizer:bg-primary transition-colors" />
+                        </div>
+                      </div>
+                      <div className="flex-1">Średnie poparcie w scenariuszach</div>
+                      <div className="w-16 text-right shrink-0">Średnia</div>
+                      <div className="w-10 text-right shrink-0">Użycia</div>
+                    </div>
+
+                    {/* Wiersze */}
+                    <div className="mt-1 flex flex-col gap-1">
+                      {summary.avgShares.map(({ party, avg, count }) => {
+                        const name = partyName(party);
+                        return (
+                          <div
+                            key={party}
+                            className="flex items-center gap-3 py-1 px-1.5 rounded hover:bg-muted/30 transition-colors text-sm"
+                          >
+                            <span
+                              style={{ width: `${avgShares.effectiveWidth}px` }}
+                              className={`shrink-0 font-medium text-foreground ${
+                                avgShares.choice === "full" ? "whitespace-nowrap pr-2" : "truncate"
+                              }`}
+                              title={name}
+                            >
+                              {name}
+                            </span>
+                            <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full transition-all duration-300"
+                                style={{
+                                  width: `${Math.min(100, avg)}%`,
+                                  backgroundColor: PARTY_COLORS[party] ?? "var(--primary)",
+                                }}
+                              />
+                            </div>
+                            <span className="num w-16 text-right text-sm font-semibold text-ink shrink-0">
+                              {avg.toFixed(1)}%
+                            </span>
+                            <span className="num w-10 text-right text-xs text-muted-foreground shrink-0">
+                              ×{count}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* Frekwencja */}
@@ -1312,7 +1616,7 @@ function StatsPage() {
                         <tr key={sh.id} className="border-t border-border/60">
                           <td className="py-1.5">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <a href={`/?s=${sh.id}`} target="_blank" rel="noreferrer" className="font-medium text-ink underline-offset-2 hover:underline">{sh.name}</a>
+                              <a href={`/?s=${sh.id}`} target="_blank" rel="noreferrer" className="font-medium text-ink underline-offset-2 hover:underline max-w-[280px] truncate" title={sh.name}>{sh.name}</a>
                               {sh.featured && (
                                 <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
                                   <Sparkles className="h-2.5 w-2.5" /> Społeczność
@@ -1498,7 +1802,7 @@ function StatsPage() {
                             : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
                         return (
                           <tr key={p.id} className="border-t align-top">
-                            <td className="py-2 pr-2 font-semibold text-ink">{p.name}</td>
+                            <td className="py-2 pr-2 font-semibold text-ink max-w-[240px] truncate" title={p.name}>{p.name}</td>
                             <td className="whitespace-nowrap py-2 pr-2"><span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${statusClass}`}>{statusLabel}</span></td>
                             <td className="py-2 pr-2">{author || "-"}</td>
                             <td className="max-w-[320px] py-2 pr-2 text-muted-foreground"><span className="line-clamp-3" title={description}>{description || "-"}</span></td>

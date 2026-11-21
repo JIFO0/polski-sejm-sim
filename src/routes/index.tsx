@@ -673,7 +673,7 @@ function Index() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-[1400px] space-y-14 px-5 py-12">
+      <main className="relative z-10 mx-auto max-w-[1400px] space-y-14 px-3 sm:px-5 py-8 sm:py-12">
         <section
           className="border-l-4 border-primary bg-surface/80 px-5 py-4 backdrop-blur-sm"
           aria-labelledby="tutorial-title"
@@ -695,7 +695,7 @@ function Index() {
         <CollapsibleSection title={tr("Symulacja w okręgach")}>
           {/* MAPA + PANEL */}
           <section className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
-            <div className="panel p-4 md:p-6">
+            <div className="panel min-w-0 p-4 md:p-6">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="mr-auto">
                   <h2 className="font-display text-2xl font-bold text-ink">{tr("41 okręgów")}</h2>
@@ -856,7 +856,7 @@ function Index() {
               ) : null}
             </div>
 
-            <div className="min-h-[520px]">
+            <div className="min-w-0 min-h-[520px]">
               {selected != null ? (
                 <DistrictPanel
                   districtId={selected}
@@ -873,32 +873,32 @@ function Index() {
                 />
               ) : (
                 <div
-                  className="panel leader-tint h-full p-5"
+                  className="panel leader-tint h-full p-3.5 sm:p-5"
                   style={{ "--leader-color": leader?.color ?? "var(--border)" } as CSSProperties}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-display text-lg font-bold text-ink">
+                  <div className="flex flex-wrap sm:flex-nowrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <h3 className="font-display text-base sm:text-lg font-bold text-ink">
                           {tr("Wynik ogólnokrajowy")}
                         </h3>
                         <Link
                           to="/metoda-dhondta"
-                          className="inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors"
+                          className="inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors shrink-0"
                           title="Jak procenty poparcia przeliczają się na mandaty? Wyjaśnienie metody D'Hondta"
                         >
                           <Calculator className="h-3 w-3" />
                           <span>{tr("Metoda D'Hondta")}</span>
                         </Link>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                         {tr("Suwak i pole procentowe zmieniają poparcie z zachowaniem regionalnych różnic.")}
                       </p>
                     </div>
                     <Button
                       variant={showVotes ? "secondary" : "outline"}
                       size="sm"
-                      className="h-8 gap-1.5 px-2.5 text-xs font-semibold shrink-0"
+                      className="h-8 gap-1.5 px-2 sm:px-2.5 text-xs font-semibold shrink-0"
                       onClick={() => setShowVotes(!showVotes)}
                       title="Przełącz wyświetlanie szacunkowej liczby głosów"
                     >
@@ -907,14 +907,14 @@ function Index() {
                     </Button>
                   </div>
 
-                  <div className="mt-2.5 flex items-center justify-between rounded-md bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
-                    <span>
+                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md bg-muted/60 px-2.5 sm:px-3 py-1.5 text-xs text-muted-foreground">
+                    <span className="whitespace-nowrap">
                       {tr("Uprawnieni:")}{" "}
                       <strong className="text-ink">
                         {(result.totalElectorate / 1_000_000).toFixed(2)} mln
                       </strong>
                     </span>
-                    <span>
+                    <span className="whitespace-nowrap">
                       {tr("Oddane:")}{" "}
                       <strong className="text-ink">
                         {(result.totalVotes / 1_000_000).toFixed(2)} mln
@@ -964,12 +964,12 @@ function Index() {
                       return (
                         <div
                           key={p.id}
-                          className="rounded-lg border border-border/70 p-3"
+                          className="rounded-lg border border-border/70 p-2.5 sm:p-3"
                           onMouseEnter={() => setHighlight(new Set([p.id]))}
                           onMouseLeave={() => setHighlight(null)}
                         >
-                          <div className="flex items-center gap-2.5">
-                            <PartyLogo id={p.id} size={28} />
+                          <div className="flex items-center gap-2 sm:gap-2.5">
+                            <PartyLogo id={p.id} size={28} className="shrink-0" />
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-semibold">{p.short}</p>
                               <p className="truncate text-[11px] text-muted-foreground">
@@ -988,7 +988,7 @@ function Index() {
                               max={(scenario.independentSupport ?? true) ? share + unassignedShare : 100}
                             />
                             <span
-                              className="num w-10 rounded bg-ink/5 py-0.5 text-center text-sm font-bold"
+                              className="num w-9 sm:w-10 rounded bg-ink/5 py-0.5 text-center text-xs sm:text-sm font-bold shrink-0"
                               title={`${seats} mandatów`}
                             >
                               {seats}
