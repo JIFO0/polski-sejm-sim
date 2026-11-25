@@ -68,31 +68,31 @@ export type SfxEvent =
   | "feedback.sent"
   | "turnout.group";
 
-/** THE place to remap sounds: app event -> sound id. */
-export const SFX_EVENT_MAP: Record<SfxEvent, SfxId> = {
-  "slider.change": "ui_slider_tick",
-  "threshold.exit": "sim_threshold_exit",
-  "coalition.toggle": "coalition_toggle",
+/** THE place to remap sounds: app event -> sound id (or null when muted). */
+export const SFX_EVENT_MAP: Record<SfxEvent, SfxId | null> = {
+  "slider.change": null,
+  "threshold.exit": null,
+  "coalition.toggle": null,
   "coalition.majority": "coalition_majority",
-  "coalition.majorityLost": "coalition_majority_lost",
+  "coalition.majorityLost": null,
   "coalition.constitutional": "coalition_constitutional",
-  "coalition.constitutionalLost": "coalition_constitutional_lost",
-  "party.add": "party_add",
-  "list.merge": "list_merge",
-  "entity.remove": "ui_remove",
-  "scenario.save": "scenario_save",
-  "scenario.load": "scenario_load",
-  "scenario.share": "scenario_share",
-  "scenario.reset": "scenario_reset",
-  "export.json": "export_json",
-  "export.graphic": "export_graphic",
-  "theme.toggle": "theme_toggle",
+  "coalition.constitutionalLost": null,
+  "party.add": null,
+  "list.merge": null,
+  "entity.remove": null,
+  "scenario.save": null,
+  "scenario.load": null,
+  "scenario.share": null,
+  "scenario.reset": null,
+  "export.json": null,
+  "export.graphic": null,
+  "theme.toggle": null,
   "toast.error": "toast_error",
   "toast.warning": "toast_warning",
-  "silence.show": "election_silence",
-  "demographic.toggle": "demographic_toggle",
-  "feedback.sent": "feedback_sent",
-  "turnout.group": "turnout_group",
+  "silence.show": null,
+  "demographic.toggle": null,
+  "feedback.sent": null,
+  "turnout.group": null,
 };
 
 /**
@@ -217,7 +217,10 @@ function scheduleIdlePreload() {
   if (preloadScheduled || !unlocked || !readEnabled()) return;
   preloadScheduled = true;
   const run = () => {
-    for (const id of SFX_IDS) void loadBuffer(id);
+    const activeIds = new Set(
+      Object.values(SFX_EVENT_MAP).filter((id): id is SfxId => id !== null),
+    );
+    for (const id of activeIds) void loadBuffer(id);
   };
   const w = window as unknown as { requestIdleCallback?: (cb: () => void) => number };
   if (w.requestIdleCallback) w.requestIdleCallback(run);
@@ -247,6 +250,9 @@ export function playSfx(event: SfxEvent): void {
   if (typeof window === "undefined" || !unlocked || !readEnabled()) return;
   if (document.visibilityState === "hidden") return;
 
+  const id = SFX_EVENT_MAP[event];
+  if (!id) return;
+
   const now = performance.now();
   const gap = SFX_EVENT_GAP_MS[event] ?? SFX_DEFAULT_GAP_MS;
   if (now - (lastPlayedAt.get(event) ?? -Infinity) < gap) return;
@@ -254,7 +260,6 @@ export function playSfx(event: SfxEvent): void {
   lastPlayedAt.set(event, now);
   lastAnyAt = now;
 
-  const id = SFX_EVENT_MAP[event];
   void loadBuffer(id).then((buffer) => {
     const audio = ctx;
     if (!buffer || !audio || !master || !readEnabled()) return;
