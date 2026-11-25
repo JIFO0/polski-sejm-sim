@@ -218,10 +218,22 @@ export function ensureSessionAndTrack(): void {
   } catch {}
 }
 
-/** Rejestruje odsłonę podstrony (pageview) przy każdej zmianie trasy. */
+const PAGE_VIEW_DEDUP_MS = 2000;
+let lastTrackedPageView: { path: string; at: number } | null = null;
+
+/** Rejestruje odsłonę podstrony (pageview) przy każdej zmianie trasy (z deduplikacją wywołań z layoutu i trasy). */
 export function trackPageView(path?: string): void {
   const currentPath = path ?? (typeof window !== "undefined" ? window.location.pathname : "");
   if (shouldIgnoreTracking(currentPath)) return;
+  const now = Date.now();
+  if (
+    lastTrackedPageView &&
+    lastTrackedPageView.path === currentPath &&
+    now - lastTrackedPageView.at < PAGE_VIEW_DEDUP_MS
+  ) {
+    return;
+  }
+  lastTrackedPageView = { path: currentPath, at: now };
   ensureSessionAndTrack();
   track({
     event: "page_view",

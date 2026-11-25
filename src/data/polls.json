@@ -1,5 +1,54 @@
 [
   {
+    "id": "united-surveys-wp-2026-11-20",
+    "institute": "United Surveys by IBRiS",
+    "commissioner": "Wirtualna Polska",
+    "fieldworkFrom": "2026-11-20",
+    "fieldworkTo": "2026-11-22",
+    "publishedAt": "2026-11-25",
+    "sampleSize": 1000,
+    "method": "mix",
+    "methodDetail": "metoda mix-mode: wywiady internetowe (CAWI) oraz telefoniczne (CATI)",
+    "publicationTitle": "Sondaż United Surveys by IBRiS dla Wirtualnej Polski, 20–22 listopada 2026",
+    "results": {
+      "ko": 30.9,
+      "pis": 17.7,
+      "konf": 13.9,
+      "kkp": 10.0,
+      "nl": 6.2,
+      "rp": 5.9,
+      "psl": 4.4,
+      "razem": 3.7,
+      "pl2050": 0.7
+    },
+    "sourceUrl": "https://wiadomosci.wp.pl/pis-odbija-sie-od-swojego-dna-ko-bez-szans-na-pelna-wladze-7354433351788544a"
+  },
+  {
+    "id": "pollster-se-2026-11-18",
+    "institute": "Instytut Badań Pollster dla Super Expressu",
+    "commissioner": "Super Express",
+    "fieldworkFrom": "2026-11-18",
+    "fieldworkTo": "2026-11-19",
+    "publishedAt": "2026-11-20",
+    "sampleSize": 1018,
+    "method": "CAWI",
+    "methodDetail": "badanie zrealizowane metodą CAWI na próbie 1018 dorosłych Polaków",
+    "publicationTitle": "Sondaż Instytutu Badań Pollster dla Super Expressu, 18–19 listopada 2026",
+    "results": {
+      "ko": 31.83,
+      "pis": 23.74,
+      "konf": 13.55,
+      "nl": 8.53,
+      "kkp": 6.16,
+      "psl": 5.04,
+      "rp": 4.4,
+      "razem": 4.26,
+      "pl2050": 1.98,
+      "inne": 0.51
+    },
+    "sourceUrl": "https://polityka.se.pl/wiadomosci/absolutna-sensacja-w-najnowszym-sondazu-powrot-do-sejmu-po-miesiacach-zapasci-to-moze-zmienic-wszystko-aa-ho7L-fN6e-FwxJ.html"
+  },
+  {
     "id": "pollster-se-2026-11-09",
     "institute": "Instytut Badań Pollster dla Super Expressu",
     "commissioner": "Super Express",
