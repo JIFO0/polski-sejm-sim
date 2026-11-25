@@ -1,12 +1,13 @@
 import { Volume1, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
-import { setSfxEnabled, useSfxEnabled } from "@/lib/sfx";
+import { HAS_ACTIVE_SFX, setSfxEnabled, useSfxEnabled } from "@/lib/sfx";
 
 /** Small on/off switch for the quiet interface sounds; sits next to the theme toggle. */
 export function SfxToggle({ className = "" }: { className?: string }) {
   const on = useSfxEnabled();
   const en = useLanguage() === "en";
+  if (!HAS_ACTIVE_SFX) return null;
   const label = en
     ? on
       ? "Turn interface sounds off"

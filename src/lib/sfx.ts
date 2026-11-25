@@ -73,9 +73,9 @@ export const SFX_EVENT_MAP: Record<SfxEvent, SfxId | null> = {
   "slider.change": null,
   "threshold.exit": null,
   "coalition.toggle": null,
-  "coalition.majority": "coalition_majority",
+  "coalition.majority": null,
   "coalition.majorityLost": null,
-  "coalition.constitutional": "coalition_constitutional",
+  "coalition.constitutional": null,
   "coalition.constitutionalLost": null,
   "party.add": null,
   "list.merge": null,
@@ -87,13 +87,15 @@ export const SFX_EVENT_MAP: Record<SfxEvent, SfxId | null> = {
   "export.json": null,
   "export.graphic": null,
   "theme.toggle": null,
-  "toast.error": "toast_error",
-  "toast.warning": "toast_warning",
+  "toast.error": null,
+  "toast.warning": null,
   "silence.show": null,
   "demographic.toggle": null,
   "feedback.sent": null,
   "turnout.group": null,
 };
+
+export const HAS_ACTIVE_SFX = Object.values(SFX_EVENT_MAP).some((id) => id !== null);
 
 /**
  * Global volume. The files are already normalised quietly (about -30 LUFS),
@@ -238,7 +240,7 @@ function unlock() {
   scheduleIdlePreload();
 }
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && HAS_ACTIVE_SFX) {
   // Dźwięk nie zagra, dopóki użytkownik niczego nie kliknie, nie dotknie ani nie wciśnie.
   for (const type of ["pointerdown", "keydown", "touchstart"]) {
     window.addEventListener(type, unlock, { capture: true, passive: true });
